@@ -197,6 +197,7 @@ export function hasPermissionUrl(user: User | null, path: string): boolean {
 }
 
 const SUPER_ADMIN_PATHS = [
+  '/admin/cap7a',
   '/admin/rbac',
   '/admin/registry',
   '/admin/edit-layout',

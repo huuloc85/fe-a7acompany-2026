@@ -254,6 +254,18 @@ function Sidebar() {
                 {!isSidebarClose && <span>Chỉnh giao diện</span>}
               </div>
             </Link>
+            <Link
+              to="/admin/cap7a"
+              aria-label="Cap7A-Check"
+              className="block no-underline"
+            >
+              <div className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13.5px] text-black/80 transition-all duration-200 hover:bg-gray-50 hover:text-black active:scale-[0.98] dark:text-gray-200 dark:hover:bg-white/5 dark:hover:text-white">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[15px] text-gray-500 dark:text-gray-400">
+                  <FaServer />
+                </span>
+                {!isSidebarClose && <span>Cap7A-Check</span>}
+              </div>
+            </Link>
             <Link to="/admin/registry" className="block no-underline">
               <div className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13.5px] text-black/80 transition-all duration-200 hover:bg-gray-50 hover:text-black active:scale-[0.98] dark:text-gray-200 dark:hover:bg-white/5 dark:hover:text-white">
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[15px] text-gray-500 dark:text-gray-400">
@@ -435,6 +447,18 @@ function Sidebar() {
                           <IconEdit />
                         </span>
                         <span>Chỉnh giao diện</span>
+                      </div>
+                    </Link>
+                    <Link
+                      to="/admin/cap7a"
+                      onClick={toggleSidebar}
+                      className="block no-underline"
+                    >
+                      <div className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13.5px] text-gray-500 transition-all duration-200 hover:bg-gray-50 hover:text-gray-700 active:scale-[0.98] dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[15px] text-gray-400">
+                          <FaServer />
+                        </span>
+                        <span>Cap7A-Check</span>
                       </div>
                     </Link>
                     <Link
