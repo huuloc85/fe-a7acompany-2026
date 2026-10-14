@@ -12,6 +12,29 @@ import { CrudService } from '@utils/crudService';
 const ENDPOINT = '/api/attendances';
 const EMP_ENDPOINT = '/api/employee/attendances';
 
+export const decideOvertimeApproval = (data: {
+  employee_id: string;
+  date: string;
+  shift: number;
+  action: 'approve' | 'cancel';
+  reason: string;
+}) => axiosPrivate.post(`${ENDPOINT}/overtime-approval`, data);
+
+export interface AttendanceDailyResult
+  extends Omit<AttendanceResult, 'time_in' | 'time_out' | 'company'> {
+  id: number;
+  company: string | null;
+  time_in: string | null;
+  time_out: string | null;
+  calculated_at: string;
+}
+
+export const fetchAttendanceDailyResults = (params?: QueryParams) =>
+  axiosPrivate.get<
+    AttendanceDailyResult,
+    PaginatedResponse<AttendanceDailyResult>
+  >(`${ENDPOINT}/daily-results`, { params });
+
 export interface AttendanceResponse {
   employee_id: string;
   name: string;

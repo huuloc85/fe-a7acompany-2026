@@ -1,9 +1,16 @@
 import { useParams, useNavigate } from '@tanstack/react-router';
-import { useQuery } from '@tanstack/react-query';
-import { Button, Spin, Alert, Tag } from 'antd';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Button, Spin, Alert, Tag, message } from 'antd';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { DetailView, AdminActionModal } from '@components/RequestForm';
-import { adminRequestFormService } from '@services/RequestFormService';
+import {
+  adminRequestFormService,
+  supervisorRequestFormService
+} from '@services/RequestFormService';
+import {
+  canUserApproveReject,
+  getUserApprovalType
+} from '@/utils/requestFormUtil';
 import { useAuth } from '@hooks/useAuth';
 import { useState } from 'react';
 import AppButton from '@components/common/AppButton';
@@ -14,10 +21,46 @@ export default function RequestFormDetail() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [approvalModalVisible, setApprovalModalVisible] = useState(false);
+  const [mode, setMode] = useState<'approve' | 'reject'>('approve');
+  const queryClient = useQueryClient();
+  const service =
+    getUserApprovalType(user) === 'supervisor'
+      ? supervisorRequestFormService
+      : adminRequestFormService;
+  const mutation = useMutation({
+    mutationFn: (payload: {
+      action: 'approve' | 'reject';
+      rejection_reason?: string;
+      digital_signature_supervisor?: File;
+      digital_signature_manager?: File;
+    }) =>
+      payload.digital_signature_supervisor || payload.digital_signature_manager
+        ? service.approveOrRejectWithSignatures(Number(id), payload)
+        : service.approveOrReject(Number(id), payload),
+    onSuccess: (response) => {
+      message.success(response.message || 'Đã cập nhật đơn');
+      setApprovalModalVisible(false);
+      queryClient.invalidateQueries({
+        predicate: (query) => {
+          const key = String(query.queryKey[0]);
+          return (
+            key.includes('request-form') ||
+            [
+              'attendances',
+              'emp-attendance',
+              'attendance-daily-results'
+            ].includes(key)
+          );
+        }
+      });
+    },
+    onError: (error: { response?: { data?: { message?: string } } }) =>
+      message.error(error.response?.data?.message || 'Không thể xử lý đơn')
+  });
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['admin-request-form-detail', id],
-    queryFn: () => adminRequestFormService.getDetail(Number(id)),
+    queryFn: () => service.getDetail(Number(id)),
     enabled: !!id,
     // Performance optimizations
     staleTime: 30000, // Data fresh trong 30s
@@ -32,6 +75,7 @@ export default function RequestFormDetail() {
   };
 
   const handleApproval = () => {
+    setMode('approve');
     setApprovalModalVisible(true);
   };
 
@@ -81,7 +125,7 @@ export default function RequestFormDetail() {
     );
   }
 
-  const canApprove = requestForm.status === 'pending';
+  const { canApprove, canReject } = canUserApproveReject(requestForm, user);
 
   return (
     <ComponentCard title="Chi tiết đơn yêu cầu">
@@ -96,6 +140,17 @@ export default function RequestFormDetail() {
             <AppButton tone="primary" onClick={handleApproval}>
               Duyệt đơn
             </AppButton>
+          )}
+          {canReject && (
+            <Button
+              danger
+              onClick={() => {
+                setMode('reject');
+                setApprovalModalVisible(true);
+              }}
+            >
+              Từ chối
+            </Button>
           )}
           <div className="ml-auto flex items-center gap-2">
             <Tag
@@ -131,17 +186,12 @@ export default function RequestFormDetail() {
       <AdminActionModal
         visible={approvalModalVisible}
         record={requestForm}
-        mode="approve"
+        mode={mode}
+        loading={mutation.isPending}
         currentUser={user}
         onCancel={() => setApprovalModalVisible(false)}
-        onApprove={() => {
-          setApprovalModalVisible(false);
-          // Refresh data after approval
-        }}
-        onReject={() => {
-          setApprovalModalVisible(false);
-          // Refresh data after rejection
-        }}
+        onApprove={(payload) => mutation.mutate(payload)}
+        onReject={(payload) => mutation.mutate(payload)}
       />
     </ComponentCard>
   );

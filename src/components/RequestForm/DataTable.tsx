@@ -180,6 +180,15 @@ export const DataTable: React.FC<RequestFormTableProps> = ({
   const canApprove = (record: RequestForm): boolean => {
     // ❌ Status phải là pending
     if (record.status !== 'pending') return false;
+    if (record.type === 'don_xin_tang_ca') {
+      return (
+        userType === 'supervisor' &&
+        String(currentUserId) === String(record.supervisor_id) &&
+        String(currentUserId) !== String(record.employee_id) &&
+        (!!record.has_applicant_signature ||
+          !!record.digital_signature_applicant)
+      );
+    }
 
     // ❌ ĐẶC BIỆT: Đơn Ủy Quyền - Admin KHÔNG được duyệt
     // Chỉ có người được ủy quyền mới ký duyệt đơn ủy quyền
@@ -201,9 +210,6 @@ export const DataTable: React.FC<RequestFormTableProps> = ({
 
     // Check if this request was created by a supervisor
     const createdBySupervisor = isRequestCreatedBySupervisor(record);
-
-    // ❌ Nếu đã có cả 2 chữ ký thì TUYỆT ĐỐI không cho phép duyệt nữa
-    if (hasSupervisorSignature && hasManagerSignature) return false;
 
     // ✅ SUPERVISOR: Có thể duyệt nếu chưa có chữ ký supervisor
     if (userType === 'supervisor') {
@@ -230,12 +236,17 @@ export const DataTable: React.FC<RequestFormTableProps> = ({
 
       // If supervisor created the request, only manager signature is needed
       if (createdBySupervisor) {
-        return !hasManagerSignature;
+        return true;
       }
 
       // Nếu đã có chữ ký manager rồi thì không cho duyệt nữa
       if (hasManagerSignature) {
-        return false;
+        return (
+          hasSupervisorSignature ||
+          ['20122900', '23030100', '17031400'].includes(
+            String(record.employee_id)
+          )
+        );
       }
 
       return true; // Admin/Manager có thể duyệt
@@ -418,6 +429,19 @@ export const DataTable: React.FC<RequestFormTableProps> = ({
       align: 'center',
       responsive: ['lg'],
       render: (record: RequestForm) => {
+        if (record.type === 'don_xin_tang_ca') {
+          const signed =
+            record.has_applicant_signature ||
+            !!record.digital_signature_applicant;
+          return (
+            <div>
+              <div>Người làm đơn</div>
+              <Tag color={signed ? 'green' : 'orange'}>
+                {signed ? 'Đã ký' : 'Chưa ký'}
+              </Tag>
+            </div>
+          );
+        }
         // Đặc biệt cho đơn Giấy ủy quyền
         if (record.type === 'giay_uy_quyen') {
           const hasDelegatorSignature =
@@ -576,6 +600,19 @@ export const DataTable: React.FC<RequestFormTableProps> = ({
       align: 'center',
       responsive: ['lg'],
       render: (record: RequestForm) => {
+        if (record.type === 'don_xin_tang_ca') {
+          const signed =
+            record.has_supervisor_signature ||
+            !!record.digital_signature_supervisor;
+          return (
+            <div>
+              <div>Tổ trưởng</div>
+              <Tag color={signed ? 'green' : 'orange'}>
+                {signed ? 'Đã ký' : 'Chưa ký'}
+              </Tag>
+            </div>
+          );
+        }
         // Đặc biệt cho đơn Giấy ủy quyền
         if (record.type === 'giay_uy_quyen') {
           const hasAuthorizedSignature =
@@ -1069,18 +1106,35 @@ export const DataTable: React.FC<RequestFormTableProps> = ({
     // Signature info
     const sig1Done = isDelegation
       ? !!(record.has_delegator_signature || record.digital_signature_delegator)
-      : !!(
-          record.has_supervisor_signature ||
-          record.digital_signature_supervisor ||
-          createdBySupervisor
-        );
+      : record.type === 'don_xin_tang_ca'
+        ? !!(
+            record.has_applicant_signature || record.digital_signature_applicant
+          )
+        : !!(
+            record.has_supervisor_signature ||
+            record.digital_signature_supervisor ||
+            createdBySupervisor
+          );
     const sig2Done = isDelegation
       ? !!(
           record.has_authorized_signature || record.digital_signature_authorized
         )
-      : !!(record.has_manager_signature || record.digital_signature_manager);
-    const sig1Label = isDelegation ? 'Người UQ' : 'Tổ trưởng';
-    const sig2Label = isDelegation ? 'Người được UQ' : 'Quản lý';
+      : record.type === 'don_xin_tang_ca'
+        ? !!(
+            record.has_supervisor_signature ||
+            record.digital_signature_supervisor
+          )
+        : !!(record.has_manager_signature || record.digital_signature_manager);
+    const sig1Label = isDelegation
+      ? 'Người UQ'
+      : record.type === 'don_xin_tang_ca'
+        ? 'Người làm đơn'
+        : 'Tổ trưởng';
+    const sig2Label = isDelegation
+      ? 'Người được UQ'
+      : record.type === 'don_xin_tang_ca'
+        ? 'Tổ trưởng'
+        : 'Quản lý';
 
     // Approver info
     const approverInfo =

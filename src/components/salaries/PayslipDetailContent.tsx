@@ -1,4 +1,5 @@
 import { SalaryDetailTableType } from '@/types/salaryType';
+import { PayrollSnapshotPayslip } from './PayrollSnapshot';
 import { convertNumberToWords } from '@utils/number2Word';
 import { Alert, Spin, Tag, Statistic } from 'antd';
 import dayjs from 'dayjs';
@@ -500,6 +501,16 @@ export const PayslipDetailContent = ({
   const totalSalary = totalIncome + unionDeduction * 4 + companyInsuranceDetail;
 
   const otherNotes = '......';
+
+  if (!isLoading && !error && salaryDetails?.payroll_row && salary_manager) {
+    return (
+      <PayrollSnapshotPayslip
+        row={salaryDetails.payroll_row}
+        startDate={salary_manager.start_date}
+        endDate={salary_manager.end_date}
+      />
+    );
+  }
 
   return (
     <div className={sectionGap}>

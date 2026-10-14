@@ -1,4 +1,5 @@
 import { RequestForm, RequestFormStatus } from '@/types/requestFormType';
+import { normalizeRoleName } from './authUtil';
 import {
   SUPERVISOR_IDS,
   SUPERVISOR_ROLE_IDS,
@@ -33,7 +34,7 @@ export function getUserApprovalType(
   const adminRoles = ['admin', 'super admin', 'co admin', 'manager'];
   const isManager = adminRoles
     .map((role) => role.toLowerCase())
-    .includes(roleName.toLowerCase());
+    .includes(normalizeRoleName(roleName));
 
   if (isManager) return 'manager';
 
@@ -46,7 +47,7 @@ export function getUserApprovalType(
   );
   const isSupervisorRole =
     SUPERVISOR_ROLE_NAMES.includes(
-      roleName.toLowerCase() as (typeof SUPERVISOR_ROLE_NAMES)[number]
+      normalizeRoleName(roleName) as (typeof SUPERVISOR_ROLE_NAMES)[number]
     ) ||
     (!!roleId && (SUPERVISOR_ROLE_IDS as readonly string[]).includes(roleId));
 
@@ -70,6 +71,15 @@ export function getUserSignatureType(
   const userType = getUserApprovalType(user);
 
   // For delegation forms, no signature needed
+  if (record.type === 'don_xin_tang_ca') {
+    return userType === 'supervisor' &&
+      String(user.id) === String(record.supervisor_id) &&
+      String(user.id) !== String(record.employee_id) &&
+      !record.has_supervisor_signature &&
+      !record.digital_signature_supervisor
+      ? 'supervisor'
+      : null;
+  }
   if (record.type === 'giay_uy_quyen') {
     return null;
   }
@@ -81,13 +91,18 @@ export function getUserSignatureType(
   if (
     userType === 'supervisor' &&
     !record.has_supervisor_signature &&
+    !record.digital_signature_supervisor &&
     !createdBySupervisor
   ) {
     return 'supervisor';
   }
 
   // Manager can sign if not signed yet (no need to wait for supervisor)
-  if (userType === 'manager' && !record.has_manager_signature) {
+  if (
+    userType === 'manager' &&
+    !record.has_manager_signature &&
+    !record.digital_signature_manager
+  ) {
     return 'manager';
   }
 
@@ -136,6 +151,21 @@ export function canUserApproveReject(
   }
 
   // For delegation forms
+  if (record.type === 'don_xin_tang_ca') {
+    const assigned =
+      userType === 'supervisor' &&
+      String(user.id) === String(record.supervisor_id) &&
+      String(user.id) !== String(record.employee_id);
+    return {
+      canApprove:
+        assigned &&
+        (!!record.has_applicant_signature ||
+          !!record.digital_signature_applicant),
+      canReject: assigned || userType === 'manager',
+      reason:
+        'Đơn tăng ca cần người làm đơn và tổ trưởng được chỉ định ký; admin xử lý trực tiếp tại bảng công.'
+    };
+  }
   if (record.type === 'giay_uy_quyen') {
     // Only managers can approve/reject delegation forms
     if (userType === 'manager') {
@@ -162,7 +192,10 @@ export function canUserApproveReject(
       };
     }
 
-    if (record.has_supervisor_signature) {
+    if (
+      record.has_supervisor_signature ||
+      record.digital_signature_supervisor
+    ) {
       return {
         canApprove: false,
         canReject: true,
@@ -174,9 +207,9 @@ export function canUserApproveReject(
 
   // Manager can sign/reject (no need to wait for supervisor)
   if (userType === 'manager') {
-    if (record.has_manager_signature) {
+    if (record.has_manager_signature || record.digital_signature_manager) {
       return {
-        canApprove: false,
+        canApprove: areSignaturesComplete(record),
         canReject: true,
         reason: 'Bạn đã ký đơn này rồi'
       };
@@ -228,6 +261,14 @@ export function needsSignatures(_record: RequestForm): boolean {
  * @returns boolean
  */
 export function areSignaturesComplete(record: RequestForm): boolean {
+  if (record.type === 'don_xin_tang_ca') {
+    return (
+      (!!record.has_applicant_signature ||
+        !!record.digital_signature_applicant) &&
+      (!!record.has_supervisor_signature ||
+        !!record.digital_signature_supervisor)
+    );
+  }
   // Delegation forms need both delegator and authorized signatures
   if (record.type === 'giay_uy_quyen') {
     const hasDelegatorSignature =
@@ -241,13 +282,22 @@ export function areSignaturesComplete(record: RequestForm): boolean {
   // Check if request was created by supervisor (employee_id === supervisor_id)
   const createdBySupervisor = isRequestCreatedBySupervisor(record);
 
-  if (createdBySupervisor) {
+  if (
+    createdBySupervisor ||
+    [...SUPERVISOR_IDS, '20122900', '23030100', '17031400'].includes(
+      String(record.employee_id)
+    )
+  ) {
     // If supervisor created the request, only manager signature is needed
-    return !!record.has_manager_signature;
+    return !!record.has_manager_signature || !!record.digital_signature_manager;
   }
 
   // Regular forms need both signatures
-  return !!record.has_supervisor_signature && !!record.has_manager_signature;
+  return (
+    (!!record.has_supervisor_signature ||
+      !!record.digital_signature_supervisor) &&
+    (!!record.has_manager_signature || !!record.digital_signature_manager)
+  );
 }
 
 /**
@@ -271,24 +321,13 @@ export function isRequestCreatedBySupervisor(record: RequestForm): boolean {
  * @returns Effective status for display
  */
 export function getEffectiveStatus(record: RequestForm): RequestFormStatus {
-  // If already approved/rejected, use that status
   if (
-    record.status === 'approved' ||
-    record.status === 'rejected' ||
-    record.status === 'authorized_approved'
+    record.type === 'giay_uy_quyen' &&
+    record.status === 'pending' &&
+    areSignaturesComplete(record)
   ) {
-    return record.status;
+    return 'authorized_approved';
   }
-
-  // For pending requests, check if signatures are actually complete
-  if (record.status === 'pending' && areSignaturesComplete(record)) {
-    // Delegation forms use 'authorized_approved' status
-    if (record.type === 'giay_uy_quyen') {
-      return 'authorized_approved';
-    }
-    return 'approved';
-  }
-
-  // Default to original status
+  // Signatures alone must never fabricate a final server approval.
   return record.status;
 }

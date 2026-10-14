@@ -18,6 +18,7 @@ interface CreateRoleFormProps<
   isGrid?: boolean;
   config?: AxiosRequestConfig;
   onSuccess?: () => void;
+  onCreated?: (result: TData) => void;
 }
 
 export function CreateForm<
@@ -30,12 +31,14 @@ export function CreateForm<
   fields = [],
   isGrid = true,
   config = {},
+  onCreated,
   onSuccess = () => {}
 }: CreateRoleFormProps<TData, TCreateDto, TUpdateDto>) {
   const ruleMap = zodToAntdRules({ schema, fields });
 
   const { form, handleFinish, isLoading, resetForm } = useDynamicCrudForm({
     service: service,
+    onCreated,
     onSuccess: (): void => {
       onSuccess();
       resetForm();

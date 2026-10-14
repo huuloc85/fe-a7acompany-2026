@@ -1,0 +1,701 @@
+.vvp-excel-workbook {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.vvp-excel-workbook > [role='tabpanel'],
+.vvp-excel-workbook .vvp-web-table,
+.vvp-excel-workbook .vvp-web-tabs {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+html body #root .vvp-web-table .ant-table-thead > tr > th {
+  height: 72px;
+  padding: 8px 12px;
+  vertical-align: middle;
+}
+html body #root .vvp-web-table .ant-table-tbody > tr > td {
+  height: 56px;
+  padding: 8px 12px;
+  vertical-align: middle;
+  font-size: 14px;
+  line-height: 20px;
+}
+.vvp-column-title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  line-height: 22px;
+}
+.vvp-payslip-layout {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 16px;
+}
+.vvp-payslip-layout > .vvp-payslip {
+  flex: 1 1 700px;
+  min-width: 0;
+  margin-top: 0;
+}
+.vvp-payslip-qr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 260px;
+  max-width: 100%;
+  padding: 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  background: #fff;
+  color: #182230;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.vvp-payslip-qr small {
+  color: #475467;
+}
+.vvp-payroll-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.vvp-payroll-content > .ant-btn {
+  align-self: flex-start;
+}
+.vvp-payroll-toolbar,
+.vvp-payroll-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+.vvp-payroll-total {
+  margin-left: auto;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.vvp-holiday-summary {
+  font-size: 13px;
+}
+.vvp-warning-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.vvp-warning-toggle:focus-visible {
+  outline: 2px solid #b45309;
+  outline-offset: 3px;
+}
+html body #root .vvp-payroll-page .vvp-employee-search,
+html body #root .vvp-payroll-page .vvp-employee-select .ant-select-selector {
+  height: 40px !important;
+  min-height: 40px;
+  border-radius: 10px !important;
+  padding: 4px 12px !important;
+}
+.vvp-employee-select {
+  height: 40px;
+}
+html body #root .vvp-payroll-page .vvp-employee-search > input.ant-input {
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.vvp-employee-search .ant-input-prefix {
+  margin-right: 8px;
+  color: #64748b;
+}
+html body #root .vvp-period-select .ant-select-selection-overflow {
+  align-items: center;
+}
+html
+  body
+  #root
+  .vvp-period-select
+  .ant-select-selection-overflow-item-rest
+  .ant-select-selection-item {
+  background: transparent !important;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  font-weight: 500;
+}
+.vvp-payroll-content > .ant-alert {
+  padding: 8px 12px;
+}
+.vvp-payroll-content > .ant-alert .ant-alert-message {
+  font-size: 14px;
+}
+.vvp-web-tabs .ant-tabs-nav {
+  margin-bottom: 0;
+}
+.vvp-web-tabs {
+  order: -1;
+}
+.vvp-period-card {
+  margin-bottom: 0;
+}
+.vvp-period-card > div {
+  padding: 12px 16px;
+}
+.vvp-period-card h3 {
+  font-size: 16px;
+  line-height: 24px;
+  text-transform: none;
+}
+.vvp-period-card .space-y-6 > * + * {
+  margin-top: 12px;
+}
+.vvp-period-fields,
+.vvp-period-employees,
+.vvp-period-buttons {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+.vvp-period-fields > div > div:first-child,
+.vvp-period-select > label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 13px;
+}
+.vvp-period-select {
+  flex: 1 1 260px;
+  max-width: 420px;
+  min-width: 0;
+}
+.vvp-period-range,
+.vvp-period-catalogue {
+  align-self: flex-end;
+  display: flex;
+  align-items: center;
+  min-height: 40px;
+  font-size: 13px;
+}
+html body #root .vvp-period-card .ant-picker,
+html body #root .vvp-period-card .ant-select,
+html body #root .vvp-period-card .vvp-period-buttons > .ant-btn {
+  height: 40px !important;
+  min-height: 40px !important;
+}
+.vvp-period-buttons {
+  align-items: center;
+}
+.vvp-period-fields > .vvp-period-buttons {
+  margin-left: auto;
+}
+@media (max-width: 640px) {
+  .vvp-period-fields > .vvp-period-buttons {
+    margin-left: 0;
+  }
+  .vvp-period-select {
+    max-width: none;
+    flex-basis: 100%;
+  }
+}
+.vvp-web-table .ant-table-cell {
+  font-variant-numeric: tabular-nums;
+}
+.vvp-bank-account {
+  display: inline-block;
+  max-width: 100%;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: #f1f5f9;
+  color: #334155;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.dark .vvp-bank-account {
+  background: #263449;
+  color: #e2e8f0;
+}
+.vvp-account-edit {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 16px;
+  align-items: center;
+  gap: 6px;
+}
+.vvp-account-edit .vvp-bank-account {
+  width: 100%;
+  text-align: left;
+  overflow-x: auto;
+}
+.vvp-account-edit-icon {
+  color: #64748b;
+  font-size: 13px;
+  text-align: center;
+}
+.vvp-web-table .ant-table-content,
+.vvp-web-table .ant-table-body {
+  scrollbar-width: none;
+}
+.vvp-web-table .ant-table-content::-webkit-scrollbar,
+.vvp-web-table .ant-table-body::-webkit-scrollbar {
+  display: none;
+}
+.vvp-web-table .ant-table-sticky-scroll {
+  display: none;
+}
+.vvp-web-table {
+  --vvp-grid-border: #cbd5e1;
+  --vvp-grid-header: #eaf1f8;
+  --vvp-grid-cell: #ffffff;
+  --vvp-grid-hover: #eff6ff;
+}
+.dark .vvp-web-table {
+  --vvp-grid-border: #475569;
+  --vvp-grid-header: #243247;
+  --vvp-grid-cell: #182230;
+  --vvp-grid-hover: #26364b;
+}
+/* Keep the payroll grid opaque and distinct from the global glass tables. */
+html body #root .vvp-web-table .ant-table-container,
+html body #root .vvp-web-table .ant-table-thead > tr > th,
+html body #root .vvp-web-table .ant-table-tbody > tr > td {
+  border-color: var(--vvp-grid-border) !important;
+}
+html body #root .vvp-web-table .ant-table-thead > tr > th {
+  background: var(--vvp-grid-header) !important;
+}
+html body #root .vvp-web-table .ant-table-tbody > tr > td {
+  background: var(--vvp-grid-cell) !important;
+}
+html body #root .vvp-web-table .ant-table-tbody > tr:hover > td,
+html
+  body
+  #root
+  .vvp-web-table
+  .ant-table-tbody
+  > tr
+  > td.ant-table-cell-row-hover {
+  background: var(--vvp-grid-hover) !important;
+}
+.vvp-web-table .ant-table.ant-table-middle .ant-table-thead > tr > th,
+.vvp-web-table .ant-table.ant-table-middle .ant-table-tbody > tr > td {
+  padding: 8px 12px;
+  overflow-wrap: anywhere;
+}
+.vvp-web-table .vvp-employee-name {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.vvp-web-table .vvp-employee-name:hover:not(:disabled) {
+  text-decoration: underline;
+}
+.vvp-adjustment-cell {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+}
+.vvp-adjustment-cell span {
+  color: #64748b;
+}
+.vvp-adjustment-cell:hover:not(:disabled) {
+  text-decoration: underline;
+}
+.vvp-adjustment-cell:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+.vvp-adjustment-cell:focus-visible {
+  outline: 2px solid #075db1;
+}
+.vvp-web-table .vvp-employee-name:focus-visible {
+  outline: 2px solid #075db1;
+  outline-offset: 2px;
+}
+.vvp-web-table .vvp-employee-name:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+.vvp-payroll-drawer .ant-drawer-body > .space-y-4 {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.vvp-payroll-drawer .ant-drawer-body > .space-y-4 > .ant-btn {
+  align-self: flex-start;
+}
+.vvp-sheet-tabs {
+  order: -1;
+  display: flex;
+  overflow-x: auto;
+  position: relative;
+  z-index: 3;
+  background: #f3f4f6;
+  padding: 4px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+}
+.vvp-sheet-tabs button {
+  flex-shrink: 0;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 0;
+  color: #273946;
+  cursor: pointer;
+}
+.vvp-sheet-tabs button[aria-selected='true'] {
+  background: white;
+  color: #075db1;
+  box-shadow: inset 0 -3px #075db1;
+  font-weight: bold;
+}
+.vvp-sheet-tabs button:focus-visible {
+  outline: 2px solid #075db1;
+  outline-offset: -2px;
+}
+.vvp-sheet-scroll {
+  overflow: auto;
+  max-height: 62vh;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  background: white;
+  color: #172b3a;
+}
+.vvp-sheet-grid {
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 13px;
+  font-family: inherit;
+}
+.vvp-sheet-grid th,
+.vvp-sheet-grid td {
+  min-width: 108px;
+  max-width: 240px;
+  padding: 8px 10px;
+  border-right: 1px solid #f3f4f6;
+  border-bottom: 1px solid #e5e7eb;
+}
+.vvp-sheet-grid thead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+.vvp-sheet-grid thead th {
+  background: #f9fafb;
+  text-align: center;
+  white-space: normal;
+  min-width: 116px;
+}
+.vvp-sheet-grid .vvp-letters th {
+  background: #eef2f4;
+  color: #53636e;
+  padding: 3px;
+  font-weight: normal;
+}
+.vvp-sheet-grid .vvp-row-number {
+  position: sticky;
+  left: 0;
+  background: #eef2f4;
+  min-width: 38px;
+  width: 38px;
+  text-align: center;
+  font-weight: normal;
+}
+.vvp-sheet-grid .vvp-letters th:first-child {
+  min-width: 38px;
+  width: 38px;
+}
+.vvp-sheet-grid td {
+  white-space: nowrap;
+}
+.vvp-sheet-grid tbody tr:hover td {
+  background: #f0f8fc;
+}
+.vvp-number {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.vvp-web-table .vvp-attendance-day {
+  --vvp-grid-cell: #eff8ff;
+  --vvp-grid-header: #dbeeff;
+  --vvp-grid-hover: #dbeeff;
+}
+.vvp-web-table .vvp-attendance-income {
+  --vvp-grid-cell: #f0f9ff;
+  --vvp-grid-header: #dceefa;
+  --vvp-grid-hover: #dceefa;
+}
+.vvp-web-table .vvp-attendance-deduction {
+  --vvp-grid-cell: #fff1f2;
+  --vvp-grid-header: #ffe0e5;
+  --vvp-grid-hover: #ffe0e5;
+}
+.vvp-web-table .vvp-attendance-total {
+  --vvp-grid-cell: #ecfdf5;
+  --vvp-grid-header: #c9f1dd;
+  --vvp-grid-hover: #c9f1dd;
+  font-weight: 600;
+}
+.dark .vvp-web-table .vvp-attendance-income {
+  --vvp-grid-cell: #172e42;
+  --vvp-grid-header: #20435e;
+  --vvp-grid-hover: #20435e;
+}
+.dark .vvp-web-table .vvp-attendance-deduction {
+  --vvp-grid-cell: #3b2430;
+  --vvp-grid-header: #583343;
+  --vvp-grid-hover: #583343;
+}
+.dark .vvp-web-table .vvp-attendance-total {
+  --vvp-grid-cell: #16382f;
+  --vvp-grid-header: #225443;
+  --vvp-grid-hover: #225443;
+}
+.vvp-web-table .vvp-attendance-night {
+  --vvp-grid-cell: #f5f3ff;
+  --vvp-grid-header: #e9e2ff;
+  --vvp-grid-hover: #e9e2ff;
+}
+.vvp-web-table .vvp-attendance-overtime {
+  --vvp-grid-cell: #fffbeb;
+  --vvp-grid-header: #fef0c3;
+  --vvp-grid-hover: #fef0c3;
+}
+.dark .vvp-web-table .vvp-attendance-day {
+  --vvp-grid-cell: #172e42;
+  --vvp-grid-header: #20435e;
+  --vvp-grid-hover: #20435e;
+}
+.dark .vvp-web-table .vvp-attendance-night {
+  --vvp-grid-cell: #2a2342;
+  --vvp-grid-header: #403360;
+  --vvp-grid-hover: #403360;
+}
+.dark .vvp-web-table .vvp-attendance-overtime {
+  --vvp-grid-cell: #362e1c;
+  --vvp-grid-header: #514323;
+  --vvp-grid-hover: #514323;
+}
+.vvp-missing {
+  color: #8a5200;
+  background: #fff9e8;
+  text-align: center;
+}
+.vvp-edit-name {
+  color: #075db1;
+  cursor: pointer;
+  font-weight: 500;
+  text-underline-offset: 3px;
+}
+.vvp-payroll-drawer .ant-drawer-body {
+  background: #f8fafc;
+}
+.vvp-payroll-drawer .ant-alert {
+  border-radius: 12px;
+}
+.vvp-payroll-drawer .ant-collapse {
+  border-radius: 12px;
+}
+.dark .vvp-payroll-drawer .ant-drawer-body {
+  background: #101828;
+}
+.dark .vvp-sheet-scroll,
+.dark .vvp-sheet-tabs button[aria-selected='true'] {
+  background: #1d2939;
+  color: #f2f4f7;
+}
+.dark .vvp-sheet-tabs,
+.dark .vvp-sheet-grid thead th,
+.dark .vvp-sheet-grid .vvp-row-number {
+  background: #182230;
+  color: #d0d5dd;
+}
+.dark .vvp-sheet-grid th,
+.dark .vvp-sheet-grid td,
+.dark .vvp-sheet-scroll,
+.dark .vvp-sheet-tabs {
+  border-color: #344054;
+}
+.dark .vvp-sheet-grid tbody tr:hover td {
+  background: #344054;
+}
+.dark .vvp-sheet-tabs button {
+  color: #d0d5dd;
+}
+.vvp-edit-name:disabled {
+  cursor: wait;
+}
+.vvp-payslip {
+  margin-top: 20px;
+  max-width: 1050px;
+  padding: 24px;
+  border: 1px solid #a8b7c3;
+  background: white;
+  color: #111;
+  font:
+    14px Arial,
+    sans-serif;
+  overflow-x: auto;
+}
+.vvp-payslip h3,
+.vvp-payslip h4 {
+  text-align: center;
+  font-weight: bold;
+  padding: 12px 0;
+}
+.vvp-payslip p {
+  margin: 8px 0;
+}
+.vvp-payslip table {
+  width: 100%;
+  min-width: 650px;
+  border-collapse: collapse;
+}
+.vvp-payslip td,
+.vvp-payslip th {
+  border: 1px solid #8d9ca6;
+  padding: 7px;
+}
+.vvp-payslip th,
+.vvp-section {
+  background: #e2edf5;
+  font-weight: bold;
+}
+.vvp-signatures {
+  display: flex;
+  justify-content: space-around;
+  padding: 24px 0 48px;
+  text-align: center;
+  font-weight: bold;
+}
+.vvp-payslip .vvp-section-II {
+  background: #ffe0e5;
+}
+.vvp-payslip .vvp-section-III {
+  background: #fef0c3;
+}
+.vvp-payslip .vvp-section-IV {
+  background: #c9f1dd;
+}
+.vvp-inline-edit-cell {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: text;
+  padding: 2px 4px;
+  width: 100%;
+}
+.vvp-inline-edit-cell:hover {
+  background: #f5f8fc;
+  outline: 1px solid #b8c7d9;
+}
+.vvp-inline-edit-input.ant-input {
+  background: #ffffff;
+  border-color: #b8c7d9;
+  box-shadow: none;
+  text-align: center;
+}
+.vvp-inline-edit-input.ant-input:focus,
+.vvp-inline-edit-input.ant-input-focused {
+  border-color: #5b8def;
+  box-shadow: 0 0 0 2px rgba(91, 141, 239, 0.14);
+}
+@media (max-width: 600px) {
+  .vvp-sheet-scroll {
+    max-height: 55vh;
+  }
+  .vvp-payslip {
+    padding: 12px;
+  }
+}
+.vvp-bank-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  vertical-align: middle;
+}
+.vvp-bank-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 48px;
+  width: 48px;
+  height: 26px;
+  padding: 1px;
+  background: #fff;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  border-radius: 5px;
+}
+.vvp-bank-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.vvp-bank-name {
+  font-size: 12px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.vvp-bank-select.ant-select {
+  max-width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+/* Match the 38px small-control selector height defined in index.css. */
+html body .vvp-bank-select.ant-select-single.ant-select-sm {
+  height: 38px;
+}
+.vvp-bank-select.ant-select .ant-select-selector {
+  min-height: 32px;
+  border-radius: 6px;
+  padding-inline: 8px;
+  cursor: pointer;
+}
+.vvp-bank-select .ant-select-selection-item {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+.vvp-bank-select .vvp-bank-label {
+  width: 100%;
+  gap: 6px;
+}
+.vvp-bank-select .vvp-bank-logo {
+  flex-basis: 44px;
+  width: 44px;
+  height: 24px;
+  padding: 0;
+}
+.vvp-bank-select .ant-select-selection-search-input {
+  cursor: pointer;
+  caret-color: transparent;
+}

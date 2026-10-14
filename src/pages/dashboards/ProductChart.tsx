@@ -1,8 +1,17 @@
 import { TotalMonthQuantityType } from '@/types/totalMonthQuantityType';
 import { Bar } from '@ant-design/plots';
+import { uiStore } from '@stores/uiStore';
+import { useStore } from '@tanstack/react-store';
 import { Card, Badge } from 'antd';
 import { memo, useEffect } from 'react';
-import { FaArrowUp, FaArrowDown, FaChartBar, FaEquals } from 'react-icons/fa';
+import {
+  FaArrowUp,
+  FaArrowDown,
+  FaChartBar,
+  FaEquals,
+  FaBoxOpen,
+  FaClipboardList
+} from 'react-icons/fa';
 
 type ProductDataType = {
   product: string;
@@ -18,6 +27,7 @@ export const ProductChart = memo(function ProductChart({
 }: {
   data: TotalMonthQuantityType[];
 }) {
+  const isDark = useStore(uiStore, (state) => state.theme === 'dark');
   const chartData: ProductDataType[] = (data || [])
     .map((item) => ({
       product: item.product?.name || 'N/A',
@@ -56,6 +66,7 @@ export const ProductChart = memo(function ProductChart({
   };
 
   const config = {
+    theme: isDark ? 'dark' : 'light',
     data: chartData,
     isGroup: false,
     xField: 'product',
@@ -88,12 +99,12 @@ export const ProductChart = memo(function ProductChart({
         title: false,
         label: {
           style: {
-            fill: '#9ca3af',
+            fill: isDark ? '#94a3b8' : '#64748b',
             fontSize: 11
           }
         },
         grid: true,
-        gridStroke: '#f3f4f6',
+        gridStroke: isDark ? '#334155' : '#e2e8f0',
         gridStrokeDasharray: '4,4'
       },
       x: {
@@ -105,7 +116,7 @@ export const ProductChart = memo(function ProductChart({
         },
         label: {
           style: {
-            fill: '#6b7280',
+            fill: isDark ? '#cbd5e1' : '#64748b',
             fontSize: 11,
             fontWeight: 500
           }
@@ -146,22 +157,22 @@ export const ProductChart = memo(function ProductChart({
     {
       label: 'Cao nhất',
       value: maxQuantity,
-      icon: <FaArrowUp className="text-gray-400" />
+      icon: <FaArrowUp className="text-emerald-500" />
     },
     {
       label: 'Trung bình',
       value: avgQuantity,
-      icon: <FaEquals className="text-gray-400" />
+      icon: <FaEquals className="text-blue-500" />
     },
     {
       label: 'Tổng cộng',
       value: totalQuantity,
-      icon: <FaChartBar className="text-gray-400" />
+      icon: <FaChartBar className="text-indigo-500" />
     },
     {
       label: 'Thấp nhất',
       value: minQuantity,
-      icon: <FaArrowDown className="text-gray-400" />
+      icon: <FaArrowDown className="text-amber-500" />
     }
   ];
 
@@ -187,8 +198,9 @@ export const ProductChart = memo(function ProductChart({
         }
         extra={
           <div className="hidden items-center gap-4 lg:flex">
-            <span className="liquid-glass-control rounded-xl px-3 py-1.5 text-xs font-bold text-blue-600 dark:text-blue-300">
-              📊 Top sản phẩm
+            <span className="liquid-glass-control inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold text-blue-600 dark:text-blue-300">
+              <FaBoxOpen aria-hidden="true" />
+              Top sản phẩm
             </span>
           </div>
         }
@@ -196,11 +208,14 @@ export const ProductChart = memo(function ProductChart({
         {/* Stats Cards */}
         <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
           {statCards.map((stat, i) => (
-            <div key={i} className="liquid-glass-control rounded-2xl p-4">
+            <div
+              key={i}
+              className="dashboard-stat-card liquid-glass-control rounded-2xl p-4"
+            >
               <div className="flex items-center gap-2 text-xs font-medium text-gray-500 dark:text-gray-400">
                 {stat.icon} {stat.label}
               </div>
-              <div className="mt-1 text-lg font-bold text-gray-900 dark:text-white">
+              <div className="mt-1 text-xl font-bold tracking-tight text-gray-900 tabular-nums dark:text-white">
                 {formatNumber(stat.value)}
               </div>
             </div>
@@ -235,8 +250,9 @@ export const ProductChart = memo(function ProductChart({
         {/* Production Analysis */}
         {chartData.length > 0 && (
           <div className="liquid-glass-control mt-6 rounded-2xl p-4">
-            <h4 className="mb-3 text-sm font-bold text-gray-800 dark:text-white">
-              📋 Báo cáo sản lượng
+            <h4 className="mb-3 flex items-center gap-2 text-sm font-bold text-gray-800 dark:text-white">
+              <FaClipboardList className="text-gray-400" aria-hidden="true" />
+              Báo cáo sản lượng
             </h4>
             <div className="grid grid-cols-1 gap-3 text-sm md:grid-cols-3">
               <div className="liquid-glass-control flex items-center justify-between rounded-xl p-3">

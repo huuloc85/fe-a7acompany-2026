@@ -1,5 +1,6 @@
 import { User } from '@/types/authType';
 import {
+  SUPERVISOR_IDS,
   SUPERVISOR_ROLE_IDS,
   SUPERVISOR_ROLE_NAMES
 } from '@/constants/supervisors';
@@ -8,7 +9,11 @@ import { redirect } from '@tanstack/react-router';
 type RoleMatcher = string | number;
 const TOTAL_WORK_SCHEDULE_VIEWER_IDS = ['23030100'] as const;
 
-const normalizeRoleName = (role: string) => role.toLowerCase().trim();
+export const normalizeRoleName = (role: string) => {
+  const normalized = role.toLowerCase().trim().replace(/\s+/g, ' ');
+  // API filters use hyphens, while login responses traditionally use spaces.
+  return normalized.replace(/^(co|super)[-_]admin$/, '$1 admin');
+};
 const normalizeRoleId = (role: string | number) => role.toString().trim();
 
 const hasRole = (user: User, roles: RoleMatcher[]) => {
@@ -148,11 +153,14 @@ function getAllowedUrls(user: User): string[] {
  * "/admin/employees", "/admin/employees/add", "/admin/employees/edit/123"...
  */
 function isUrlAllowed(path: string, allowedUrls: string[]): boolean {
-  const normalized = path.replace(/\/+$/, '').toLowerCase();
+  const normalized = normalizePermissionPath(path);
+  if (!normalized) return false;
   return allowedUrls.some((url) => {
-    const normalizedUrl = url.replace(/\/+$/, '').toLowerCase();
+    const normalizedUrl = normalizePermissionPath(url);
+    if (!normalizedUrl) return false;
     return (
-      normalized === normalizedUrl || normalized.startsWith(normalizedUrl + '/')
+      normalized === normalizedUrl ||
+      (normalizedUrl !== '/' && normalized.startsWith(normalizedUrl + '/'))
     );
   });
 }
@@ -171,15 +179,7 @@ export function requirePermission(user: User | null, currentPath: string) {
     throw redirect({ to: '/login' });
   }
 
-  // Admin-level roles bypass tất cả (align với BE middleware api.can)
-  const adminRoles = ['super admin', 'admin', 'co admin'];
-  if (hasRole(user, adminRoles)) {
-    return;
-  }
-
-  const allowedUrls = getAllowedUrls(user);
-
-  if (!isUrlAllowed(currentPath, allowedUrls)) {
+  if (!canAccessRoute(user, currentPath)) {
     throw redirect({ to: '/forbidden', statusCode: 403 });
   }
 }
@@ -190,8 +190,71 @@ export function requirePermission(user: User | null, currentPath: string) {
  */
 export function hasPermissionUrl(user: User | null, path: string): boolean {
   if (!user) return false;
+  if (!normalizePermissionPath(path)) return false;
   if (hasRole(user, ['super admin'])) return true;
+  if (isUrlAllowed(path, SUPER_ADMIN_PATHS)) return false;
   return isUrlAllowed(path, getAllowedUrls(user));
+}
+
+const SUPER_ADMIN_PATHS = [
+  '/admin/rbac',
+  '/admin/registry',
+  '/admin/edit-layout',
+  '/admin/system-logs'
+];
+
+export function normalizePermissionPath(url: string): string {
+  if (!url.startsWith('/') || url.startsWith('//')) return '';
+  const path = url.split(/[?#]/, 1)[0].replace(/\/+$/, '').toLowerCase() || '/';
+  return path === '/admin/work-schedule-categories' ? '/work-schedules' : path;
+}
+
+const SCHEDULE_ROLES: RoleMatcher[] = [
+  'tổ trưởng ngoại quan',
+  'tổ phó sản xuất',
+  'tổ trưởng sản xuất',
+  'tổ trưởng qc',
+  'tổ trưởng kho',
+  'tổ trưởng khuôn',
+  23,
+  24,
+  25
+];
+
+/** Shared by route guards and navigation. Explicit permissions grant business
+ * routes; only Super Admin bypasses permissions. Preserve existing employee
+ * and supervisor access without giving Admin/Co Admin a role-based bypass.
+ */
+export function canAccessRoute(user: User | null, url: string): boolean {
+  if (!user) return false;
+  const path = normalizePermissionPath(url);
+  if (!path) return false;
+  if (hasPermissionUrl(user, path)) return true;
+  if (isUrlAllowed(path, SUPER_ADMIN_PATHS)) return false;
+  if (path === '/' || path === '/admin' || path === '/profile') return true;
+  if (
+    isUrlAllowed(path, ['/work-schedules']) &&
+    canViewTotalWorkSchedules(user)
+  )
+    return true;
+  if (isAdmin(user.role.name)) return false;
+  if (isUrlAllowed(path, ['/employee'])) return true;
+  if (path === '/admin/request-forms') {
+    return getUserApprovalType(user, [...SUPERVISOR_IDS]) === 'supervisor';
+  }
+  if (isUrlAllowed(path, ['/stock'])) {
+    return hasRole(user, ['kho', 'tổ trưởng kho', 24]);
+  }
+  if (isUrlAllowed(path, ['/stamps'])) {
+    return hasRole(user, ['qa-qc', 'qc', 'tổ trưởng qc', 23]);
+  }
+  if (isUrlAllowed(path, ['/work-schedules'])) {
+    return hasRole(user, SCHEDULE_ROLES);
+  }
+  if (isUrlAllowed(path, ['/activity-schedule'])) {
+    return hasRole(user, SCHEDULE_ROLES);
+  }
+  return false;
 }
 
 /**

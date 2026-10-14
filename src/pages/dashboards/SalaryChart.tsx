@@ -4,7 +4,14 @@ import { uiStore } from '@stores/uiStore';
 import { useStore } from '@tanstack/react-store';
 import { Badge, Card } from 'antd';
 import { memo, useEffect } from 'react';
-import { FaArrowUp, FaArrowDown, FaChartLine, FaEquals } from 'react-icons/fa';
+import {
+  FaArrowUp,
+  FaArrowDown,
+  FaChartLine,
+  FaEquals,
+  FaWallet,
+  FaClipboardList
+} from 'react-icons/fa';
 
 type salaryDataType = {
   month: string;
@@ -17,7 +24,8 @@ export const SalaryChart = memo(function SalaryChart({
 }: {
   data: SalaryType[];
 }) {
-  const { isMobile } = useStore(uiStore);
+  const { isMobile, theme } = useStore(uiStore);
+  const isDark = theme === 'dark';
 
   const chartData: salaryDataType[] = data
     .map((item) => ({
@@ -54,6 +62,7 @@ export const SalaryChart = memo(function SalaryChart({
   };
 
   const config = {
+    theme: isDark ? 'dark' : 'light',
     data: chartData,
     xField: 'month',
     yField: 'total',
@@ -82,18 +91,18 @@ export const SalaryChart = memo(function SalaryChart({
         title: false,
         label: {
           style: {
-            fill: '#9ca3af',
+            fill: isDark ? '#94a3b8' : '#64748b',
             fontSize: 11
           }
         },
         grid: true,
-        gridStroke: '#f3f4f6',
+        gridStroke: isDark ? '#334155' : '#e2e8f0',
         gridStrokeDasharray: '4,4'
       },
       x: {
         label: {
           style: {
-            fill: '#6b7280',
+            fill: isDark ? '#cbd5e1' : '#64748b',
             fontSize: 11,
             fontWeight: 500
           }
@@ -107,7 +116,7 @@ export const SalaryChart = memo(function SalaryChart({
             textBaseline: 'bottom',
             offset: 8,
             style: {
-              fill: '#374151',
+              fill: isDark ? '#e2e8f0' : '#334155',
               fontSize: 11,
               fontWeight: 600,
               textAlign: 'center'
@@ -157,22 +166,22 @@ export const SalaryChart = memo(function SalaryChart({
     {
       label: 'Cao nhất',
       value: maxSalary,
-      icon: <FaArrowUp className="text-gray-400" />
+      icon: <FaArrowUp className="text-emerald-500" />
     },
     {
       label: 'Trung bình',
       value: avgSalary,
-      icon: <FaEquals className="text-gray-400" />
+      icon: <FaEquals className="text-blue-500" />
     },
     {
       label: 'Tổng cộng',
       value: totalSalaries,
-      icon: <FaChartLine className="text-gray-400" />
+      icon: <FaChartLine className="text-indigo-500" />
     },
     {
       label: 'Thấp nhất',
       value: minSalary,
-      icon: <FaArrowDown className="text-gray-400" />
+      icon: <FaArrowDown className="text-amber-500" />
     }
   ];
 
@@ -212,8 +221,9 @@ export const SalaryChart = memo(function SalaryChart({
         }
         extra={
           <div className="hidden items-center gap-4 lg:flex">
-            <span className="liquid-glass-control rounded-xl px-3 py-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-300">
-              💰 Theo dõi lương
+            <span className="liquid-glass-control inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-300">
+              <FaWallet aria-hidden="true" />
+              Theo dõi lương
             </span>
           </div>
         }
@@ -221,11 +231,14 @@ export const SalaryChart = memo(function SalaryChart({
         {/* Stats Cards */}
         <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
           {statCards.map((stat, i) => (
-            <div key={i} className="liquid-glass-control rounded-2xl p-4">
+            <div
+              key={i}
+              className="dashboard-stat-card liquid-glass-control rounded-2xl p-4"
+            >
               <div className="flex items-center gap-2 text-xs font-medium text-gray-500 dark:text-gray-400">
                 {stat.icon} {stat.label}
               </div>
-              <div className="mt-1 text-lg font-bold text-gray-900 dark:text-white">
+              <div className="mt-1 text-xl font-bold tracking-tight text-gray-900 tabular-nums dark:text-white">
                 {formatCurrency(stat.value)}
               </div>
             </div>
@@ -260,8 +273,9 @@ export const SalaryChart = memo(function SalaryChart({
         {/* Salary Analysis */}
         {chartData.length > 0 && (
           <div className="liquid-glass-control mt-6 rounded-2xl p-4">
-            <h4 className="mb-3 text-sm font-bold text-gray-800 dark:text-white">
-              📋 Phân tích lương
+            <h4 className="mb-3 flex items-center gap-2 text-sm font-bold text-gray-800 dark:text-white">
+              <FaClipboardList className="text-gray-400" aria-hidden="true" />
+              Phân tích lương
             </h4>
             <div className="grid grid-cols-1 gap-3 text-sm md:grid-cols-3">
               <div className="liquid-glass-control flex items-center justify-between rounded-xl p-3">

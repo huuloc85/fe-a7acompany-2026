@@ -2,23 +2,31 @@ import { useMemo } from 'react';
 import { DatePicker, Spin } from 'antd';
 import { useQuery } from '@tanstack/react-query';
 import type { Dayjs } from 'dayjs';
-import { adminRequestFormService } from '@services/RequestFormService';
+import {
+  adminRequestFormService,
+  supervisorRequestFormService
+} from '@services/RequestFormService';
 import { FaCalendarAlt, FaUserClock, FaMedal } from 'react-icons/fa';
 
 export const RequestFormOverview = ({
   year,
-  onYearChange
+  onYearChange,
+  supervisorId
 }: {
   year: Dayjs;
   onYearChange: (date: Dayjs) => void;
+  supervisorId?: string;
 }) => {
   const fromDate = year.startOf('year').format('YYYY-MM-DD');
   const toDate = year.endOf('year').format('YYYY-MM-DD');
 
   const { data, isLoading } = useQuery({
-    queryKey: ['admin-request-forms-overview', fromDate, toDate],
+    queryKey: ['admin-request-forms-overview', supervisorId, fromDate, toDate],
     queryFn: () =>
-      adminRequestFormService.getList({
+      (supervisorId
+        ? supervisorRequestFormService
+        : adminRequestFormService
+      ).getList({
         per_page: 10000,
         from_date: fromDate,
         to_date: toDate

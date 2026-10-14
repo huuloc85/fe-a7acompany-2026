@@ -1,0 +1,7 @@
+# Mid-Autumn banner artwork
+
+Generated with the built-in image generation tool. No lettering is baked into the image; editable copy lives in `src/components/holiday/MidAutumnBanner.tsx`.
+
+## Generation prompt
+
+Use case: illustration-story. Asset type: wide background artwork for a Vietnamese Mid-Autumn festival company login and dashboard banner, 3:2 landscape high-resolution. Primary request: premium poetic Vietnamese Trung Thu night illustration, absolutely no text or lettering. Scene: deep midnight teal night sky with subtle small gold stars, a luminous warm ivory full moon on the upper right, delicate red and amber silk lanterns suspended near the right edge, a small ivory jade rabbit beside elegant mooncakes and tea on a quiet curved hill at bottom right, layered soft jade and dark teal hills and stylized drifting clouds along the bottom. Elegant hand-painted editorial illustration with subtle paper grain, refined atmospheric lighting, rich but restrained details, not cartoon clipart, not photoreal. Composition: keep the left 55 percent predominantly clear dark teal night sky with only very faint stars so HTML headline can be overlaid later; main moon and decorative objects grouped on right 40 percent; important subjects vertically centered enough to allow wide banner cropping. Colors midnight teal #102f35, soft jade, warm pale gold #ecd49d, terracotta red. Constraints: no text, no title, no typography, no letters, no numbers, no logo, no watermark, no borders, no UI controls.

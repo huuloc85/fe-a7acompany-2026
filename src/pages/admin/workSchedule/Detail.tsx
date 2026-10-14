@@ -33,12 +33,12 @@ import BackButton from '@components/common/BackButton';
 import ComponentCard from '@components/common/ComponentCard';
 import { useAuth } from '@hooks/useAuth';
 import { useCrudList } from '@hooks/useCrudList';
-import { useIsMobile } from '@hooks/useIsMobile';
 import { scheduleDetailService } from '@services/ScheduleDetailService';
 import { fetchWorkScheduleCategories } from '@services/WorkScheduleCategoryService';
 import { scheduleService } from '@services/workScheduleService';
 import { canViewTotalWorkSchedules } from '@utils/authUtil';
 import { countDayOfWeekInMonth } from '@utils/countDayOfWeekInMonth';
+import './scheduleHover.css';
 
 interface HnhcTableType {
   key: string;
@@ -115,7 +115,6 @@ export default function Detail({
   isDrawer?: boolean;
 }) {
   const { user } = useAuth();
-  const isMobile = useIsMobile();
   const isLimitedTotalWorkScheduleViewer = canViewTotalWorkSchedules(user);
   const routeParams = useParams({ strict: false });
   const id = (scheduleId ||
@@ -126,6 +125,55 @@ export default function Detail({
   const [totalSaturdays, setTotalSaturdays] = useState<number>(0);
   const [currentDate, setCurrentDate] = useState<dayjs.Dayjs | null>(null);
   const mainContentRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const root = mainContentRef.current;
+    if (!root) return;
+
+    let activeCell: HTMLTableCellElement | null = null;
+    let highlightedCells: HTMLTableCellElement[] = [];
+    const clearHighlight = () => {
+      highlightedCells.forEach((cell) =>
+        cell.classList.remove('schedule-hover-axis')
+      );
+      highlightedCells = [];
+      activeCell = null;
+    };
+    const highlight = (event: PointerEvent) => {
+      if (event.pointerType === 'touch') return;
+      const target = event.target;
+      const cell =
+        target instanceof Element
+          ? target.closest<HTMLTableCellElement>('td, th')
+          : null;
+      const table = cell?.closest('.work-schedule-sticky-table');
+      if (!cell || !table || !root.contains(table)) {
+        clearHighlight();
+        return;
+      }
+      if (cell === activeCell) return;
+      clearHighlight();
+      activeCell = cell;
+      // Include the sticky header's separate table and the fixed employee column.
+      table
+        .querySelectorAll<HTMLTableCellElement>('td, th')
+        .forEach((candidate) => {
+          if (candidate.cellIndex === cell.cellIndex) {
+            candidate.classList.add('schedule-hover-axis');
+            highlightedCells.push(candidate);
+          }
+        });
+    };
+    root.addEventListener('pointerover', highlight);
+    root.addEventListener('pointerleave', clearHighlight);
+    root.addEventListener('pointercancel', clearHighlight);
+    return () => {
+      clearHighlight();
+      root.removeEventListener('pointerover', highlight);
+      root.removeEventListener('pointerleave', clearHighlight);
+      root.removeEventListener('pointercancel', clearHighlight);
+    };
+  }, []);
 
   const { data: schedule, isLoading: isLoadingSchedule } = useQuery({
     queryKey: ['schedule', id],
@@ -496,12 +544,10 @@ export default function Detail({
   });
   const monthTableScroll = getTableScroll(maxDay);
   const saturdayTableScroll = getTableScroll(totalSaturdays);
-  const stickyHeaderOffset = 0;
-  const tableSticky: TableProps<unknown>['sticky'] = isMobile
-    ? undefined
-    : {
-        offsetHeader: stickyHeaderOffset
-      };
+  const [stickyHeaderOffset, setStickyHeaderOffset] = useState(0);
+  const tableSticky: TableProps<unknown>['sticky'] = {
+    offsetHeader: stickyHeaderOffset
+  };
   const scheduleTableClassName =
     'smooth-sticky-table work-schedule-sticky-table [&_.ant-table-cell-fix-left]:!max-w-none [&_.ant-table-cell-fix-left]:!whitespace-normal';
   const scheduleTableStyle = {
@@ -599,63 +645,22 @@ export default function Detail({
   }, [employees, allEmployees, maxDay, user?.role.id]);
 
   useEffect(() => {
-    const root = mainContentRef.current;
-    if (!root) return;
-
-    let frameId = 0;
-
-    const updateStickyVisibility = () => {
-      frameId = 0;
-      if (isMobile) return;
-      const stickyTop = stickyHeaderOffset;
-
-      root
-        .querySelectorAll<HTMLElement>('.work-schedule-sticky-table')
-        .forEach((table) => {
-          const stickyHolder = table.querySelector<HTMLElement>(
-            '.ant-table-sticky-holder'
-          );
-          if (!stickyHolder) return;
-
-          const tableRect = table.getBoundingClientRect();
-          const stickyHeight = stickyHolder.offsetHeight || 0;
-          const shouldHideSticky =
-            tableRect.top <= stickyTop &&
-            tableRect.bottom <= stickyTop + stickyHeight + 1;
-
-          table.classList.toggle(
-            'work-schedule-sticky-ended',
-            shouldHideSticky
-          );
-        });
-    };
-
-    const scheduleStickyUpdate = () => {
-      if (frameId) return;
-      frameId = window.requestAnimationFrame(updateStickyVisibility);
-    };
-
-    scheduleStickyUpdate();
-    window.addEventListener('scroll', scheduleStickyUpdate, true);
-    window.addEventListener('resize', scheduleStickyUpdate);
-
-    return () => {
-      if (frameId) {
-        window.cancelAnimationFrame(frameId);
-      }
-      window.removeEventListener('scroll', scheduleStickyUpdate, true);
-      window.removeEventListener('resize', scheduleStickyUpdate);
-    };
-  }, [
-    isDrawer,
-    isMobile,
-    hnhcData,
-    eatRoomData,
-    wcMenData,
-    wcWomenData,
-    wcTrashData,
-    queryResult.isLoading
-  ]);
+    // Drawer body scrolls below its own header, independently of the page header.
+    if (isDrawer) {
+      setStickyHeaderOffset(0);
+      return;
+    }
+    const header = document.querySelector<HTMLElement>(
+      '.glass-app-shell header'
+    );
+    if (!header) return;
+    const updateOffset = () =>
+      setStickyHeaderOffset(header.getBoundingClientRect().height);
+    updateOffset();
+    const observer = new ResizeObserver(updateOffset);
+    observer.observe(header);
+    return () => observer.disconnect();
+  }, [isDrawer]);
 
   const items: TabsProps['items'] = [
     {
@@ -839,7 +844,7 @@ export default function Detail({
   const mainContent = (
     <div
       ref={mainContentRef}
-      className={isDrawer ? 'flex flex-col gap-6' : 'space-y-5'}
+      className={`work-schedule-detail ${isDrawer ? 'flex flex-col gap-6' : 'space-y-5'}`}
     >
       {/* ── Legends ──────────────────────────────────────────── */}
       <div className="flex flex-wrap gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/50">

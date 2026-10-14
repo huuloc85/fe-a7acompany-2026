@@ -1,4 +1,5 @@
 import axiosPrivate from '@/api/axiosInstance';
+import type { PayrollDraft } from '@/utils/payrollCalculation';
 import { QueryParams } from '@/types/queryParams';
 import { PaginatedResponse } from '@/types/responseTypes';
 import {
@@ -31,6 +32,8 @@ export type FetchSalaryParams = {
 };
 
 type SalaryTableResponse = {
+  snapshot?: PayrollDraft | null;
+  manager?: SalaryType;
   category: CategoryTableType[];
   salary: SalaryTableType[];
   salaryDetail: SalaryDetailTableType[];
@@ -65,6 +68,8 @@ export const fetchSalary = async ({ id, company }: FetchSalaryParams) => {
   );
 
   return {
+    snapshot: response.snapshot,
+    manager: response.manager,
     category: response.category,
     salary: response.salary,
     salaryDetail: response.salaryDetail,

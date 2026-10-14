@@ -1,0 +1,298 @@
+.employee-slip {
+  --slip-border: #dce3ed;
+  --slip-muted: #64748b;
+  --slip-surface: #fff;
+  --slip-heading: #f3f4f6;
+  color: #1e293b;
+  display: grid;
+  gap: 20px;
+  min-width: 0;
+}
+.employee-slip p,
+.employee-slip h3,
+.employee-slip h4,
+.employee-slip dl,
+.employee-slip dd {
+  margin: 0;
+}
+.employee-slip-heading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  text-align: center;
+}
+.employee-slip-heading h3 {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 4px 0 8px;
+}
+.employee-slip-heading p {
+  color: var(--slip-muted);
+  font-size: 13px;
+  line-height: 1.8;
+}
+.employee-slip-heading .employee-slip-eyebrow {
+  color: inherit;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+}
+.employee-slip-identity {
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.employee-slip-identity strong {
+  font-size: 17px;
+}
+.employee-slip-net {
+  background: var(--slip-surface);
+  border: 1px solid var(--slip-border);
+  border-radius: 8px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.employee-slip-net p {
+  font-size: 14px;
+  line-height: 1.8;
+}
+.employee-slip-net strong {
+  display: block;
+  font-size: clamp(26px, 4vw, 38px);
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.employee-slip-net strong span {
+  font-size: 20px;
+  font-weight: 400;
+}
+.employee-slip-net > p {
+  text-align: right;
+}
+.employee-slip-summary {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px;
+  background: var(--slip-surface);
+  border: 1px solid var(--slip-border);
+  border-radius: 12px;
+}
+.employee-slip-summary div {
+  display: grid;
+  gap: 6px;
+}
+.employee-slip-summary span,
+.employee-slip-hours span {
+  color: var(--slip-muted);
+  font-size: 12px;
+}
+.employee-slip-summary strong {
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+.employee-slip-hours {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+.employee-slip-hours > div {
+  background: var(--slip-surface);
+  border: 1px solid var(--slip-border);
+  border-radius: 10px;
+  padding: 12px 16px;
+  display: grid;
+  gap: 5px;
+}
+.employee-slip-hours strong {
+  font-size: 19px;
+  font-variant-numeric: tabular-nums;
+}
+.employee-slip-hours small {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--slip-muted);
+}
+.employee-slip-breakdown {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 20px;
+}
+.employee-slip-group {
+  border: 1px solid var(--slip-border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--slip-surface);
+}
+.employee-slip-group > header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 16px;
+  border-bottom: 1px solid var(--slip-border);
+  background: var(--slip-heading);
+}
+.employee-slip-group.income > header {
+  background: #eaf2ff;
+  border-top: 3px solid #4f7fc9;
+  color: #1e4f94;
+}
+.employee-slip-group.deductions > header {
+  background: #fff0f1;
+  border-top: 3px solid #c96b76;
+  color: #8f303d;
+}
+.employee-slip-group h4 {
+  font-size: 14px;
+  font-weight: 600;
+}
+.employee-slip-lines > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(130px, 1fr);
+  gap: 14px;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--slip-border);
+  font-size: 13px;
+}
+.employee-slip-lines > div:last-child {
+  border-bottom: 0;
+}
+.employee-slip-lines dt {
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+.employee-slip-lines dd {
+  font-weight: 600;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.employee-slip-lines dd span {
+  color: var(--slip-muted);
+  font-weight: 400;
+}
+.employee-slip-group details {
+  border-top: 1px solid var(--slip-border);
+}
+.employee-slip-group summary {
+  padding: 12px 16px;
+  color: var(--slip-muted);
+  font-size: 12px;
+  cursor: pointer;
+}
+.employee-slip-group summary:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: -3px;
+}
+.employee-slip-empty {
+  padding: 16px;
+  color: var(--slip-muted);
+  font-size: 13px;
+}
+.employee-slip-summary,
+.employee-slip-hours,
+.employee-slip-group,
+.employee-slip-note {
+  text-align: center;
+}
+.employee-slip-lines > div {
+  text-align: center;
+}
+.employee-slip-lines dd {
+  text-align: center;
+}
+.employee-slip-group > header {
+  text-align: center;
+}
+.employee-slip-note {
+  padding: 16px;
+  border: 1px solid var(--slip-border);
+  border-radius: 12px;
+  background: var(--slip-surface);
+  font-size: 13px;
+}
+.employee-slip-note p {
+  margin-top: 6px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--slip-muted);
+}
+.dark .employee-slip {
+  --slip-border: #374151;
+  --slip-muted: #9ca3af;
+  --slip-surface: #111827;
+  --slip-heading: #1f2937;
+  color: #e5e7eb;
+}
+.dark .employee-slip-group.income > header {
+  background: #1e3558;
+  color: #bfdbfe;
+}
+.dark .employee-slip-group.deductions > header {
+  background: #4a252f;
+  color: #fecdd3;
+}
+@media (max-width: 640px) {
+  .employee-slip {
+    gap: 14px;
+  }
+  .employee-slip-identity {
+    text-align: center;
+  }
+  .employee-slip-net {
+    padding: 18px;
+  }
+  .employee-slip-net > p {
+    text-align: left;
+  }
+  .employee-slip-summary {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 14px;
+  }
+  .employee-slip-summary > span {
+    display: none;
+  }
+  .employee-slip-summary div {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .employee-slip-summary strong {
+    font-size: 14px;
+    white-space: nowrap;
+  }
+  .employee-slip-hours {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .employee-slip-breakdown {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+}
+@media print {
+  .employee-slip {
+    color: #000;
+  }
+  .employee-slip-net {
+    background: none;
+    color: #000;
+    border: 1px solid #94a3b8;
+  }
+  .employee-slip-group {
+    break-inside: avoid;
+  }
+}

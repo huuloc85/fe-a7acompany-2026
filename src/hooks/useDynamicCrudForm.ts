@@ -16,6 +16,7 @@ interface UseDynamicCrudFormProps<TData, TCreateDto, TUpdateDto> {
   id?: string | number;
   service: CrudServiceType<TData, TCreateDto, TUpdateDto>;
   onSuccess?: () => void;
+  onCreated?: (result: TData) => void;
   onError?: (error: unknown) => void;
   schema?: ZodObject<ZodRawShape>; // optional zod schema
   form?: ReturnType<typeof Form.useForm>[0];
@@ -32,6 +33,7 @@ export function useDynamicCrudForm<
   id,
   service,
   onSuccess,
+  onCreated,
   onError,
   schema,
   form,
@@ -83,10 +85,11 @@ export function useDynamicCrudForm<
           : service.updatePatch(id, payload as TUpdateDto, config)
         : service.create(payload as TCreateDto, config);
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       message.success(id ? 'Cập nhật thành công' : 'Tạo mới thành công');
       if (!id) {
         activeForm.resetFields();
+        onCreated?.(result);
       }
       queryClient.invalidateQueries();
       onSuccess?.();

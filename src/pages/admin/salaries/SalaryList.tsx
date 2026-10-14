@@ -1,7 +1,21 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { Alert, Empty, Radio, Select, Spin, Tabs, TabsProps } from 'antd';
+import {
+  Alert,
+  Empty,
+  Radio,
+  Select,
+  Spin,
+  Tabs,
+  TabsProps,
+  Button,
+  Modal,
+  message,
+  Tag
+} from 'antd';
+import PayrollSnapshot from '@/components/salaries/PayrollSnapshot';
+import { publishPayroll } from '@/services/PayrollPublicationService';
 import dayjs from 'dayjs';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   FaCalendarAlt,
   FaClock,
@@ -17,7 +31,8 @@ import { useIsMobile } from '@hooks/useIsMobile';
 import { useCrudList } from '@/hooks/useCrudList';
 import ComponentCard from '@components/common/ComponentCard';
 import RefreshButton from '@components/common/RefreshButton';
-import { AddSalary } from '@components/salaries/AddModal';
+import { Link } from '@tanstack/react-router';
+import AppButton from '@components/common/AppButton';
 import { AttendanceTable } from '@components/salaries/AttendanceTable';
 import CategoryTable from '@components/salaries/CategoryTable';
 import { DeleteModal } from '@components/salaries/DeleteModal';
@@ -35,14 +50,12 @@ const formatVND = (value: number | null | undefined) => {
 
 export default function SalaryList() {
   const isMobile = useIsMobile();
+  const [publishing, setPublishing] = useState(false);
   const [company, setCompany] = useState<CompanyType>('vvp');
   const [selectedSalaryId, setSelectedSalaryId] = useState<string | null>(null);
   const [selectedSalaryDetailId, setSelectedSalaryDetailId] = useState<
     number | null
   >(null);
-  const [shouldSelectLatestAfterCreate, setShouldSelectLatestAfterCreate] =
-    useState(false);
-  const hasObservedCreateRefetchRef = useRef(false);
 
   const { data, pagination, queryResult } = useCrudList({
     service: salariesService,
@@ -107,7 +120,7 @@ export default function SalaryList() {
     () =>
       salaries.map((item) => ({
         value: String(item.id),
-        label: item.title,
+        label: `${item.title}${item.status === 'draft' ? ' — Bản nháp' : ''}`,
         startDate: item.start_date,
         endDate: item.end_date
       })),
@@ -140,47 +153,31 @@ export default function SalaryList() {
 
   const selectedSalaryCompanyTotals = useMemo(() => {
     const vvp =
+      vvpSalaryData?.snapshot?.rows.reduce((sum, row) => sum + row.net, 0) ??
       vvpSalaryData?.salary.reduce(
         (sum, item) => sum + (item.actually_received_payroll || 0),
         0
-      ) ?? 0;
+      ) ??
+      0;
     const a7a =
+      a7aSalaryData?.snapshot?.rows.reduce((sum, row) => sum + row.net, 0) ??
       a7aSalaryData?.salary.reduce(
         (sum, item) => sum + (item.actually_received_payroll || 0),
         0
-      ) ?? 0;
+      ) ??
+      0;
 
     return {
       vvp,
       a7a,
       total: vvp + a7a
     };
-  }, [a7aSalaryData?.salary, vvpSalaryData?.salary]);
+  }, [a7aSalaryData, vvpSalaryData]);
 
   useEffect(() => {
     if (selectedSalaryId || !salaries.length) return;
     setSelectedSalaryId(String(salaries[0].id));
   }, [salaries, selectedSalaryId]);
-
-  useEffect(() => {
-    if (!shouldSelectLatestAfterCreate) {
-      return;
-    }
-
-    if (isFetching) {
-      hasObservedCreateRefetchRef.current = true;
-      return;
-    }
-
-    if (!hasObservedCreateRefetchRef.current || !salaries.length) {
-      return;
-    }
-
-    setSelectedSalaryId(String(salaries[0].id));
-    setSelectedSalaryDetailId(null);
-    setShouldSelectLatestAfterCreate(false);
-    hasObservedCreateRefetchRef.current = false;
-  }, [isFetching, salaries, shouldSelectLatestAfterCreate]);
 
   useEffect(() => {
     setSelectedSalaryDetailId(null);
@@ -304,26 +301,75 @@ export default function SalaryList() {
         {/* ── Action Bar ────────────────────────────────────────── */}
         <div className="flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/50">
           <RefreshButton refresh={refetch} isLoading={isFetching} />
-          <AddSalary
-            onCreated={() => {
-              hasObservedCreateRefetchRef.current = false;
-              setShouldSelectLatestAfterCreate(true);
-            }}
-          />
+          <Link to="/admin/salaries/calculate">
+            <AppButton tone="primary" icon={<FaMoneyBillWave />}>
+              Tính lương
+            </AppButton>
+          </Link>
           {selectedSalary && (
-            <DeleteModal
-              id={String(selectedSalary.id)}
-              title={selectedSalary.title}
-              onDeleted={() => {
-                const nextSalary = salaries.find(
-                  (item) => String(item.id) !== String(selectedSalary.id)
-                );
-
-                setSelectedSalaryId(nextSalary ? String(nextSalary.id) : null);
-                setSelectedSalaryDetailId(null);
-              }}
-            />
+            <Tag color={selectedSalary.status === 'draft' ? 'blue' : 'green'}>
+              {selectedSalary.status === 'draft' ? 'Bản nháp' : 'Đã công bố'}
+            </Tag>
           )}
+          {selectedSalary?.status === 'draft' && (
+            <Button
+              type="primary"
+              loading={publishing}
+              disabled={
+                isDetailFetching ||
+                isDetailError ||
+                selectedSalaryData?.manager?.id !== selectedSalary.id
+              }
+              onClick={() => {
+                const id = selectedSalary.id;
+                const revision = selectedSalaryData?.manager?.revision;
+                if (revision == null) return;
+                Modal.confirm({
+                  title: 'Duyệt và công bố bảng lương?',
+                  content:
+                    'Nhân viên sẽ xem được phiếu lương của mình. Bản công bố không thể ghi đè.',
+                  okText: 'Duyệt / Công bố',
+                  cancelText: 'Hủy',
+                  onOk: async () => {
+                    setPublishing(true);
+                    try {
+                      await publishPayroll(Number(id), revision);
+                      await refetch();
+                      message.success('Đã công bố bảng lương.');
+                    } catch {
+                      message.error(
+                        'Chưa công bố được. Kiểm tra quyền duyệt và tải lại bản mới nhất.'
+                      );
+                    } finally {
+                      setPublishing(false);
+                    }
+                  }
+                });
+              }}
+            >
+              Duyệt / Công bố
+            </Button>
+          )}
+          {selectedSalary &&
+            !(
+              selectedSalary.calculator_key &&
+              selectedSalary.status === 'published'
+            ) && (
+              <DeleteModal
+                id={String(selectedSalary.id)}
+                title={selectedSalary.title}
+                onDeleted={() => {
+                  const nextSalary = salaries.find(
+                    (item) => String(item.id) !== String(selectedSalary.id)
+                  );
+
+                  setSelectedSalaryId(
+                    nextSalary ? String(nextSalary.id) : null
+                  );
+                  setSelectedSalaryDetailId(null);
+                }}
+              />
+            )}
           <div className="ml-auto flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 dark:border-gray-600 dark:bg-gray-800">
             <FaMoneyBillWave className="text-xs text-emerald-500" />
             <span className="text-xs text-gray-500">
@@ -450,7 +496,12 @@ export default function SalaryList() {
           )}
 
           <Spin spinning={isDetailLoading}>
-            {selectedSalaryId ? (
+            {selectedSalaryData?.snapshot ? (
+              <PayrollSnapshot
+                key={selectedSalaryId}
+                draft={selectedSalaryData.snapshot}
+              />
+            ) : selectedSalaryId ? (
               <Tabs
                 items={salaryTabs}
                 size={isMobile ? 'small' : 'large'}

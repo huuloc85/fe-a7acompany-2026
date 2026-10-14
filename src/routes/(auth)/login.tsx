@@ -37,6 +37,8 @@ import logo from '@assets/images/logo/logoAsset.svg';
 
 import { FaRegUser } from 'react-icons/fa';
 import { IoLockClosedOutline } from 'react-icons/io5';
+import { FiArrowRight, FiShield } from 'react-icons/fi';
+import { useMidAutumnMode } from '@hooks/useMidAutumnMode';
 
 type FieldType = {
   username: string;
@@ -80,6 +82,7 @@ export const Route = createFileRoute('/(auth)/login')({
 });
 
 function RouteComponent() {
+  const isMidAutumn = useMidAutumnMode();
   const [form] = Form.useForm();
   const navigate = useNavigate();
   const search = useSearch({ from: '/(auth)/login' });
@@ -230,21 +233,41 @@ function RouteComponent() {
   };
 
   return (
-    <div className="liquid-glass-card auth-glass-card flex min-w-0 flex-col items-center rounded-[28px] px-6 py-8 sm:px-8">
+    <div
+      className={
+        isMidAutumn
+          ? 'mid-autumn-login'
+          : 'liquid-glass-card auth-glass-card flex min-w-0 flex-col items-center rounded-[28px] px-6 py-8 sm:px-8'
+      }
+    >
       {/* ── Logo ── */}
-      <div className="mb-8">
-        <img src={logo} alt="Logo" className="mx-auto h-28" />
+      <div className={isMidAutumn ? 'mid-autumn-login-logo' : 'mb-8'}>
+        <img
+          src={logo}
+          alt="Vinh Vinh Phát"
+          className={isMidAutumn ? undefined : 'mx-auto h-28'}
+        />
       </div>
 
       {/* ── Title ── */}
-      <div className="mb-6 text-center">
-        <h1 className="mb-1 text-2xl font-bold text-black dark:text-white">
-          Đăng Nhập
-        </h1>
-        <p className="text-sm text-black/40 dark:text-gray-500">
-          Nhập thông tin tài khoản để tiếp tục
-        </p>
-      </div>
+      {isMidAutumn ? (
+        <div className="mid-autumn-login-heading">
+          <span className="mid-autumn-login-greeting">
+            MỘT NGÀY MỚI, CÙNG NHAU
+          </span>
+          <h1>Chào mừng trở lại.</h1>
+          <p>Đăng nhập để bắt đầu ngày làm việc của bạn.</p>
+        </div>
+      ) : (
+        <div className="mb-6 text-center">
+          <h1 className="mb-1 text-2xl font-bold text-black dark:text-white">
+            Đăng Nhập
+          </h1>
+          <p className="text-sm text-black/40 dark:text-gray-500">
+            Nhập thông tin tài khoản để tiếp tục
+          </p>
+        </div>
+      )}
 
       {/* ── Form ── */}
       <div className="w-full min-w-0">
@@ -259,6 +282,8 @@ function RouteComponent() {
         >
           <Form.Item<FieldType>
             name="username"
+            label={isMidAutumn ? 'Tài khoản' : undefined}
+            htmlFor="username"
             rules={[
               { required: true, message: 'Vui lòng nhập tên đăng nhập!' }
             ]}
@@ -266,28 +291,40 @@ function RouteComponent() {
             <Input
               id="username"
               name="username"
+              aria-label="Tài khoản"
               placeholder="Số điện thoại hoặc tên đăng nhập"
               prefix={<FaRegUser className="text-lg text-black/30" />}
               disabled={isPending}
               autoComplete="username"
               size="large"
-              className="!rounded-xl !text-black placeholder:!text-black/30 hover:!border-gray-300 focus:!border-blue-400 dark:!text-white"
+              className={
+                isMidAutumn
+                  ? 'mid-autumn-input'
+                  : '!rounded-xl !text-black placeholder:!text-black/30 hover:!border-gray-300 focus:!border-blue-400 dark:!text-white'
+              }
             />
           </Form.Item>
 
           <Form.Item<FieldType>
             name="password"
+            label={isMidAutumn ? 'Mật khẩu' : undefined}
+            htmlFor="current-password"
             rules={[{ required: true, message: 'Vui lòng nhập mật khẩu!' }]}
           >
             <Input.Password
               id="current-password"
               name="password"
+              aria-label="Mật khẩu"
               placeholder="Mật khẩu"
               prefix={<IoLockClosedOutline className="text-lg text-black/30" />}
               disabled={isPending}
               autoComplete="current-password"
               size="large"
-              className="!rounded-xl !text-black placeholder:!text-black/30 hover:!border-gray-300 focus:!border-blue-400 dark:!text-white"
+              className={
+                isMidAutumn
+                  ? 'mid-autumn-input'
+                  : '!rounded-xl !text-black placeholder:!text-black/30 hover:!border-gray-300 focus:!border-blue-400 dark:!text-white'
+              }
             />
           </Form.Item>
 
@@ -299,9 +336,13 @@ function RouteComponent() {
               loading={isPending}
               disabled={isPending}
               size="large"
-              className="liquid-glass-button glass-button !h-12 !rounded-xl !text-base !font-semibold active:!scale-[0.98]"
+              className={
+                isMidAutumn
+                  ? 'mid-autumn-submit'
+                  : 'liquid-glass-button glass-button !h-12 !rounded-xl !text-base !font-semibold active:!scale-[0.98]'
+              }
             >
-              Đăng Nhập
+              Đăng nhập {isMidAutumn && <FiArrowRight aria-hidden="true" />}
             </Button>
           </Form.Item>
         </Form>
@@ -318,9 +359,21 @@ function RouteComponent() {
       </p> */}
 
       {/* ── Footer ── */}
-      <p className="mt-6 text-center text-xs text-black/25 dark:text-gray-600">
-        VINH VINH PHAT ONE MEMBER CO.,LTD
-      </p>
+      {isMidAutumn ? (
+        <>
+          <p className="mid-autumn-login-help">
+            Cần hỗ trợ tài khoản? <span>Liên hệ bộ phận nhân sự.</span>
+          </p>
+          <p className="mid-autumn-login-security">
+            <FiShield aria-hidden="true" /> Hệ thống dành cho nhân viên Vinh
+            Vinh Phát
+          </p>
+        </>
+      ) : (
+        <p className="mt-6 text-center text-xs text-black/25 dark:text-gray-600">
+          VINH VINH PHAT ONE MEMBER CO.,LTD
+        </p>
+      )}
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import { isAllowRole } from '@utils/authUtil';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@hooks/useAuth';
 import { useIsMobile } from '@hooks/useIsMobile';
@@ -86,9 +87,7 @@ export default function FeedbackPage() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const isMobile = useIsMobile();
-  const isSuperAdmin = (user?.role?.name || '')
-    .toLowerCase()
-    .includes('super admin');
+  const isSuperAdmin = isAllowRole(user, ['super admin']);
   const [anonymous, setAnonymous] = useState(true);
   const { highlightId } = Route.useSearch();
   const highlightHandled = useRef(false);

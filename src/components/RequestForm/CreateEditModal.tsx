@@ -387,6 +387,26 @@ TP.Hồ Chí Minh, ngày ${dayjs().date()} tháng ${dayjs().month() + 1} năm ${
            
            ${cleanName(userInfo?.name)}`;
       }
+      case 'don_xin_tang_ca': {
+        const data = formData as Record<string, unknown>;
+        return `Họ và tên: ${cleanName(userInfo?.name)}     Giới tính: ${getGenderText(userInfo?.gender)}     Chức vụ: ${getRoleName()}
+
+Kính xin Tổ trưởng cho tôi được tăng ca ngày ${dayjs(data.ngay_ap_dung as string).format('DD/MM/YYYY')}.
+Ca làm: ${Number(data.ca_lam) === 2 ? 'Ca đêm' : 'Ca ngày'}
+Số giờ tăng ca: theo chấm công thực tế.
+Lý do: ${data.ly_do}
+
+Kính trình Tổ trưởng xem xét và phê duyệt.
+Tôi xin chân thành cảm ơn!
+
+TP.Hồ Chí Minh, ngày ${dayjs().date()} tháng ${dayjs().month() + 1} năm ${dayjs().year()}
+
+                    Người làm đơn                                Tổ trưởng
+
+           [Vùng chữ ký điện tử]                     ${getSupervisorName()}
+
+           ${cleanName(userInfo?.name)}`;
+      }
       case 'don_xin_di_tre_ve_som': {
         const data = formData as Record<string, unknown>;
         const genderText = getGenderText(userInfo?.gender);
@@ -530,8 +550,8 @@ TP.Hồ Chí Minh, ngày ${dayjs().date()} tháng ${dayjs().month() + 1} năm ${
     // (không phải ủy quyền, không phải supervisor, và không phải người nộp thẳng cho quản lý)
     if (
       values.type !== 'giay_uy_quyen' &&
-      !isCurrentUserSupervisor &&
-      !canSubmitDirectToManager &&
+      (values.type === 'don_xin_tang_ca' ||
+        (!isCurrentUserSupervisor && !canSubmitDirectToManager)) &&
       !supervisorId
     ) {
       message.warning('Vui lòng chọn tổ trưởng để duyệt đơn');
@@ -575,12 +595,21 @@ TP.Hồ Chí Minh, ngày ${dayjs().date()} tháng ${dayjs().month() + 1} năm ${
       type: values.type,
       title: autoTitle,
       content: autoContent,
-      form_data: values.form_data
+      form_data:
+        values.type === 'don_xin_tang_ca'
+          ? {
+              ngay_ap_dung: dayjs(
+                values.form_data.ngay_ap_dung as string
+              ).format('YYYY-MM-DD'),
+              ca_lam: values.form_data.ca_lam,
+              ly_do: values.form_data.ly_do
+            }
+          : values.form_data
     };
 
     // Thêm supervisor_id cho đơn thường (không phải đơn ủy quyền)
     if (values.type !== 'giay_uy_quyen') {
-      if (isCurrentUserSupervisor) {
+      if (isCurrentUserSupervisor && values.type !== 'don_xin_tang_ca') {
         // Nếu user là supervisor, set supervisor_id = chính user đó
         payload.supervisor_id = currentUser!.id.toString();
       } else if (supervisorId) {
@@ -795,8 +824,8 @@ TP.Hồ Chí Minh, ngày ${dayjs().date()} tháng ${dayjs().month() + 1} năm ${
         {/* Supervisor Selection - Chỉ hiển thị cho đơn thường và user không phải supervisor và không phải direct to manager */}
         {selectedType &&
           selectedType !== 'giay_uy_quyen' &&
-          !isCurrentUserSupervisor &&
-          !canSubmitDirectToManager && (
+          (selectedType === 'don_xin_tang_ca' ||
+            (!isCurrentUserSupervisor && !canSubmitDirectToManager)) && (
             <Card>
               <Form.Item
                 label="Tổ trưởng"
@@ -830,10 +859,19 @@ TP.Hồ Chí Minh, ngày ${dayjs().date()} tháng ${dayjs().month() + 1} năm ${
                         ? 'Không tìm thấy tổ trưởng'
                         : null
                   }
-                  options={supervisors.map((sup) => ({
-                    value: sup.id?.toString(),
-                    label: sup.name
-                  }))}
+                  options={supervisors
+                    .filter(
+                      (sup) =>
+                        selectedType !== 'don_xin_tang_ca' ||
+                        (String(sup.id) !== String(currentUser.id) &&
+                          (SUPERVISOR_IDS as readonly string[]).includes(
+                            String(sup.id)
+                          ))
+                    )
+                    .map((sup) => ({
+                      value: sup.id?.toString(),
+                      label: sup.name
+                    }))}
                 />
               </Form.Item>
               <div className="mt-2 mb-4 text-xs text-gray-600">
@@ -848,6 +886,7 @@ TP.Hồ Chí Minh, ngày ${dayjs().date()} tháng ${dayjs().month() + 1} năm ${
         {/* Thông báo cho supervisor */}
         {selectedType &&
           selectedType !== 'giay_uy_quyen' &&
+          selectedType !== 'don_xin_tang_ca' &&
           isCurrentUserSupervisor && (
             <Card className="border-blue-200 bg-blue-50">
               <div className="text-center text-blue-700">
@@ -861,6 +900,7 @@ TP.Hồ Chí Minh, ngày ${dayjs().date()} tháng ${dayjs().month() + 1} năm ${
         {/* Thông báo cho người nộp thẳng quản lý */}
         {selectedType &&
           selectedType !== 'giay_uy_quyen' &&
+          selectedType !== 'don_xin_tang_ca' &&
           !isCurrentUserSupervisor &&
           canSubmitDirectToManager && (
             <Card className="border-green-200 bg-green-50">

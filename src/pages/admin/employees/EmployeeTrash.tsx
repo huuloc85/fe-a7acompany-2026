@@ -171,7 +171,9 @@ export default function EmployeeTrash() {
                   <strong>
                     {_record.name} - {_record.id}
                   </strong>
-                  ? Hành động này không thể hoàn tác!
+                  ? Hành động này không thể hoàn tác! Bridge cũng sẽ xóa hồ sơ
+                  và vân tay trên máy chấm công đối với nhân viên thuộc nhóm
+                  đồng bộ.
                 </p>
               }
             />

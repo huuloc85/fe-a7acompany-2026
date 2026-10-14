@@ -1,0 +1,90 @@
+.mid-autumn-sidebar {
+  --moon-menu-bg: #e9f1e9;
+  --moon-menu-text: #285543;
+  --moon-menu-gold: #bb9854;
+}
+
+.dark .mid-autumn-sidebar {
+  --moon-menu-bg: #213d33;
+  --moon-menu-text: #f1dfb3;
+  --moon-menu-gold: #d1b273;
+}
+
+.mid-autumn-sidebar-logo {
+  position: relative;
+}
+
+.mid-autumn-sidebar-lantern {
+  position: absolute;
+  top: 4px;
+  right: 10px;
+  width: 26px;
+  height: 58px;
+  pointer-events: none;
+  transform-origin: 50% 0;
+  animation: sidebar-lantern-sway 4s ease-in-out 2;
+}
+
+.mid-autumn-sidebar[data-collapsed='true'] .mid-autumn-sidebar-lantern {
+  display: none;
+}
+
+.mid-autumn-sidebar[data-mobile='true'] .mid-autumn-sidebar-lantern {
+  width: 21px;
+  height: 47px;
+  right: 14px;
+  animation: none;
+}
+
+/* Scoped above the app's global button styles, including the portal drawer. */
+html
+  body
+  :is(#root, .app-sidebar-drawer)
+  .mid-autumn-sidebar
+  nav
+  .mid-autumn-sidebar-active {
+  --liquid-btn-text-rgb: 40 85 67;
+  background: var(--moon-menu-bg) !important;
+  border: 1px solid var(--moon-menu-gold) !important;
+  color: var(--moon-menu-text) !important;
+  box-shadow:
+    inset 3px 0 0 var(--moon-menu-gold),
+    0 3px 10px #183e3c08 !important;
+  text-shadow: none !important;
+}
+
+html
+  body
+  :is(#root, .app-sidebar-drawer)
+  .mid-autumn-sidebar
+  nav
+  .mid-autumn-sidebar-active
+  :is(span, svg, i) {
+  color: var(--moon-menu-text) !important;
+}
+
+.mid-autumn-sidebar nav a:focus-visible,
+.mid-autumn-sidebar nav button:focus-visible {
+  outline: 2px solid var(--moon-menu-gold);
+  outline-offset: 2px;
+  border-radius: 12px;
+}
+
+@keyframes sidebar-lantern-sway {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  25% {
+    transform: rotate(5deg);
+  }
+  75% {
+    transform: rotate(-5deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mid-autumn-sidebar-lantern {
+    animation: none;
+  }
+}

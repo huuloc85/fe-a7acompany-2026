@@ -14,7 +14,8 @@ export const baseRequestFormSchema = z.object({
       'don_xin_tu_chuc',
       'don_xin_nghi_viec',
       'don_xin_nghi_phep',
-      'don_xin_di_tre_ve_som'
+      'don_xin_di_tre_ve_som',
+      'don_xin_tang_ca'
     ] as const,
     {
       required_error: vi.REQUIRED_FIELD,
@@ -316,6 +317,16 @@ export const donXinDiTreVeSomSchema = baseRequestFormSchema.extend({
 });
 
 // Update schema (optional fields)
+export const donXinTangCaFormDataSchema = z.object({
+  ngay_ap_dung: z.string().regex(datePattern, vi.INVALID_DATE),
+  ca_lam: z.union([z.literal(1), z.literal(2)]),
+  ly_do: z.string().trim().min(1, vi.REQUIRED_FIELD).max(500)
+});
+
+export const donXinTangCaSchema = baseRequestFormSchema.extend({
+  form_data: donXinTangCaFormDataSchema
+});
+
 export const updateRequestFormSchema = z.object({
   title: z
     .string()
@@ -338,7 +349,8 @@ export const requestFormFiltersSchema = z.object({
       'don_xin_tu_chuc',
       'don_xin_nghi_viec',
       'don_xin_nghi_phep',
-      'don_xin_di_tre_ve_som'
+      'don_xin_di_tre_ve_som',
+      'don_xin_tang_ca'
     ] as const)
     .optional(),
   status: z.enum(['pending', 'approved', 'rejected'] as const).optional(),
@@ -379,7 +391,8 @@ export const requestFormSchemas = {
   don_xin_tu_chuc: donXinTuChucSchema,
   don_xin_nghi_viec: donXinNghiViecSchema,
   don_xin_nghi_phep: donXinNghiPhepSchema,
-  don_xin_di_tre_ve_som: donXinDiTreVeSomSchema
+  don_xin_di_tre_ve_som: donXinDiTreVeSomSchema,
+  don_xin_tang_ca: donXinTangCaSchema
 } as const;
 
 // Type inference

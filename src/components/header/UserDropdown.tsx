@@ -1,3 +1,4 @@
+import { isAdmin } from '@utils/authUtil';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { Avatar, message } from 'antd';
 import { useRef, useState, useEffect } from 'react';
@@ -57,8 +58,7 @@ export default function UserDropdown() {
     }
   };
 
-  const roleName = user?.role?.name?.toLowerCase() || '';
-  const isAdminRole = ['super admin', 'admin', 'co admin'].includes(roleName);
+  const isAdminRole = isAdmin(user?.role?.name || '');
   const firstName = (user?.name?.split(' ').pop() || 'User').replace(
     /[()]/g,
     ''

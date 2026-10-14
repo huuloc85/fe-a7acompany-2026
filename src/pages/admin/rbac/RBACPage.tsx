@@ -1,4 +1,5 @@
 import { useAuth } from '@hooks/useAuth';
+import { getApiErrorMessage } from '@/utils/apiError';
 import { useIsMobile } from '@hooks/useIsMobile';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -59,6 +60,7 @@ import {
   updateSidebarItem
 } from '@services/RBACService';
 import { authCheck } from '@services/AuthService';
+import { isAllowRole } from '@utils/authUtil';
 import { Permission } from '@/types/permissionType';
 import { SidebarItem } from '@/types/menuItem';
 import AppButton from '@components/common/AppButton';
@@ -2315,27 +2317,7 @@ function AdminManager() {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
     },
     onError: (error: unknown) => {
-      const axiosErr = error as {
-        response?: {
-          data?: {
-            message?: string;
-            error?: { message?: string; errors?: Record<string, string[]> };
-          };
-          status?: number;
-        };
-      };
-      const beMessage =
-        axiosErr?.response?.data?.message ||
-        axiosErr?.response?.data?.error?.message ||
-        'Thất bại!';
-      const validationErrors = axiosErr?.response?.data?.error?.errors;
-      const status = axiosErr?.response?.status;
-      if (validationErrors) {
-        const firstError = Object.values(validationErrors).flat()[0];
-        message.error(`[${status}] ${firstError || beMessage}`);
-      } else {
-        message.error(`[${status || '?'}] ${beMessage}`);
-      }
+      message.error(getApiErrorMessage(error));
     }
   });
 
@@ -2502,7 +2484,10 @@ function AdminManager() {
           >
             <Form.Item
               name="name"
-              rules={[{ required: true, message: 'Bắt buộc' }]}
+              rules={[
+                { required: true, whitespace: true, message: 'Bắt buộc' },
+                { max: 255, message: 'Họ tên tối đa 255 ký tự' }
+              ]}
               className="!mb-0 !flex-1"
             >
               <Input placeholder="Nhập họ tên..." className="!rounded-lg" />
@@ -2651,9 +2636,7 @@ function AdminManager() {
 export default function RBACPage() {
   const { user } = useAuth();
   const isMobile = useIsMobile();
-  const roleName = user?.role.name?.toLowerCase() || '';
-
-  if (!roleName.includes('super admin')) {
+  if (!isAllowRole(user, ['super admin'])) {
     return (
       <ComponentCard title="Không có quyền">
         <Empty description="Bạn không có quyền truy cập trang này." />

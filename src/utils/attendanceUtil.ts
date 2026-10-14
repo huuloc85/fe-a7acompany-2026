@@ -1,5 +1,6 @@
-import { AttendanceResponse } from '@services/AttendanceService';
+import type { AttendanceResponse } from '@services/AttendanceService';
 import dayjs from 'dayjs';
+import type { OvertimeApproval } from './overtimeApproval';
 
 export interface AttendanceResult {
   employee_id: string;
@@ -15,6 +16,7 @@ export interface AttendanceResult {
   total_hours: number;
   overtime_hours: number;
   administrative_hours: number;
+  overtime_approval?: OvertimeApproval;
 }
 
 export function calculateAttendances(
@@ -107,7 +109,34 @@ export function calculateAttendances(
     }
     let total_hours = 0;
     let break_time = 0;
-    if (time_in && time_out) {
+    if (time_in && time_out && date >= '2026-09-01') {
+      const day = dayjs(date).startOf('day');
+      const shiftStart = day.hour(shift === 2 ? 21 : 7).minute(30);
+      const start = Math.max(dayjs(time_in).valueOf(), shiftStart.valueOf());
+      const end = dayjs(time_out).valueOf();
+      // Production breaks are paid; only the meal break is deducted.
+      // Night break offsets are relative to the shift's starting date.
+      const breaks =
+        calendar_category_id == '4'
+          ? [
+              [9 * 60 + 40, 9 * 60 + 55],
+              [12 * 60, 13 * 60],
+              [14 * 60 + 40, 14 * 60 + 55]
+            ]
+          : shift === 2
+            ? [[25 * 60 + 30, 26 * 60 + 30]]
+            : [[11 * 60 + 30, 12 * 60 + 30]];
+      const unpaidMilliseconds = breaks.reduce((total, [from, to]) => {
+        const breakStart = day.add(from, 'minute').valueOf();
+        const breakEnd = day.add(to, 'minute').valueOf();
+        return (
+          total +
+          Math.max(0, Math.min(end, breakEnd) - Math.max(start, breakStart))
+        );
+      }, 0);
+      total_hours =
+        Math.floor(Math.max(0, end - start - unpaidMilliseconds) / 900000) / 4;
+    } else if (time_in && time_out) {
       let start = new Date(time_in);
       const end = new Date(time_out);
       if (shift === 1) {

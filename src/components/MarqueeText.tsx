@@ -1,4 +1,5 @@
 import { Alert, Tag } from 'antd';
+import { memo } from 'react';
 import Marquee from 'react-fast-marquee';
 import { FaBell } from 'react-icons/fa6';
 interface MarqueeTextProps {
@@ -6,9 +7,9 @@ interface MarqueeTextProps {
   speed?: number;
 }
 
-export default function MarqueeAlert({
+const MarqueeAlert = memo(function MarqueeAlert({
   messages,
-  speed = 100
+  speed = 50
 }: MarqueeTextProps) {
   return (
     <>
@@ -17,11 +18,29 @@ export default function MarqueeAlert({
         showIcon
         icon={<FaBell size={20} />}
         message={
-          <Marquee speed={speed}>
+          <Marquee
+            speed={speed}
+            pauseOnHover
+            className="[&_.rfm-marquee]:will-change-transform"
+          >
             {messages.map((msg, index) => (
               <Tag key={`marquee-${index}`}>
                 <div className="p-1 text-[1rem] font-semibold uppercase">
-                  {msg}
+                  {msg.split(/(Zalo\s+0898406358)/gi).map((part, partIndex) =>
+                    /^Zalo\s+0898406358$/i.test(part) ? (
+                      <a
+                        key={partIndex}
+                        href="https://zalo.me/0898406358"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="!text-blue-700 underline underline-offset-2 hover:!text-blue-900 focus-visible:outline-2 focus-visible:outline-offset-2"
+                      >
+                        {part}
+                      </a>
+                    ) : (
+                      part
+                    )
+                  )}
                 </div>
               </Tag>
             ))}
@@ -30,4 +49,6 @@ export default function MarqueeAlert({
       />
     </>
   );
-}
+});
+
+export default MarqueeAlert;

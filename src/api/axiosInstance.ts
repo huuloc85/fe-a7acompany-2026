@@ -102,7 +102,10 @@ axiosPrivate.interceptors.response.use(
 
       case 500:
         message.error(
-          'Hệ thống gặp sự cố khi xử lý chức năng này. Quản trị viên vui lòng kiểm tra System Logs để biết chi tiết.'
+          'Hệ thống gặp sự cố khi xử lý chức năng này. Quản trị viên vui lòng kiểm tra System Logs để biết chi tiết.' +
+            (error.response.headers['x-request-id']
+              ? ` Mã lỗi: ${error.response.headers['x-request-id']}`
+              : '')
         );
         break;
 

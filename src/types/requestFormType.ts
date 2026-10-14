@@ -3,7 +3,8 @@ export type RequestFormType =
   | 'don_xin_tu_chuc'
   | 'don_xin_nghi_viec'
   | 'don_xin_nghi_phep'
-  | 'don_xin_di_tre_ve_som';
+  | 'don_xin_di_tre_ve_som'
+  | 'don_xin_tang_ca';
 
 export type RequestFormStatus =
   | 'pending'
@@ -208,12 +209,19 @@ export interface DonXinDiTreVeSomFormData {
 }
 
 // Union type for all form data
+export interface DonXinTangCaFormData {
+  ngay_ap_dung: string;
+  ca_lam: 1 | 2;
+  ly_do: string;
+}
+
 export type RequestFormData =
   | GiayUyQuyenFormData
   | DonXinTuChucFormData
   | DonXinNghiViecFormData
   | DonXinNghiPhepFormData
-  | DonXinDiTreVeSomFormData;
+  | DonXinDiTreVeSomFormData
+  | DonXinTangCaFormData;
 
 // Create/Update DTOs
 export interface CreateRequestFormDto {
@@ -263,6 +271,7 @@ export interface RequestFormListResponse {
 }
 
 export interface RequestFormDetailResponse {
+  message?: string;
   success: boolean;
   data: RequestForm;
 }
@@ -356,7 +365,8 @@ export const REQUEST_FORM_TYPES: Record<RequestFormType, string> = {
   don_xin_tu_chuc: 'Đơn xin từ chức',
   don_xin_nghi_viec: 'Đơn xin nghỉ việc',
   don_xin_nghi_phep: 'Đơn xin nghỉ phép',
-  don_xin_di_tre_ve_som: 'Đơn xin đi trễ - về sớm'
+  don_xin_di_tre_ve_som: 'Đơn xin đi trễ - về sớm',
+  don_xin_tang_ca: 'Đơn xin tăng ca'
 };
 
 export const REQUEST_FORM_STATUSES: Record<RequestFormStatus, string> = {

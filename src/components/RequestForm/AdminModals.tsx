@@ -263,6 +263,19 @@ export const AdminActionModal: React.FC<AdminActionModalProps> = ({
       const signatureLabel = getSignatureLabel(signType);
 
       if (!needsSignature) {
+        if (
+          approveRejectPermission.canApprove &&
+          (userType === 'manager' || record.type === 'don_xin_tang_ca')
+        ) {
+          return (
+            <Alert
+              type="info"
+              showIcon
+              message="Hoàn tất duyệt đơn"
+              description="Đơn đã đủ chữ ký. Xác nhận để cập nhật trạng thái Đã duyệt, không cần ký lại."
+            />
+          );
+        }
         return (
           <Alert
             message="Không thể ký"
@@ -287,7 +300,9 @@ export const AdminActionModal: React.FC<AdminActionModalProps> = ({
             }
             description={
               userType === 'supervisor'
-                ? 'Sau khi bạn ký, đơn sẽ vẫn ở trạng thái "Chờ duyệt" và chờ Quản Lý Nhà Máy ký để hoàn tất.'
+                ? record.type === 'don_xin_tang_ca'
+                  ? 'Đơn tăng ca được duyệt sau khi tổ trưởng ký, không cần chữ ký quản lý.'
+                  : 'Sau khi bạn ký, đơn được duyệt nếu quản lý đã ký; nếu chưa, đơn tiếp tục chờ quản lý.'
                 : 'Sau khi bạn ký, đơn sẽ được phê duyệt và chuyển sang trạng thái "Đã duyệt".'
             }
             type="info"

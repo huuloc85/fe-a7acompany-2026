@@ -54,12 +54,14 @@ export const updateProductQuantity = async (
   productId: ProductType['id'],
   date: string,
   quantity: ProductHistoryStatusType['quantity'],
-  status: ProductHistoryStatusType['status']
+  status: ProductHistoryStatusType['status'],
+  shift?: 'Ca 1' | 'Ca 2'
 ) => {
   await axiosPrivate.put(`${ENDPOINT}/addQuantityDetail`, {
     product_id: productId,
     status: status,
     quantity: quantity,
-    date: date
+    date: date,
+    shift
   });
 };

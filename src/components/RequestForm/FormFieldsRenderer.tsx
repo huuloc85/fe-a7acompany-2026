@@ -404,6 +404,52 @@ export const DonXinDiTreVeSomForm: React.FC = () => {
   );
 };
 
+export const DonXinTangCaForm: React.FC = () => (
+  <>
+    <Form.Item
+      name={['form_data', 'ngay_ap_dung']}
+      label="Ngày công tăng ca"
+      extra="Với ca đêm, chọn ngày bắt đầu ca."
+      rules={[{ required: true, message: 'Vui lòng chọn ngày tăng ca' }]}
+    >
+      <DatePicker
+        format="DD/MM/YYYY"
+        disabledDate={disabledDate}
+        size="large"
+      />
+    </Form.Item>
+    <Form.Item
+      name={['form_data', 'ca_lam']}
+      label="Ca làm"
+      rules={[{ required: true, message: 'Vui lòng chọn ca làm' }]}
+    >
+      <Select
+        size="large"
+        options={[
+          { value: 1, label: 'Ca ngày' },
+          { value: 2, label: 'Ca đêm' }
+        ]}
+      />
+    </Form.Item>
+    <p className="mb-4 text-sm text-gray-500">
+      Số giờ tăng ca được lấy từ chấm công thực tế, không cần đăng ký trước.
+    </p>
+    <Form.Item
+      name={['form_data', 'ly_do']}
+      label="Lý do tăng ca"
+      rules={[
+        {
+          required: true,
+          whitespace: true,
+          message: 'Vui lòng nhập lý do tăng ca'
+        }
+      ]}
+    >
+      <Input.TextArea rows={3} maxLength={500} showCount />
+    </Form.Item>
+  </>
+);
+
 export const FormFieldsRenderer: React.FC<{ formType: string }> = ({
   formType
 }) => {
@@ -418,6 +464,8 @@ export const FormFieldsRenderer: React.FC<{ formType: string }> = ({
       return <DonXinNghiPhepForm />;
     case 'don_xin_di_tre_ve_som':
       return <DonXinDiTreVeSomForm />;
+    case 'don_xin_tang_ca':
+      return <DonXinTangCaForm />;
     default:
       return null;
   }

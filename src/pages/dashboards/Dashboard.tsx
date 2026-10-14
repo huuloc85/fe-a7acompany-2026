@@ -32,6 +32,8 @@ import { SalaryChart } from './SalaryChart';
 import { motion } from 'framer-motion';
 import { useHolidayMode } from '@hooks/useHolidayMode';
 import HolidayBanner from '@components/holiday/HolidayBanner';
+import MidAutumnBanner from '@components/holiday/MidAutumnBanner';
+import { useMidAutumnMode } from '@hooks/useMidAutumnMode';
 
 // ─── FA class → react-icons mapper (shared with Sidebar) ─────────────────────
 
@@ -122,6 +124,7 @@ const capitalizeWords = (str: string) =>
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function Dashboard() {
+  const isMidAutumn = useMidAutumnMode();
   const { user } = useAuth();
   const admin = isAdmin(user?.role.name || '');
 
@@ -298,7 +301,7 @@ export default function Dashboard() {
     return {
       title: 'Duyệt Đơn Xin Phép',
       icon: <MdApproval />,
-      navLink: '/employee/request-forms'
+      navLink: '/admin/request-forms'
     };
   }, [isSupervisor]);
 
@@ -606,7 +609,23 @@ export default function Dashboard() {
   }, [weather, currentTime]);
 
   return (
-    <div className="dashboard-page space-y-6">
+    <div
+      className={
+        isMidAutumn
+          ? 'dashboard-page mid-autumn-dashboard space-y-6'
+          : 'dashboard-page dashboard-redesign space-y-6'
+      }
+    >
+      {isMidAutumn && (
+        <>
+          <div className="mid-autumn-dashboard-heading">
+            <span>
+              <FaIcons.FaRegMoon aria-hidden="true" /> Chào mùa trăng đoàn viên
+            </span>
+          </div>
+          <MidAutumnBanner />
+        </>
+      )}
       {/* ── Holiday Banner (30/4 – 1/5) ────────────────────────── */}
       {isHoliday && (
         <HolidayBanner daysUntil={daysUntilHoliday} phase={holidayPhase} />
@@ -620,8 +639,16 @@ export default function Dashboard() {
       )}
 
       {/* ── Welcome Header ─────────────────────────────────────── */}
-      <div className="liquid-glass-card rounded-[26px] p-5 transition-shadow duration-300">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_88%_0%,rgba(96,165,250,0.22),transparent_32%),radial-gradient(circle_at_8%_100%,rgba(45,212,191,0.16),transparent_30%)] dark:bg-[radial-gradient(circle_at_88%_0%,rgba(59,130,246,0.16),transparent_32%),radial-gradient(circle_at_8%_100%,rgba(20,184,166,0.1),transparent_30%)]" />
+      <div
+        className={
+          isMidAutumn
+            ? 'mid-autumn-welcome rounded-[22px] p-5'
+            : 'dashboard-welcome liquid-glass-card rounded-[26px] p-5 transition-shadow duration-300'
+        }
+      >
+        {!isMidAutumn && (
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_88%_0%,rgba(96,165,250,0.22),transparent_32%),radial-gradient(circle_at_8%_100%,rgba(148,163,184,0.16),transparent_30%)] dark:bg-[radial-gradient(circle_at_88%_0%,rgba(59,130,246,0.16),transparent_32%),radial-gradient(circle_at_8%_100%,rgba(148,163,184,0.1),transparent_30%)]" />
+        )}
         <div className="relative z-10">
           {/* Mobile logo */}
           <div className="mb-3 flex justify-center sm:hidden">
@@ -629,10 +656,10 @@ export default function Dashboard() {
           </div>
 
           {/* Main header row */}
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="dashboard-welcome-row flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             {/* Left: Greeting */}
             <div className="text-center sm:text-left">
-              <p className="text-sm font-semibold text-black/60 dark:text-gray-500">
+              <p className="dashboard-eyebrow text-sm font-semibold text-black/60 dark:text-gray-500">
                 Xin chào
               </p>
               <h1 className="mt-0.5 text-2xl font-bold text-black sm:text-3xl dark:text-white">
@@ -640,14 +667,14 @@ export default function Dashboard() {
                 <span className="inline-block">{greeting.emoji}</span>
               </h1>
               {greeting.text && (
-                <p className="mt-1 text-sm font-semibold text-black/50 dark:text-gray-500">
+                <p className="dashboard-greeting mt-1 text-sm font-semibold text-black/50 dark:text-gray-500">
                   {greeting.text}
                 </p>
               )}
             </div>
 
             {/* Right: Live clock + info */}
-            <div className="flex flex-col items-center sm:items-end">
+            <div className="dashboard-time flex flex-col items-center sm:items-end">
               <div className="flex items-center gap-2">
                 <span className="font-mono text-2xl font-bold tracking-wide text-black tabular-nums sm:text-3xl dark:text-white">
                   {clockDisplay}
@@ -671,9 +698,15 @@ export default function Dashboard() {
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.4, delay: 0.2 }}
-            className="mb-4 flex items-center gap-2"
+            className="dashboard-section-heading mb-4 flex items-center gap-2"
           >
-            <div className="h-4 w-1 rounded-full bg-blue-400/70 shadow-[0_0_14px_rgba(96,165,250,0.45)] dark:bg-blue-300/60" />
+            <div
+              className={
+                isMidAutumn
+                  ? 'mid-autumn-section-marker'
+                  : 'h-4 w-1 rounded-full bg-blue-400/70 shadow-[0_0_14px_rgba(96,165,250,0.45)] dark:bg-blue-300/60'
+              }
+            />
             <h2 className="text-xs font-bold tracking-wide text-black/60 uppercase dark:text-gray-500">
               Truy cập nhanh
             </h2>
@@ -683,7 +716,7 @@ export default function Dashboard() {
           </motion.div>
 
           <div
-            className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4"
+            className="dashboard-widget-grid grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4"
             style={{ '--xl-cols': xlCols } as React.CSSProperties}
             // xl breakpoint: dynamic columns
             // Tailwind can't do dynamic values, so we use a CSS custom property + arbitrary value
@@ -699,6 +732,7 @@ export default function Dashboard() {
                   onClick={widget.onClick}
                   index={index}
                   isLoading={widget.isLoading}
+                  isMidAutumn={isMidAutumn}
                 />
               </div>
             ))}
@@ -710,8 +744,14 @@ export default function Dashboard() {
       {visibleChartCount > 0 && (
         <div className="dashboard-charts-section">
           {/* Section label */}
-          <div className="mb-4 flex items-center gap-2">
-            <div className="h-4 w-1 rounded-full bg-blue-400/70 shadow-[0_0_14px_rgba(96,165,250,0.45)] dark:bg-blue-300/60" />
+          <div className="dashboard-section-heading mb-4 flex items-center gap-2">
+            <div
+              className={
+                isMidAutumn
+                  ? 'mid-autumn-section-marker'
+                  : 'h-4 w-1 rounded-full bg-blue-400/70 shadow-[0_0_14px_rgba(96,165,250,0.45)] dark:bg-blue-300/60'
+              }
+            />
             <h2 className="text-xs font-bold tracking-wide text-black/60 uppercase dark:text-gray-500">
               Biểu đồ thống kê
             </h2>

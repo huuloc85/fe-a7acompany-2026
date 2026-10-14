@@ -25,6 +25,7 @@ interface FormFields {
   date: Dayjs;
   quantity: number;
   productStatus: ProductStatusType;
+  shift?: 'Ca 1' | 'Ca 2';
 }
 
 interface UpdateQuantityModalProps {
@@ -36,6 +37,7 @@ export const UpdateQuantityModal: React.FC<UpdateQuantityModalProps> = ({
 }) => {
   const [open, setOpen] = useState(false);
   const [form] = Form.useForm<FormFields>();
+  const selectedStatus = Form.useWatch('productStatus', form);
 
   const handleOpen = () => {
     setOpen(true);
@@ -63,7 +65,10 @@ export const UpdateQuantityModal: React.FC<UpdateQuantityModalProps> = ({
         product.id,
         data.date.format('YYYY-MM-DD'),
         data.quantity,
-        data.productStatus
+        data.productStatus,
+        data.productStatus === productStatus.enum.PRODUCE
+          ? data.shift
+          : undefined
       );
     },
     onMutate: () => {
@@ -159,6 +164,22 @@ export const UpdateQuantityModal: React.FC<UpdateQuantityModalProps> = ({
           >
             <Select options={statusOptions} />
           </Form.Item>
+          {selectedStatus === productStatus.enum.PRODUCE && (
+            <Form.Item<FormFields>
+              label="Ca làm việc"
+              name="shift"
+              preserve={false}
+              rules={[{ required: true, message: 'Vui lòng chọn ca làm việc' }]}
+            >
+              <Select
+                placeholder="Chọn ca làm việc"
+                options={[
+                  { label: 'Ca 1', value: 'Ca 1' },
+                  { label: 'Ca 2', value: 'Ca 2' }
+                ]}
+              />
+            </Form.Item>
+          )}
           <Form.Item>
             <Button type="primary" htmlType="submit">
               Cập nhật

@@ -60,6 +60,7 @@ import { Route as AuthenticatedEmployeeTodoAddProductImport } from './routes/_au
 import { Route as AuthenticatedEmployeeStampsRequestImport } from './routes/_authenticated/employee/stamps/request'
 import { Route as AuthenticatedEmployeeStampsHistoryImport } from './routes/_authenticated/employee/stamps/history'
 import { Route as AuthenticatedEmployeeRequestFormsAuthorizedImport } from './routes/_authenticated/employee/request-forms/authorized'
+import { Route as AuthenticatedAdminSalariesCalculateImport } from './routes/_authenticated/admin/salaries/calculate'
 import { Route as AuthenticatedAdminRequestFormsIdImport } from './routes/_authenticated/admin/request-forms/$id'
 import { Route as AuthenticatedAdminProductsIdImport } from './routes/_authenticated/admin/products/$id'
 import { Route as AuthenticatedAdminEmployeesAddImport } from './routes/_authenticated/admin/employees/add'
@@ -404,6 +405,13 @@ const AuthenticatedEmployeeRequestFormsAuthorizedRoute =
     getParentRoute: () => AuthenticatedEmployeeRequestFormsRouteRoute,
   } as any)
 
+const AuthenticatedAdminSalariesCalculateRoute =
+  AuthenticatedAdminSalariesCalculateImport.update({
+    id: '/calculate',
+    path: '/calculate',
+    getParentRoute: () => AuthenticatedAdminSalariesRouteRoute,
+  } as any)
+
 const AuthenticatedAdminRequestFormsIdRoute =
   AuthenticatedAdminRequestFormsIdImport.update({
     id: '/request-forms/$id',
@@ -624,6 +632,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/request-forms/$id'
       preLoaderRoute: typeof AuthenticatedAdminRequestFormsIdImport
       parentRoute: typeof AuthenticatedAdminRouteImport
+    }
+    '/_authenticated/admin/salaries/calculate': {
+      id: '/_authenticated/admin/salaries/calculate'
+      path: '/calculate'
+      fullPath: '/admin/salaries/calculate'
+      preLoaderRoute: typeof AuthenticatedAdminSalariesCalculateImport
+      parentRoute: typeof AuthenticatedAdminSalariesRouteImport
     }
     '/_authenticated/employee/request-forms/authorized': {
       id: '/_authenticated/employee/request-forms/authorized'
@@ -880,12 +895,15 @@ const AuthenticatedAdminProductsRouteRouteWithChildren =
   )
 
 interface AuthenticatedAdminSalariesRouteRouteChildren {
+  AuthenticatedAdminSalariesCalculateRoute: typeof AuthenticatedAdminSalariesCalculateRoute
   AuthenticatedAdminSalariesIdLazyRoute: typeof AuthenticatedAdminSalariesIdLazyRoute
   AuthenticatedAdminSalariesIndexRoute: typeof AuthenticatedAdminSalariesIndexRoute
 }
 
 const AuthenticatedAdminSalariesRouteRouteChildren: AuthenticatedAdminSalariesRouteRouteChildren =
   {
+    AuthenticatedAdminSalariesCalculateRoute:
+      AuthenticatedAdminSalariesCalculateRoute,
     AuthenticatedAdminSalariesIdLazyRoute:
       AuthenticatedAdminSalariesIdLazyRoute,
     AuthenticatedAdminSalariesIndexRoute: AuthenticatedAdminSalariesIndexRoute,
@@ -1118,6 +1136,7 @@ export interface FileRoutesByFullPath {
   '/admin/employees/add': typeof AuthenticatedAdminEmployeesAddRoute
   '/admin/products/$id': typeof AuthenticatedAdminProductsIdRoute
   '/admin/request-forms/$id': typeof AuthenticatedAdminRequestFormsIdRoute
+  '/admin/salaries/calculate': typeof AuthenticatedAdminSalariesCalculateRoute
   '/employee/request-forms/authorized': typeof AuthenticatedEmployeeRequestFormsAuthorizedRoute
   '/employee/stamps/history': typeof AuthenticatedEmployeeStampsHistoryRoute
   '/employee/stamps/request': typeof AuthenticatedEmployeeStampsRequestRoute
@@ -1167,6 +1186,7 @@ export interface FileRoutesByTo {
   '/admin/employees/add': typeof AuthenticatedAdminEmployeesAddRoute
   '/admin/products/$id': typeof AuthenticatedAdminProductsIdRoute
   '/admin/request-forms/$id': typeof AuthenticatedAdminRequestFormsIdRoute
+  '/admin/salaries/calculate': typeof AuthenticatedAdminSalariesCalculateRoute
   '/employee/request-forms/authorized': typeof AuthenticatedEmployeeRequestFormsAuthorizedRoute
   '/employee/stamps/history': typeof AuthenticatedEmployeeStampsHistoryRoute
   '/employee/stamps/request': typeof AuthenticatedEmployeeStampsRequestRoute
@@ -1225,6 +1245,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/employees/add': typeof AuthenticatedAdminEmployeesAddRoute
   '/_authenticated/admin/products/$id': typeof AuthenticatedAdminProductsIdRoute
   '/_authenticated/admin/request-forms/$id': typeof AuthenticatedAdminRequestFormsIdRoute
+  '/_authenticated/admin/salaries/calculate': typeof AuthenticatedAdminSalariesCalculateRoute
   '/_authenticated/employee/request-forms/authorized': typeof AuthenticatedEmployeeRequestFormsAuthorizedRoute
   '/_authenticated/employee/stamps/history': typeof AuthenticatedEmployeeStampsHistoryRoute
   '/_authenticated/employee/stamps/request': typeof AuthenticatedEmployeeStampsRequestRoute
@@ -1283,6 +1304,7 @@ export interface FileRouteTypes {
     | '/admin/employees/add'
     | '/admin/products/$id'
     | '/admin/request-forms/$id'
+    | '/admin/salaries/calculate'
     | '/employee/request-forms/authorized'
     | '/employee/stamps/history'
     | '/employee/stamps/request'
@@ -1331,6 +1353,7 @@ export interface FileRouteTypes {
     | '/admin/employees/add'
     | '/admin/products/$id'
     | '/admin/request-forms/$id'
+    | '/admin/salaries/calculate'
     | '/employee/request-forms/authorized'
     | '/employee/stamps/history'
     | '/employee/stamps/request'
@@ -1387,6 +1410,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/employees/add'
     | '/_authenticated/admin/products/$id'
     | '/_authenticated/admin/request-forms/$id'
+    | '/_authenticated/admin/salaries/calculate'
     | '/_authenticated/employee/request-forms/authorized'
     | '/_authenticated/employee/stamps/history'
     | '/_authenticated/employee/stamps/request'
@@ -1560,6 +1584,7 @@ export const routeTree = rootRoute
       "filePath": "_authenticated/admin/salaries/route.tsx",
       "parent": "/_authenticated/admin",
       "children": [
+        "/_authenticated/admin/salaries/calculate",
         "/_authenticated/admin/salaries/$id",
         "/_authenticated/admin/salaries/"
       ]
@@ -1615,6 +1640,10 @@ export const routeTree = rootRoute
     "/_authenticated/admin/request-forms/$id": {
       "filePath": "_authenticated/admin/request-forms/$id.tsx",
       "parent": "/_authenticated/admin"
+    },
+    "/_authenticated/admin/salaries/calculate": {
+      "filePath": "_authenticated/admin/salaries/calculate.tsx",
+      "parent": "/_authenticated/admin/salaries"
     },
     "/_authenticated/employee/request-forms/authorized": {
       "filePath": "_authenticated/employee/request-forms/authorized.tsx",

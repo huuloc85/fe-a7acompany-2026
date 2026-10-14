@@ -18,9 +18,14 @@ import {
   RequestFormFilters as RequestFormFiltersType
 } from '@/types/requestFormType';
 import { useAuth } from '@hooks/useAuth';
+import { getUserApprovalType } from '@/utils/requestFormUtil';
 
 export default function RequestFormList() {
   const { user } = useAuth();
+  const isSupervisor = getUserApprovalType(user) === 'supervisor';
+  const approvalService = isSupervisor
+    ? requestFormService.supervisor
+    : adminRequestFormService;
   const queryClient = useQueryClient();
 
   // State for Year Overview & Default Filters
@@ -34,7 +39,9 @@ export default function RequestFormList() {
     to_date: dayjs().endOf('year').format('YYYY-MM-DD')
   };
   const QUERY_KEYS = {
-    requestForms: 'admin-request-forms',
+    requestForms: isSupervisor
+      ? `supervisor-request-forms-${user?.id}`
+      : 'admin-request-forms',
     statistics: 'admin-request-forms-statistics'
   } as const;
 
@@ -50,11 +57,13 @@ export default function RequestFormList() {
     'approve'
   );
 
-  // Xác định loại user - chỉ còn admin access trang này
-  const userType = 'admin'; // Simplified since only admins can access this page
+  const userType = isSupervisor ? 'supervisor' : 'admin';
 
   // Helper functions
   const invalidateAdminRequestForms = () => {
+    queryClient.invalidateQueries({ queryKey: ['attendances'] });
+    queryClient.invalidateQueries({ queryKey: ['emp-attendance'] });
+    queryClient.invalidateQueries({ queryKey: ['attendance-daily-results'] });
     queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.requestForms] });
     queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.statistics] });
   };
@@ -87,7 +96,7 @@ export default function RequestFormList() {
       } = data;
 
       if (action === 'reject') {
-        return await requestFormService.admin.approveOrReject(id, {
+        return await approvalService.approveOrReject(id, {
           action,
           rejection_reason
         });
@@ -97,12 +106,12 @@ export default function RequestFormList() {
       const hasSignatures =
         digital_signature_supervisor || digital_signature_manager;
       return hasSignatures
-        ? await requestFormService.admin.approveOrRejectWithSignatures(id, {
+        ? await approvalService.approveOrRejectWithSignatures(id, {
             action,
             digital_signature_supervisor,
             digital_signature_manager
           })
-        : await requestFormService.admin.approveOrReject(id, { action });
+        : await approvalService.approveOrReject(id, { action });
     },
     // Optimistic update: Cập nhật UI ngay lập tức
     onMutate: async ({ id, data: actionData }) => {
@@ -143,21 +152,8 @@ export default function RequestFormList() {
 
       return { previousData };
     },
-    onSuccess: (_, { data }) => {
-      if (data.action === 'reject') {
-        message.success('Từ chối đơn yêu cầu thành công!');
-      } else {
-        const hasManagerSig = !!data.digital_signature_manager;
-
-        const successMessages = {
-          admin: 'Đã ký chữ ký quản lý thành công!',
-          default: 'Ký chữ ký thành công!'
-        };
-
-        const messageKey = hasManagerSig ? 'admin' : 'default';
-
-        message.success(successMessages[messageKey]);
-      }
+    onSuccess: (response) => {
+      message.success(response.message || 'Đã cập nhật trạng thái đơn');
       invalidateAdminRequestForms();
       closeModals();
     },
@@ -183,7 +179,7 @@ export default function RequestFormList() {
   // Fetch request forms với realtime polling và caching
   const { data, isLoading, isFetching, error, refetch } = useQuery({
     queryKey: [QUERY_KEYS.requestForms, filters],
-    queryFn: () => adminRequestFormService.getList(filters),
+    queryFn: () => approvalService.getList(filters),
     // Realtime optimizations
     staleTime: 0, // Data luôn stale → refetch ngay khi cần
     gcTime: 5 * 60 * 1000, // Cache trong 5 phút (thay cacheTime cũ)
@@ -209,7 +205,7 @@ export default function RequestFormList() {
   // Mutation để duyệt trực tiếp đơn Giấy Ủy Quyền
   const { mutate: approveDirectly } = useMutation({
     mutationFn: (id: number) =>
-      requestFormService.admin.approveOrReject(id, {
+      approvalService.approveOrReject(id, {
         action: 'approve'
       }),
     onSuccess: () => {
@@ -257,7 +253,7 @@ export default function RequestFormList() {
     view: async (record: RequestForm) => {
       // Fetch full detail từ API để có content đầy đủ
       try {
-        const response = await adminRequestFormService.getDetail(record.id);
+        const response = await approvalService.getDetail(record.id);
         const fullData = response.data;
         setSelectedRecord(fullData);
         setDetailModalVisible(true);
@@ -319,7 +315,11 @@ export default function RequestFormList() {
       <ComponentCard title="Quản lý đơn yêu cầu">
         <div className="space-y-5">
           {/* ── Overview Section ────────────────────────────────── */}
-          <RequestFormOverview year={year} onYearChange={handlers.yearChange} />
+          <RequestFormOverview
+            year={year}
+            onYearChange={handlers.yearChange}
+            supervisorId={isSupervisor ? user?.id : undefined}
+          />
 
           {/* ── Action Bar ──────────────────────────────────────── */}
           <div className="flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/50">

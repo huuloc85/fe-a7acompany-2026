@@ -12,7 +12,6 @@ import BirthdayModal from '@components/BirthdayModal';
 import CleaningDutyModal from '@components/CleaningDuty/CleaningDutyModal';
 import MarqueeAlert from '@components/MarqueeText';
 import { NotificationRequestModal } from '@components/common/NotificationRequestModal';
-import WeatherDropAnimation from '@components/common/WeatherDropAnimation';
 import FallingStars from '@components/holiday/FallingStars';
 import HolidayGreetingModal from '@components/holiday/HolidayGreetingModal';
 import { useBirthdayNotification } from '@hooks/useBirthdayNotification';
@@ -112,13 +111,13 @@ function AppLayout() {
   useForcedLogoutNotification();
 
   const { data: notifications } = useQuery({
-    queryKey: ['notifications'],
+    queryKey: ['notifications', 'banner'],
     queryFn: () => {
       return fetchNotifications({ 'filter[is_show]': 1 });
     },
     placeholderData: keepPreviousData,
-    // Notifications ít thay đổi, cache 2 phút
-    staleTime: 2 * 60 * 1000
+    staleTime: 0,
+    refetchInterval: 30 * 1000
   });
 
   // Use cleaning duty notification hook
@@ -167,8 +166,20 @@ function AppLayout() {
     setShowAppearancePrompt(false);
   };
 
-  const messages =
-    notifications?.data.map((notification) => notification.message) || [];
+  const messages = useMemo(
+    () =>
+      notifications?.data
+        .filter(
+          (notification) =>
+            !notification.message
+              .normalize('NFC')
+              .trim()
+              .toLocaleLowerCase('vi')
+              .startsWith('hệ thống đã cập nhật mã nhân viên.')
+        )
+        .map((notification) => notification.message) || [],
+    [notifications?.data]
+  );
   const isCurrentUserBirthday = todayBirthdays.some(
     (employee) => String(employee.id) === String(user?.id)
   );
@@ -324,8 +335,6 @@ function AppLayout() {
           </Layout>
         </Layout>
       </ConfigProvider>
-
-      <WeatherDropAnimation />
 
       <div
         aria-hidden="true"

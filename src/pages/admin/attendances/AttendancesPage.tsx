@@ -47,6 +47,16 @@ import { EmployeeListModal } from '@components/attendances/EmployeeListModal';
 import { fetchAttendancesCalculated } from '@services/AttendanceService';
 import { ExportModal } from './ExportModal';
 import { useIsMobile } from '@hooks/useIsMobile';
+import AttendanceImportButton from '@components/attendances/AttendanceImportButton';
+import AttendanceArchiveButton from '@components/attendances/AttendanceArchiveButton';
+import { useAttendanceMonth } from '@/hooks/useAttendanceMonth';
+import { OvertimeApprovalStatus } from '@/components/attendances/OvertimeApprovalStatus';
+import { OvertimeApprovalActions } from '@/components/attendances/OvertimeApprovalActions';
+import type { OvertimeApproval } from '@/utils/overtimeApproval';
+import {
+  getAttendanceWindow,
+  isOutsideAttendanceWindow
+} from '@/utils/attendanceWindow';
 
 // ─── Type defs ────────────────────────────────────────────────────────────────
 type HistoryTableColumns = AttendanceType;
@@ -64,6 +74,7 @@ interface RecordTableColumns {
   total_hours: number | null;
   overtime_hours: number | null;
   administrative_hours: number | null;
+  overtime_approval?: OvertimeApproval;
 }
 
 const isAdditionalShift = (hnhc: RecordTableColumns['hnhc']) =>
@@ -132,6 +143,7 @@ function FilterBar({
         </label>
         <DatePicker
           picker="month"
+          disabledDate={isOutsideAttendanceWindow}
           format="YYYY-MM"
           placeholder="Chọn tháng"
           inputReadOnly
@@ -146,6 +158,7 @@ function FilterBar({
           Khoảng thời gian
         </label>
         <DatePicker.RangePicker
+          disabledDate={isOutsideAttendanceWindow}
           placeholder={['Từ ngày', 'Đến ngày']}
           inputReadOnly
           value={rangeValue}
@@ -206,7 +219,8 @@ function HistoryTab() {
   const [params, setParams] = useState<QueryParams>({
     page: 1,
     limit: 50,
-    include: ['employees']
+    include: ['employees'],
+    'filter[date_between]': `${getAttendanceWindow().month.format('YYYY-MM-DD')},${getAttendanceWindow().end.format('YYYY-MM-DD')}`
   });
 
   const {
@@ -448,16 +462,19 @@ function HistoryTab() {
       <div className="rounded-xl border border-gray-100 bg-white/80 p-4 backdrop-blur-sm dark:border-gray-700 dark:bg-gray-800/50">
         <FilterBar
           onMonthChange={(value) => {
+            const selectedMonth = value || getAttendanceWindow().month;
             setParams((prev) => ({
               ...prev,
-              'filter[date]': value
-                ? `${dayjs(value).format('YYYY-MM')}`
-                : undefined
+              page: 1,
+              'filter[date]': undefined,
+              'filter[date_between]': `${selectedMonth.startOf('month').format('YYYY-MM-DD')},${selectedMonth.endOf('month').format('YYYY-MM-DD')}`
             }));
           }}
           onRangeChange={(value) => {
             setParams((prev) => ({
               ...prev,
+              page: 1,
+              'filter[date]': undefined,
               'filter[date_between]': value
                 ? `${value[0].format('YYYY-MM-DD')},${value[1].format('YYYY-MM-DD')}`
                 : undefined
@@ -584,10 +601,10 @@ function RecordsTab() {
     page: 1,
     limit: 50,
     sort: 'date',
-    'filter[date_between]': `${dayjs().startOf('month').format('YYYY-MM-DD')},${dayjs().endOf('month').format('YYYY-MM-DD')}`
+    'filter[date_between]': `${getAttendanceWindow().month.format('YYYY-MM-DD')},${getAttendanceWindow().end.format('YYYY-MM-DD')}`
   });
   const [forgottenDays, setForgottenDays] = useState<boolean>(false);
-  const [month, setMonth] = useState<Dayjs>(dayjs());
+  const [month, setMonth] = useState<Dayjs>(getAttendanceWindow().month);
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs] | null>(null);
   const [filterType, setFilterType] = useState<'month' | 'range'>('month');
 
@@ -849,12 +866,22 @@ function RecordsTab() {
       dataIndex: 'overtime_hours',
       key: 'overtime_hours',
       align: 'center',
+      width: 320,
       render: (_value, record) => {
         const displayHours = getDisplayOvertimeHours(record);
-        return displayHours ? (
-          <span className="font-semibold text-amber-600">{displayHours}</span>
-        ) : (
-          <span className="text-gray-300">—</span>
+        return (
+          <div className="flex flex-col items-center justify-center gap-1">
+            <span className="font-semibold text-amber-600">
+              {displayHours || '—'}
+            </span>
+            <OvertimeApprovalStatus
+              date={record.date}
+              hours={displayHours}
+              approval={record.overtime_approval}
+              compact
+            />
+            <OvertimeApprovalActions record={record} />
+          </div>
         );
       }
     }
@@ -934,6 +961,7 @@ function RecordsTab() {
         />
         <EmployeeListModal />
         <ExportModal />
+        <AttendanceArchiveButton />
         <div className="ml-auto flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 dark:border-gray-600 dark:bg-gray-800">
           <span className="text-xs text-gray-500">📅 {getSubtitle()}</span>
         </div>
@@ -941,11 +969,19 @@ function RecordsTab() {
 
       {/* Filter Bar */}
       <div className="rounded-xl border border-gray-100 bg-white/80 p-4 backdrop-blur-sm dark:border-gray-700 dark:bg-gray-800/50">
+        <p className="mb-3 text-sm text-gray-500">
+          Chỉ xem 3 tháng gần nhất:{' '}
+          {getAttendanceWindow().start.format('MM/YYYY')} –{' '}
+          {getAttendanceWindow().end.format('MM/YYYY')}. Dữ liệu cũ xem ở Tra
+          cứu công lưu trữ.
+        </p>
         <FilterBar
           monthValue={filterType === 'month' ? month : null}
           rangeValue={filterType === 'range' ? dateRange : null}
           onMonthChange={(value) => {
-            const selectedMonth = value ? dayjs(value) : dayjs();
+            const selectedMonth = value
+              ? dayjs(value)
+              : getAttendanceWindow().month;
             setMonth(selectedMonth);
             setDateRange(null);
             setFilterType('month');
@@ -1143,6 +1179,12 @@ function RecordsTab() {
                             </strong>
                           </span>
                         ) : null}
+                        <OvertimeApprovalStatus
+                          date={record.date}
+                          hours={getDisplayOvertimeHours(record)}
+                          approval={record.overtime_approval}
+                        />
+                        <OvertimeApprovalActions record={record} />
                       </div>
                     </div>
                   </div>
@@ -1166,7 +1208,10 @@ function RecordsTab() {
           </div>
         </Spin>
       ) : (
-        <Table<RecordTableColumns> {...tableProps} />
+        <Table<RecordTableColumns>
+          {...tableProps}
+          className="[&_.ant-table-tbody>.ant-table-row>td]:!h-24 [&_.ant-table-tbody>.ant-table-row>td]:!px-3 [&_.ant-table-tbody>.ant-table-row>td]:!py-2 [&_.ant-table-tbody>.ant-table-row>td]:!align-middle [&_.ant-table-tbody>.ant-table-row>th]:!h-24 [&_.ant-table-tbody>.ant-table-row>th]:!align-middle [&_.ant-tag]:!mr-0"
+        />
       )}
     </div>
   );
@@ -1177,9 +1222,14 @@ function RecordsTab() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function AttendancesPage() {
+  const monthKey = useAttendanceMonth();
   return (
     <ComponentCard title="Quản lý chấm công">
+      <div className="mb-4">
+        <AttendanceImportButton />
+      </div>
       <Tabs
+        key={monthKey}
         defaultActiveKey="records"
         type="card"
         size="large"

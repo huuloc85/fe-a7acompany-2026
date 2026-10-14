@@ -90,6 +90,9 @@ export default function RequestFormList() {
 
   // Helper function để invalidate queries
   const invalidateRequestForms = () => {
+    queryClient.invalidateQueries({ queryKey: ['attendances'] });
+    queryClient.invalidateQueries({ queryKey: ['emp-attendance'] });
+    queryClient.invalidateQueries({ queryKey: ['attendance-daily-results'] });
     queryClient.invalidateQueries({
       queryKey: ['employee-request-forms']
     });
@@ -329,17 +332,8 @@ export default function RequestFormList() {
 
       return { previousData };
     },
-    onSuccess: (_, { data }) => {
-      if (data.action === 'reject') {
-        message.success('Từ chối đơn yêu cầu thành công!');
-      } else {
-        const hasSupervisorSig = !!data.digital_signature_supervisor;
-        message.success(
-          hasSupervisorSig
-            ? 'Đã ký chữ ký tổ trưởng thành công! Đơn đang chờ chữ ký quản lý.'
-            : 'Ký chữ ký thành công!'
-        );
-      }
+    onSuccess: (response) => {
+      message.success(response.message || 'Đã cập nhật trạng thái đơn');
       invalidateRequestForms();
       closeModals();
     },

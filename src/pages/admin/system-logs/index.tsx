@@ -7,8 +7,11 @@ import {
   Tabs,
   TabsProps,
   Table,
-  Tag
+  Tag,
+  Input
 } from 'antd';
+import { filterSystemLogs } from '@/utils/systemLogs';
+import { getApiErrorMessage } from '@/utils/apiError';
 import type { TableColumnsType, TableProps } from 'antd';
 import {
   DeleteOutlined,
@@ -35,6 +38,7 @@ export default function SystemLogsPage() {
 
   // System Log States
   const [logs, setLogs] = useState<string>('');
+  const [search, setSearch] = useState('');
   const [isLoadingSystem, setIsLoadingSystem] = useState<boolean>(true);
   const [isClearing, setIsClearing] = useState<boolean>(false);
   const [filterLevel, setFilterLevel] = useState<'ALL' | 'ERROR' | 'INFO'>(
@@ -58,7 +62,7 @@ export default function SystemLogsPage() {
       }
     } catch (error) {
       console.error(error);
-      message.error('Lỗi khi tải log hệ thống');
+      message.error(getApiErrorMessage(error, 'Lỗi khi tải log hệ thống'));
     } finally {
       setIsLoadingSystem(false);
     }
@@ -448,7 +452,7 @@ export default function SystemLogsPage() {
                 className={`flex-shrink-0 ${filterLevel === 'INFO' ? 'bg-cyan-500 hover:bg-cyan-400' : ''}`}
                 onClick={() => setFilterLevel('INFO')}
               >
-                Cảnh Báo (Info)
+                Thông tin / Cảnh báo
               </Button>
             </div>
 
@@ -472,32 +476,23 @@ export default function SystemLogsPage() {
             </div>
           </div>
 
+          <Input.Search
+            allowClear
+            placeholder="Tìm mã lỗi (request_id) hoặc nội dung log"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+          />
+          <p className="text-xs text-gray-500">
+            Hiển thị tối đa 1.000 dòng cuối của log BE. Lỗi mạng hoặc lỗi chỉ
+            xảy ra trên trình duyệt không có log BE.
+          </p>
           <div className="custom-scrollbar h-[65vh] overflow-y-auto rounded-xl border border-[#222] bg-[#0d0d0d] p-2 font-mono shadow-inner sm:h-[70vh] sm:p-3">
             <Spin spinning={isLoadingSystem} tip="Đang tải logs...">
               {logs ? (
                 <div className="flex min-h-full flex-col">
-                  {logs
-                    .split('\n')
-                    .filter((line) => {
-                      if (line.trim() === '') return false;
-                      if (filterLevel === 'ERROR') {
-                        return (
-                          line.includes('.ERROR:') ||
-                          line.includes('.CRITICAL:') ||
-                          line.includes('.EMERGENCY:')
-                        );
-                      }
-                      if (filterLevel === 'INFO') {
-                        return (
-                          line.includes('.INFO:') ||
-                          line.includes('.DEBUG:') ||
-                          line.includes('.WARNING:') ||
-                          line.includes('local]SyncStorage')
-                        );
-                      }
-                      return true;
-                    })
-                    .map((line, idx) => renderLogLine(line, idx))}
+                  {filterSystemLogs(logs, filterLevel, search).map(
+                    (line, idx) => renderLogLine(line, idx)
+                  )}
                   <div ref={logEndRef} className="h-4" />
                 </div>
               ) : (

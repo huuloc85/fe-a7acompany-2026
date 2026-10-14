@@ -423,7 +423,9 @@ const StandardDetailView: React.FC<{ data: RequestForm }> = ({ data }) => {
 
     // Tìm pattern: [Vùng chữ ký điện tử]     SUPERVISOR_NAME     [Quản lý nhà máy cần ký tại đây]
     const signatureLineMatch = data.content.match(
-      /\[Vùng chữ ký điện tử\]\s+(.+?)\s+(?:\[Quản lý nhà máy|Quản lý)/
+      data.type === 'don_xin_tang_ca'
+        ? /\[Vùng chữ ký điện tử\][ \t]+([^\r\n]+)/
+        : /\[Vùng chữ ký điện tử\]\s+(.+?)\s+(?:\[Quản lý nhà máy|Quản lý)/
     );
 
     if (signatureLineMatch && signatureLineMatch[1]) {
@@ -434,7 +436,7 @@ const StandardDetailView: React.FC<{ data: RequestForm }> = ({ data }) => {
     }
 
     return null;
-  }, [data.content]);
+  }, [data.content, data.type]);
 
   const getGenderText = (gender: string | undefined) => {
     switch (gender) {
@@ -473,6 +475,14 @@ const StandardDetailView: React.FC<{ data: RequestForm }> = ({ data }) => {
       const line = lines[i];
       const cleanLine = line.replace(/\r/g, '').trim();
 
+      // Older overtime templates did not include a date before the signature section.
+      if (
+        data.type === 'don_xin_tang_ca' &&
+        /^Người làm đơn\s+Tổ trưởng(?:\s+Quản lý nhà máy)?$/.test(cleanLine)
+      ) {
+        break;
+      }
+
       // Skip signature section (từ "TP.Hồ Chí Minh, ngày..." đến cuối)
       if (
         cleanLine.includes('TP.') &&
@@ -485,12 +495,12 @@ const StandardDetailView: React.FC<{ data: RequestForm }> = ({ data }) => {
 
       const isPersonalInfoLine =
         (cleanLine.includes('Họ và tên:') || cleanLine.includes('Tôi tên:')) &&
-        cleanLine.includes('Giới tính:') &&
+        (cleanLine.includes('Giới tính:') || data.type === 'don_xin_tang_ca') &&
         cleanLine.includes('Chức vụ:');
 
       if (isPersonalInfoLine) {
         const nameMatch = cleanLine.match(
-          /(?:Họ và tên|Tôi tên):\s*([^G]*?)(?=\s{2,}Giới tính:|$)/
+          /(?:Họ và tên|Tôi tên):\s*(.*?)(?=\s{2,}(?:Giới tính|Chức vụ):|$)/
         );
         const genderMatch = cleanLine.match(
           /Giới tính:\s*([^C]*?)(?=\s{2,}Chức vụ:|$)/
@@ -822,12 +832,16 @@ const StandardDetailView: React.FC<{ data: RequestForm }> = ({ data }) => {
         <div className="mb-4 text-left">
           <div>
             <Text strong>
-              Kính gửi: - Ban giám đốc Công Ty TNHH MTV VINH VINH PHÁT
+              {data.type === 'don_xin_tang_ca'
+                ? 'Kính gửi: Tổ trưởng phụ trách'
+                : 'Kính gửi: - Ban giám đốc Công Ty TNHH MTV VINH VINH PHÁT'}
             </Text>
           </div>
-          <div style={{ paddingLeft: '61px' }}>
-            <Text strong>- Phòng nhân sự</Text>
-          </div>
+          {data.type !== 'don_xin_tang_ca' && (
+            <div style={{ paddingLeft: '61px' }}>
+              <Text strong>- Phòng nhân sự</Text>
+            </div>
+          )}
         </div>
       </div>
 
@@ -847,8 +861,10 @@ const StandardDetailView: React.FC<{ data: RequestForm }> = ({ data }) => {
         {/* Mobile: stack 2 cols on top + 1 below | Desktop: proper 2/3 columns side by side */}
         {(() => {
           const showSupervisor =
-            !isEmployeeSupervisor && !canSubmitDirectToManager;
-          const colCount = showSupervisor ? 3 : 2;
+            data.type === 'don_xin_tang_ca' ||
+            (!isEmployeeSupervisor && !canSubmitDirectToManager);
+          const colCount =
+            data.type === 'don_xin_tang_ca' ? 2 : showSupervisor ? 3 : 2;
 
           // Reusable signature block
           const SignatureBlock = ({
@@ -933,17 +949,19 @@ const StandardDetailView: React.FC<{ data: RequestForm }> = ({ data }) => {
                 <SignatureBlock
                   label="Tổ trưởng"
                   signaturePath={data.digital_signature_supervisor}
-                  name={supervisorName || '__________'}
+                  name={data.supervisor?.name || supervisorName || '__________'}
                   placeholder="[Tổ trưởng ký]"
                 />
               )}
 
-              <SignatureBlock
-                label="Quản lý nhà máy"
-                signaturePath={data.digital_signature_manager}
-                name="Nguyễn Được Thưởng"
-                placeholder="[Quản lý ký]"
-              />
+              {data.type !== 'don_xin_tang_ca' && (
+                <SignatureBlock
+                  label="Quản lý nhà máy"
+                  signaturePath={data.digital_signature_manager}
+                  name="Nguyễn Được Thưởng"
+                  placeholder="[Quản lý ký]"
+                />
+              )}
             </div>
           );
         })()}

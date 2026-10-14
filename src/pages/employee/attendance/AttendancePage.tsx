@@ -25,6 +25,14 @@ import { TableProps } from 'antd/lib';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 import { useMemo, useState } from 'react';
+import { useAttendanceMonth } from '@/hooks/useAttendanceMonth';
+import { OvertimeApprovalStatus } from '@/components/attendances/OvertimeApprovalStatus';
+import type { OvertimeApproval } from '@/utils/overtimeApproval';
+import {
+  clampAttendanceRange,
+  getAttendanceWindow,
+  isOutsideAttendanceWindow
+} from '@/utils/attendanceWindow';
 import {
   FiActivity,
   FiClock,
@@ -49,6 +57,7 @@ interface CalculatedRow {
   total_hours: number | null;
   overtime_hours: number | null;
   administrative_hours: number | null;
+  overtime_approval?: OvertimeApproval;
 }
 
 type ActiveTab = 'history' | 'calculate';
@@ -578,6 +587,11 @@ function MobileCalculateRow({ item }: { item: CalculatedRow }) {
           </div>
         </div>
       )}
+      <OvertimeApprovalStatus
+        date={item.date}
+        hours={displayOvertimeHours}
+        approval={item.overtime_approval}
+      />
       {isMissing && (
         <div className="mt-2 text-xs text-red-400">⚠ Chưa đủ chấm công</div>
       )}
@@ -644,16 +658,19 @@ function MobileHistoryRow({ item }: { item: AttendanceResponse }) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export const AttendancePage = () => {
+  const monthKey = useAttendanceMonth();
+  return <AttendancePageContent key={monthKey} />;
+};
+
+const AttendancePageContent = () => {
   const [activeTab, setActiveTab] = useState<ActiveTab>('calculate');
-  const [month, setMonth] = useState<Dayjs>(dayjs());
+  const [month, setMonth] = useState<Dayjs>(getAttendanceWindow().month);
   const [forgottenDays, setForgottenDays] = useState<boolean>(false);
   const [cycleMode, setCycleMode] = useState<'month' | 'payroll'>('month');
 
   // Payroll cycle helper: 16th this month → 15th next month
   const getPayrollRange = (d: Dayjs) => {
-    const from = d.date(16).format('YYYY-MM-DD');
-    const to = d.add(1, 'month').date(15).format('YYYY-MM-DD');
-    return `${from},${to}`;
+    return clampAttendanceRange(d.date(16), d.add(1, 'month').date(15));
   };
 
   const getMonthRange = (d: Dayjs) => {
@@ -669,7 +686,7 @@ export const AttendancePage = () => {
 
   const [historyParams, setHistoryParams] = useState<QueryParams>({
     limit: 0,
-    'filter[date_between]': getMonthRange(dayjs())
+    'filter[date_between]': getMonthRange(getAttendanceWindow().month)
   });
 
   const { isMobile } = useStore(uiStore);
@@ -873,15 +890,22 @@ export const AttendancePage = () => {
       title: 'Tăng ca',
       dataIndex: 'overtime_hours',
       key: 'overtime_hours',
-      width: 80,
+      width: 220,
       align: 'center',
       sorter: (a, b) => getDisplayOvertimeHours(a) - getDisplayOvertimeHours(b),
       render: (_v, record) => {
         const displayHours = getDisplayOvertimeHours(record);
-        return displayHours ? (
-          <span className="font-semibold text-amber-600">{displayHours}h</span>
-        ) : (
-          <span className="text-gray-300">-</span>
+        return (
+          <div>
+            <span className="font-semibold text-amber-600">
+              {displayHours || '—'}h
+            </span>
+            <OvertimeApprovalStatus
+              date={record.date}
+              hours={displayHours}
+              approval={record.overtime_approval}
+            />
+          </div>
         );
       }
     }
@@ -1008,7 +1032,7 @@ export const AttendancePage = () => {
 
   // ── Month change handler ───────────────────────────────────────────────
   const handleMonthChange = (date: Dayjs | null) => {
-    const d = date || dayjs();
+    const d = date || getAttendanceWindow().month;
     setMonth(d);
     setHistoryParams((prev) => ({
       ...prev,
@@ -1027,7 +1051,13 @@ export const AttendancePage = () => {
   // Label for current range
   const rangeLabel = useMemo(() => {
     if (cycleMode === 'payroll') {
-      return `${month.date(16).format('DD/MM')} → ${month.add(1, 'month').date(15).format('DD/MM')}`;
+      return clampAttendanceRange(
+        month.date(16),
+        month.add(1, 'month').date(15)
+      )
+        .split(',')
+        .map((date) => dayjs(date).format('DD/MM'))
+        .join(' → ');
     }
     return month.format('MM/YYYY');
   }, [month, cycleMode]);
@@ -1044,6 +1074,12 @@ export const AttendancePage = () => {
         }
       >
         {/* ── Header Block: Filters + Controls ─────────────────────────── */}
+        <p className="text-sm text-gray-500">
+          Chỉ xem 3 tháng gần nhất:{' '}
+          {getAttendanceWindow().start.format('MM/YYYY')} –{' '}
+          {getAttendanceWindow().end.format('MM/YYYY')}. Kỳ 16→15 chỉ lấy phần
+          nằm trong khoảng này.
+        </p>
         {isMobile ? (
           <div className="space-y-2">
             {/* Row 1: Month picker + forgotten switch */}
@@ -1051,6 +1087,7 @@ export const AttendancePage = () => {
               <div className="flex items-center gap-1.5">
                 <DatePicker
                   id="att-month-picker"
+                  disabledDate={isOutsideAttendanceWindow}
                   placeholder="Chọn tháng"
                   value={month}
                   picker="month"
@@ -1132,6 +1169,7 @@ export const AttendancePage = () => {
                 </label>
                 <DatePicker
                   id="att-month-picker"
+                  disabledDate={isOutsideAttendanceWindow}
                   placeholder="Chọn tháng"
                   value={month}
                   picker="month"

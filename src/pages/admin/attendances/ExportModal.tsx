@@ -10,6 +10,7 @@ import dayjs from 'dayjs';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { useState } from 'react';
+import { isOutsideAttendanceWindow } from '@/utils/attendanceWindow';
 
 interface DataType {
   a7a: (string | number)[][];
@@ -54,7 +55,7 @@ export const ExportModal = () => {
         currentDate = currentDate.add(1, 'day');
       }
 
-      const totalColumns = 10 + dateHeaders.length * 3;
+      const totalColumns = 12 + dateHeaders.length * 3;
 
       const response = await fetchAttendancesCalculated(params);
       const attendances = response.data;
@@ -100,8 +101,14 @@ export const ExportModal = () => {
           return sum;
         }, 0);
 
-        const totalOvertimeHours = attendances.reduce(
-          (sum, attendance) => sum + attendance.overtime_hours,
+        const totalDayOvertimeHours = attendances.reduce(
+          (sum, attendance) =>
+            sum + (attendance.shift == 1 ? attendance.overtime_hours || 0 : 0),
+          0
+        );
+        const totalNightOvertimeHours = attendances.reduce(
+          (sum, attendance) =>
+            sum + (attendance.shift == 2 ? attendance.overtime_hours || 0 : 0),
           0
         );
 
@@ -135,7 +142,9 @@ export const ExportModal = () => {
           totalHours,
           totalDayHours,
           totalNightHours,
-          totalOvertimeHours,
+          totalDayOvertimeHours,
+          totalNightOvertimeHours,
+          totalDayOvertimeHours + totalNightOvertimeHours,
           supplyMealDay,
           supplyMealNight,
           supplyMealOvertime
@@ -212,6 +221,8 @@ export const ExportModal = () => {
           'Số Công Chính',
           '',
           '',
+          'Tổng Giờ Tăng Ca',
+          '',
           '',
           'Phụ Cấp Tiền Cơm Ngày',
           'Phụ Cấp Tiền Cơm Đêm',
@@ -230,7 +241,9 @@ export const ExportModal = () => {
           'Tổng Giờ Trong Tháng',
           'Tổng Giờ Ngày',
           'Tổng Giờ Đêm',
-          'Tổng Giờ Tăng Ca',
+          'Ngày',
+          'Đêm',
+          'Tổng',
           '',
           '',
           '',
@@ -264,8 +277,8 @@ export const ExportModal = () => {
                 fgColor: { argb: 'E26B0A' }
               };
               // Apply font color for each date column dynamically based on dateHeaders
-              // The first date column starts at colNumber 12
-              const dateColStart = 12;
+              // The first night column starts at colNumber 14
+              const dateColStart = 14;
               const dateColsPerDay = 3;
               const dateColEnd =
                 dateColStart + dateHeaders.length * dateColsPerDay - 1;
@@ -291,13 +304,14 @@ export const ExportModal = () => {
         sheet.mergeCells(2, 1, 3, 1); // A2:A3 (STT)
         sheet.mergeCells(2, 2, 3, 2); // B2:B3
         sheet.mergeCells(2, 3, 3, 3); // C2:C3
-        sheet.mergeCells(2, 4, 2, 7); // D2:G2 (Số Công Chính)
-        sheet.mergeCells(2, 8, 3, 8); // H2:H3
-        sheet.mergeCells(2, 9, 3, 9); // I2:I3
+        sheet.mergeCells(2, 4, 2, 6); // D2:F2 (Số Công Chính)
+        sheet.mergeCells(2, 7, 2, 9); // G2:I2 (Tổng Giờ Tăng Ca)
         sheet.mergeCells(2, 10, 3, 10); // J2:J3
+        sheet.mergeCells(2, 11, 3, 11); // K2:K3
+        sheet.mergeCells(2, 12, 3, 12); // L2:L3
 
         // Merge cells for each date in the dateHeaders array
-        let startCol = 11;
+        let startCol = 13;
         dateHeaders.forEach(() => {
           sheet.mergeCells(2, startCol, 2, startCol + 2);
           startCol += 3;
@@ -320,30 +334,30 @@ export const ExportModal = () => {
             };
             cell.font = { size: 14, name: 'Times New Roman' };
 
-            if (colNumber >= 4 && colNumber < 8) {
+            if (colNumber >= 4 && colNumber < 10) {
               cell.fill = {
                 type: 'pattern',
                 pattern: 'solid',
                 fgColor: { argb: '8DB4E2' }
               };
             }
-            if (colNumber >= 8 && colNumber < 11) {
+            if (colNumber >= 10 && colNumber < 13) {
               cell.fill = {
                 type: 'pattern',
                 pattern: 'solid',
                 fgColor: { argb: 'DA9694' }
               };
-              if (colNumber == 8) {
+              if (colNumber == 10) {
                 cell.font.color = { argb: 'FFFFFF' };
               }
-              if (colNumber == 10) {
+              if (colNumber == 12) {
                 cell.font.color = { argb: '0000FF' };
               }
             }
 
-            // Date columns start at colNumber 11, each date takes 3 columns (Ngày, Đêm, TC)
-            if (colNumber >= 11) {
-              const dateColIndex = colNumber - 11;
+            // Date columns start at colNumber 13, each date takes 3 columns (Ngày, Đêm, TC)
+            if (colNumber >= 13) {
+              const dateColIndex = colNumber - 13;
               const dateIndex = Math.floor(dateColIndex / 3);
               const subCol = dateColIndex % 3;
               // Alternate background color for each date group
@@ -368,7 +382,7 @@ export const ExportModal = () => {
         sheet.views = [
           {
             state: 'frozen',
-            xSplit: 10,
+            xSplit: 12,
             ySplit: 3
           }
         ];
@@ -400,6 +414,12 @@ export const ExportModal = () => {
   });
 
   const handleExport = () => {
+    if (dateRange.some(isOutsideAttendanceWindow)) {
+      message.warning(
+        'Chỉ xuất bảng công trong 3 tháng gần nhất. Dữ liệu cũ dùng Tra cứu công lưu trữ.'
+      );
+      return;
+    }
     mutate({
       limit: 0,
       'filter[date_between]': `${dayjs(dateRange[0]).format('YYYY-MM-DD')},${dayjs(dateRange[1]).format('YYYY-MM-DD')}`
@@ -422,6 +442,7 @@ export const ExportModal = () => {
         closable={false}
       >
         <DatePicker.RangePicker
+          disabledDate={isOutsideAttendanceWindow}
           style={{ width: '100%' }}
           placeholder={['Từ ngày', 'Đến ngày']}
           format="YYYY-MM-DD"

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { PayrollRow } from '@/utils/payrollCalculation';
 
 import { salarySchema } from '@/schema/salarySchma.schema';
 import { EmployeeType } from './employeeType';
@@ -41,6 +42,7 @@ export interface SalaryTableType {
 }
 
 export interface SalaryDetailTableType {
+  payroll_row?: PayrollRow;
   id: number;
   employee_id: number;
   number_of_work_days_trial: number;

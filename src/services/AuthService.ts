@@ -125,38 +125,38 @@ export const authConfirmLogin = async () => {
 };
 
 export const authCheck = async () => {
-  try {
-    const response: AuthResponse = await axiosPrivate.post('/api/auth/check');
-    const currentUser = authStore.state.user;
-
-    // Merge: giữ lại data cũ nếu BE không trả field đó
-    const userData: User = {
-      id: response.id ?? currentUser?.id ?? '',
-      name: response.name ?? currentUser?.name ?? '',
-      gender: response.gender ?? currentUser?.gender ?? ('male' as Gender),
-      role: response.role_id
-        ? { id: response.role_id.toString(), name: response.role_name }
-        : (currentUser?.role ?? { id: '', name: '' }),
-      permissions: response.permissions ?? currentUser?.permissions ?? []
-    };
-
-    if (response?.image) {
-      userData.image_url = `${STORAGE_URL}/${response.image}`;
-    } else if (currentUser?.image_url) {
-      userData.image_url = currentUser.image_url;
-    }
-
-    setUser(userData);
-    if ('session_id' in response) {
-      setSessionId(response.session_id ?? null);
-    }
-    if ('auth_channel_name' in response) {
-      setAuthChannelName(response.auth_channel_name ?? null);
-    }
-
-    return response;
-  } catch (error) {
-    clearAuth();
-    throw error;
+  const checkedToken = authStore.state.token;
+  const response: AuthResponse = await axiosPrivate.post('/api/auth/check');
+  // Do not restore a session that was logged out/replaced during the request.
+  if (!checkedToken || authStore.state.token !== checkedToken) {
+    throw new Error('Phiên đăng nhập đã thay đổi. Vui lòng thử lại.');
   }
+  const currentUser = authStore.state.user;
+
+  // Session checks may omit permissions. An explicit [] still revokes all grants.
+  const userData: User = {
+    id: response.id ?? currentUser?.id ?? '',
+    name: response.name ?? currentUser?.name ?? '',
+    gender: response.gender ?? currentUser?.gender ?? ('male' as Gender),
+    role: response.role_id
+      ? { id: response.role_id.toString(), name: response.role_name }
+      : (currentUser?.role ?? { id: '', name: '' }),
+    permissions: response.permissions ?? currentUser?.permissions ?? []
+  };
+
+  if (response?.image) {
+    userData.image_url = `${STORAGE_URL}/${response.image}`;
+  } else if (currentUser?.image_url) {
+    userData.image_url = currentUser.image_url;
+  }
+
+  setUser(userData);
+  if ('session_id' in response) {
+    setSessionId(response.session_id ?? null);
+  }
+  if ('auth_channel_name' in response) {
+    setAuthChannelName(response.auth_channel_name ?? null);
+  }
+
+  return response;
 };

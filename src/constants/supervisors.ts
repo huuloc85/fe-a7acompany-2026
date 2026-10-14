@@ -3,11 +3,12 @@
  * Những user này có quyền như admin trong việc duyệt request forms
  */
 export const SUPERVISOR_IDS = [
-  '19010400',
-  '20020700',
-  '18010900',
-  '19010300',
-  '20102800'
+  '25060400',
+  '22120700',
+  '22120900',
+  '22120300',
+  '22122800',
+  '22121800'
 ] as const;
 
 export const SUPERVISOR_ROLE_IDS = ['23', '24', '25'] as const;

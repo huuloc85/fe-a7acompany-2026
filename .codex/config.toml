@@ -1,10 +1,9 @@
-model = "cx/gpt-5.5"
-model_provider = "router"
+model = "gpt-6-astra"
+model_provider = "codex_local_access"
 
-[model_providers.router]
-name = "9router"
-base_url = "http://localhost:20128/v1"
-env_key = "NINEROUTER_API_KEY"
-
-[mcp_servers.gitnexus]
-command = "./plugins/gitnexus/scripts/gitnexus-mcp-node20.sh"
+[model_providers.codex_local_access]
+name = "Codex API Service"
+base_url = "http://localhost:63649/v1"
+wire_api = "responses"
+requires_openai_auth = false
+supports_websockets = false

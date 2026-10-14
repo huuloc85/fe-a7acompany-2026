@@ -1,0 +1,38 @@
+/* Only the table content scrolls horizontally; ancestors must not trap sticky. */
+html
+  body
+  :is(#root, .ant-drawer-root, .ant-drawer)
+  .work-schedule-detail.work-schedule-detail.work-schedule-detail
+  :where(.ant-tabs-content-holder, .ant-tabs-content, .ant-tabs-tabpane) {
+  overflow: visible !important;
+}
+
+html
+  body
+  :is(#root, .ant-drawer-root, .ant-drawer)
+  .work-schedule-detail.work-schedule-detail.work-schedule-detail
+  .work-schedule-sticky-table.work-schedule-sticky-table
+  :where(.ant-table, .ant-table-container) {
+  overflow: visible !important;
+}
+
+/* Keep native row hover; add a column overlay above theme cell backgrounds. */
+html
+  body
+  :is(#root, .ant-drawer-root, .ant-drawer)
+  .work-schedule-detail
+  .work-schedule-sticky-table
+  .ant-table-cell.schedule-hover-axis.schedule-hover-axis {
+  box-shadow: inset 0 0 0 9999px rgba(14, 165, 233, 0.18) !important;
+}
+
+@media print {
+  html
+    body
+    :is(#root, .ant-drawer-root, .ant-drawer)
+    .work-schedule-detail
+    .work-schedule-sticky-table
+    .ant-table-cell.schedule-hover-axis.schedule-hover-axis {
+    box-shadow: none !important;
+  }
+}

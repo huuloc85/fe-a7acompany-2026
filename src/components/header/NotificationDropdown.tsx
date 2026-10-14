@@ -1,3 +1,4 @@
+import { isAdmin as isAdminRole } from '@utils/authUtil';
 import { useStampNotification } from '@hooks/useStampNotification';
 import { useFeedbackNotification } from '@hooks/useFeedbackNotification';
 import { useAdminFeedbackNotification } from '@hooks/useAdminFeedbackNotification';
@@ -78,9 +79,7 @@ export default function NotificationDropdown() {
   const { items: stampItems, handleClearNotifications } =
     useStampNotification();
   const { user } = useAuth();
-  const isEmployee = !['super admin', 'admin', 'co admin'].includes(
-    (user?.role?.name || '').toLowerCase()
-  );
+  const isEmployee = !isAdminRole(user?.role?.name || '');
   const isAdmin = !isEmployee;
   const {
     notifications: feedbackNotifs,

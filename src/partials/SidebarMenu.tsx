@@ -7,6 +7,8 @@ import { useStore } from '@tanstack/react-store';
 import React from 'react';
 import { FaChevronDown } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
+import '@components/holiday/mid-autumn-sidebar.css';
+import { useMidAutumnMode } from '@hooks/useMidAutumnMode';
 
 interface SidebarMenuProps {
   items: MenuItem[];
@@ -60,11 +62,13 @@ function SidebarItem({
   item,
   isActive,
   isCollapsed,
+  isMidAutumn,
   onClick
 }: {
   item: MenuItem;
   isActive: boolean;
   isCollapsed: boolean;
+  isMidAutumn: boolean;
   onClick?: () => void;
 }) {
   const path = extractPath(item);
@@ -77,7 +81,9 @@ function SidebarItem({
       whileTap={{ scale: 0.98 }}
       className={`group mx-2.5 my-0.5 flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all duration-200 ease-out ${
         isActive
-          ? 'liquid-glass-control sidebar-active-item font-semibold !text-cyan-700 dark:!text-cyan-300'
+          ? isMidAutumn
+            ? 'mid-autumn-sidebar-active font-semibold'
+            : 'liquid-glass-control sidebar-active-item font-semibold !text-cyan-700 dark:!text-cyan-300'
           : 'font-medium text-black hover:bg-white/45 hover:text-black active:scale-[0.98] dark:text-gray-200 dark:hover:bg-white/10 dark:hover:text-white'
       }`}
     >
@@ -87,7 +93,9 @@ function SidebarItem({
           transition={{ duration: 0.4 }}
           className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xl transition-colors duration-200 ${
             isActive
-              ? '!text-cyan-700 dark:!text-cyan-300'
+              ? isMidAutumn
+                ? 'text-inherit'
+                : '!text-cyan-700 dark:!text-cyan-300'
               : 'text-gray-600 group-hover:text-gray-800 dark:text-gray-400 dark:group-hover:text-gray-200'
           } ${isCollapsed ? '!mx-auto !h-9 !w-9' : ''}`}
         >
@@ -118,6 +126,7 @@ function SidebarSubmenu({
   isCollapsed,
   isOpen,
   isMobile,
+  isMidAutumn,
   onToggle,
   onClick
 }: {
@@ -126,6 +135,7 @@ function SidebarSubmenu({
   isCollapsed: boolean;
   isOpen: boolean;
   isMobile: boolean;
+  isMidAutumn: boolean;
   onToggle: () => void;
   onClick?: () => void;
 }) {
@@ -171,7 +181,9 @@ function SidebarSubmenu({
         onClick={onToggle}
         className={`group mx-2.5 my-0.5 flex w-[calc(100%-20px)] items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all duration-200 ease-out ${
           hasActiveChild
-            ? 'liquid-glass-control sidebar-active-item font-semibold !text-cyan-700 dark:!text-cyan-300'
+            ? isMidAutumn
+              ? 'mid-autumn-sidebar-active font-semibold'
+              : 'liquid-glass-control sidebar-active-item font-semibold !text-cyan-700 dark:!text-cyan-300'
             : 'font-medium text-black hover:bg-white/45 hover:text-black active:scale-[0.98] dark:text-gray-200 dark:hover:bg-white/10 dark:hover:text-white'
         }`}
       >
@@ -179,7 +191,9 @@ function SidebarSubmenu({
           <span
             className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xl transition-colors duration-200 ${
               hasActiveChild
-                ? '!text-cyan-700 dark:!text-cyan-300'
+                ? isMidAutumn
+                  ? 'text-inherit'
+                  : '!text-cyan-700 dark:!text-cyan-300'
                 : 'text-gray-600 group-hover:text-gray-800 dark:text-gray-400 dark:group-hover:text-gray-200'
             } ${isCollapsed ? '!mx-auto !h-9 !w-9' : ''}`}
           >
@@ -235,7 +249,9 @@ function SidebarSubmenu({
                       whileTap={{ scale: 0.98 }}
                       className={`mx-2 my-0.5 flex items-center gap-2.5 rounded-lg px-3 py-2 transition-all duration-200 ease-out ${
                         isChildActive
-                          ? 'liquid-glass-control sidebar-active-item font-semibold !text-cyan-700 dark:!text-cyan-300'
+                          ? isMidAutumn
+                            ? 'mid-autumn-sidebar-active font-semibold'
+                            : 'liquid-glass-control sidebar-active-item font-semibold !text-cyan-700 dark:!text-cyan-300'
                           : 'font-medium text-black hover:bg-white/45 hover:text-black active:scale-[0.98] dark:text-gray-300 dark:hover:bg-white/10 dark:hover:text-white'
                       }`}
                     >
@@ -243,7 +259,9 @@ function SidebarSubmenu({
                         <span
                           className={`text-[13px] ${
                             isChildActive
-                              ? '!text-cyan-700 dark:!text-cyan-300'
+                              ? isMidAutumn
+                                ? 'text-inherit'
+                                : '!text-cyan-700 dark:!text-cyan-300'
                               : ''
                           }`}
                         >
@@ -273,6 +291,7 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
   const { pathname } = useLocation();
   const { isMobile, isSidebarClose } = useStore(uiStore);
   const { isHoliday } = useHolidayMode();
+  const isMidAutumn = useMidAutumnMode();
 
   const [openKey, setOpenKey] = React.useState<string | null>(null);
 
@@ -286,11 +305,15 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
   };
 
   return (
-    <>
+    <div
+      className={`app-sidebar-menu${isMidAutumn ? 'mid-autumn-sidebar' : ''}`}
+      data-collapsed={isSidebarClose}
+      data-mobile={isMobile}
+    >
       {/* ── Logo ───────────────────────────────────────── */}
       <div>
         <div
-          className={`flex items-center justify-center ${isSidebarClose ? 'p-3' : 'px-5 py-6'}`}
+          className={`mid-autumn-sidebar-logo flex items-center justify-center ${isSidebarClose ? 'p-3' : 'px-5 py-6'}`}
         >
           <Link
             to="/"
@@ -312,6 +335,46 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
               className={`drop-shadow-sm transition-all duration-300 ${isSidebarClose ? 'h-[52px]' : 'h-[88px]'}`}
             />
           </Link>
+          {isMidAutumn && !isHoliday && (
+            <svg
+              className="mid-autumn-sidebar-lantern"
+              viewBox="0 0 40 88"
+              fill="none"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <path d="M20 0v17" stroke="#bc9453" />
+              <path
+                d="M13 18h14M13 52h14"
+                stroke="#dcb879"
+                strokeWidth="3"
+                strokeLinecap="round"
+              />
+              <rect
+                x="5"
+                y="20"
+                width="30"
+                height="30"
+                rx="12"
+                fill="#b54c35"
+                stroke="#e4b467"
+              />
+              <ellipse
+                cx="20"
+                cy="35"
+                rx="8"
+                ry="15"
+                fill="#df8650"
+                stroke="#efc780"
+              />
+              <path
+                d="M20 21v28M6 35h28M20 54v8m-3 0v15m3-15v18m3-18v15"
+                stroke="#edc483"
+                strokeLinecap="round"
+              />
+              <path d="m20 55 3 3-3 3-3-3 3-3Z" fill="#dcb879" />
+            </svg>
+          )}
         </div>
 
         {/* Holiday ribbon under logo */}
@@ -359,6 +422,7 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
                 isCollapsed={isSidebarClose}
                 isOpen={openKey === key}
                 isMobile={isMobile}
+                isMidAutumn={isMidAutumn}
                 onToggle={() => handleToggle(key)}
                 onClick={handleClick}
               />
@@ -374,11 +438,12 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
               item={item}
               isActive={isActive}
               isCollapsed={isSidebarClose}
+              isMidAutumn={isMidAutumn}
               onClick={handleClick}
             />
           );
         })}
       </nav>
-    </>
+    </div>
   );
 };

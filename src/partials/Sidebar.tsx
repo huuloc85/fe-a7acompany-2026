@@ -8,7 +8,11 @@ import { toggleSidebar, uiStore } from '@stores/uiStore';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { useStore } from '@tanstack/react-store';
 import { finishLogoutRedirect, startLogoutRedirect } from '@utils/authRedirect';
-import { canViewTotalWorkSchedules } from '@utils/authUtil';
+import {
+  canViewTotalWorkSchedules,
+  isAdmin as isAdminRole,
+  isAllowRole
+} from '@utils/authUtil';
 import { Drawer, Layout, message } from 'antd';
 import React, { useMemo, useState } from 'react';
 import type { IconType } from 'react-icons';
@@ -38,11 +42,8 @@ function Sidebar() {
 
   const permissions = useMemo(() => user?.permissions ?? [], [user]);
 
-  const isSuperAdmin = (user?.role.name || '')
-    .toLocaleLowerCase()
-    .includes('super admin');
-  const roleName = (user?.role.name || '').toLocaleLowerCase();
-  const isAdmin = roleName.includes('admin');
+  const isSuperAdmin = isAllowRole(user, ['super admin']);
+  const isAdmin = isAdminRole(user?.role.name || '');
 
   // 🔧 mapper: từ string FA class → react-icons component
   const mapFaClassToIconType = (faClass?: string): IconType | null => {
@@ -220,7 +221,7 @@ function Sidebar() {
       <SidebarMenu items={[...dashboardItems, ...supervisorItems, ...items]} />
 
       {/* ── Admin Tools ──────────────────────────────────── */}
-      {(user?.role.name || '').toLocaleLowerCase().includes('super admin') && (
+      {isSuperAdmin && (
         <div className="mx-2.5 mt-1 mb-2">
           <div className="mx-3 mb-2 h-px bg-gradient-to-r from-transparent via-gray-200/80 to-transparent dark:via-gray-700/60" />
           {!isSidebarClose && (
