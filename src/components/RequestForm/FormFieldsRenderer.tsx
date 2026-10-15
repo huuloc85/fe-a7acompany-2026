@@ -19,6 +19,16 @@ const disabledDate = (current: Dayjs | null): boolean => {
   return current ? current.isBefore(tenDaysAgo) : false;
 };
 
+const disabledOvertimeDate = (current: Dayjs | null): boolean => {
+  if (!current) return false;
+  const today = dayjs();
+  const earliest = today.startOf('month').subtract(15, 'day');
+  return (
+    current.isBefore(earliest, 'day') ||
+    current.isAfter(today.endOf('month'), 'day')
+  );
+};
+
 export const GiayUyQuyenForm: React.FC = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(false);
@@ -409,12 +419,12 @@ export const DonXinTangCaForm: React.FC = () => (
     <Form.Item
       name={['form_data', 'ngay_ap_dung']}
       label="Ngày công tăng ca"
-      extra="Với ca đêm, chọn ngày bắt đầu ca."
+      extra="Được chọn toàn bộ tháng hiện tại và 15 ngày cuối tháng trước. Với ca đêm, chọn ngày bắt đầu ca."
       rules={[{ required: true, message: 'Vui lòng chọn ngày tăng ca' }]}
     >
       <DatePicker
         format="DD/MM/YYYY"
-        disabledDate={disabledDate}
+        disabledDate={disabledOvertimeDate}
         size="large"
       />
     </Form.Item>

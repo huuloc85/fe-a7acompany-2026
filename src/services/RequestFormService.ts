@@ -210,6 +210,7 @@ export const supervisorRequestFormService = {
     filters?: RequestFormFilters
   ): Promise<RequestFormListResponse> => {
     const params = new URLSearchParams();
+    if (filters?.search?.trim()) params.append('search', filters.search.trim());
 
     if (filters?.type) params.append('type', filters.type);
     if (filters?.status) params.append('status', filters.status);
@@ -284,11 +285,17 @@ export const supervisorRequestFormService = {
 
 // Admin RequestForm Service
 export const adminRequestFormService = {
+  delete: async (
+    id: number
+  ): Promise<{ success: boolean; message: string }> => {
+    return await axiosPrivate.delete(`/api/request-forms/${id}`);
+  },
   // Get all request forms with filters
   getList: async (
     filters?: RequestFormFilters
   ): Promise<RequestFormListResponse> => {
     const params = new URLSearchParams();
+    if (filters?.search?.trim()) params.append('search', filters.search.trim());
 
     if (filters?.type) params.append('type', filters.type);
     if (filters?.status) params.append('status', filters.status);

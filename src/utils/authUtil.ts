@@ -7,7 +7,7 @@ import {
 import { redirect } from '@tanstack/react-router';
 
 type RoleMatcher = string | number;
-const TOTAL_WORK_SCHEDULE_VIEWER_IDS = ['23030100'] as const;
+const TOTAL_WORK_SCHEDULE_VIEWER_IDS = ['23080100'] as const;
 
 export const normalizeRoleName = (role: string) => {
   const normalized = role.toLowerCase().trim().replace(/\s+/g, ' ');

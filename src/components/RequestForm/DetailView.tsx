@@ -1,4 +1,5 @@
 import React from 'react';
+import { REQUEST_FORM_FACTORY_MANAGER_NAME } from '@/constants/requestForm';
 import { Tag, Typography } from 'antd';
 import dayjs from 'dayjs';
 import { STORAGE_URL } from '@/configs/environment.config';
@@ -8,11 +9,12 @@ import {
   REQUEST_FORM_STATUSES
 } from '@/types/requestFormType';
 import { useAuthorizedEmployee } from '@/hooks/useAuthorizedEmployee';
+import { requiresManagerApproval } from '@/utils/requestFormUtil';
 
 const { Title, Text } = Typography;
 
 // Danh sách nhân viên nộp đơn thẳng cho quản lý, bỏ qua tổ trưởng
-const DIRECT_TO_MANAGER_IDS = ['20122900', '23030100', '17031400'] as const;
+const DIRECT_TO_MANAGER_IDS = ['22122900', '23080100', '23011400'] as const;
 
 // Helper function to create cache-busting signature URL
 const getSignatureUrl = (signaturePath: string, updatedAt?: string): string => {
@@ -387,6 +389,8 @@ const AuthorizationDetailView: React.FC<{ data: RequestForm }> = ({ data }) => {
 };
 
 const StandardDetailView: React.FC<{ data: RequestForm }> = ({ data }) => {
+  const overtimeSupervisor =
+    data.type === 'don_xin_tang_ca' && !requiresManagerApproval(data);
   // Check if employee is the same as supervisor (supervisor creates their own request)
   const isEmployeeSupervisor = React.useMemo(() => {
     if (!data.supervisor_id || !data.employee_id) return false;
@@ -832,12 +836,12 @@ const StandardDetailView: React.FC<{ data: RequestForm }> = ({ data }) => {
         <div className="mb-4 text-left">
           <div>
             <Text strong>
-              {data.type === 'don_xin_tang_ca'
+              {overtimeSupervisor
                 ? 'Kính gửi: Tổ trưởng phụ trách'
                 : 'Kính gửi: - Ban giám đốc Công Ty TNHH MTV VINH VINH PHÁT'}
             </Text>
           </div>
-          {data.type !== 'don_xin_tang_ca' && (
+          {!overtimeSupervisor && (
             <div style={{ paddingLeft: '61px' }}>
               <Text strong>- Phòng nhân sự</Text>
             </div>
@@ -861,8 +865,9 @@ const StandardDetailView: React.FC<{ data: RequestForm }> = ({ data }) => {
         {/* Mobile: stack 2 cols on top + 1 below | Desktop: proper 2/3 columns side by side */}
         {(() => {
           const showSupervisor =
-            data.type === 'don_xin_tang_ca' ||
-            (!isEmployeeSupervisor && !canSubmitDirectToManager);
+            data.type === 'don_xin_tang_ca'
+              ? overtimeSupervisor
+              : !isEmployeeSupervisor && !canSubmitDirectToManager;
           const colCount =
             data.type === 'don_xin_tang_ca' ? 2 : showSupervisor ? 3 : 2;
 
@@ -954,11 +959,11 @@ const StandardDetailView: React.FC<{ data: RequestForm }> = ({ data }) => {
                 />
               )}
 
-              {data.type !== 'don_xin_tang_ca' && (
+              {!overtimeSupervisor && (
                 <SignatureBlock
                   label="Quản lý nhà máy"
                   signaturePath={data.digital_signature_manager}
-                  name="Nguyễn Được Thưởng"
+                  name={REQUEST_FORM_FACTORY_MANAGER_NAME}
                   placeholder="[Quản lý ký]"
                 />
               )}
@@ -1174,6 +1179,13 @@ export const DetailView: React.FC<RequestFormDetailProps> = ({ data }) => {
 
   // Get approver name for stamp
   const approverName = React.useMemo(() => {
+    if (data.status === 'rejected') {
+      const rejectedBy =
+        data.approvedBy ||
+        data.approved_by_employee ||
+        (typeof data.approved_by === 'object' ? data.approved_by : null);
+      return rejectedBy?.name || 'Chưa có thông tin người từ chối';
+    }
     if (data.managerApprovedBy?.name) return data.managerApprovedBy.name;
     if (data.manager_approved_by_employee?.name)
       return data.manager_approved_by_employee.name;
@@ -1284,9 +1296,11 @@ export const DetailView: React.FC<RequestFormDetailProps> = ({ data }) => {
               data.status as 'approved' | 'rejected' | 'authorized_approved'
             }
             approvedAt={
-              data.approved_at ||
-              data.manager_approved_at ||
-              data.authorized_approved_at
+              data.status === 'rejected'
+                ? data.approved_at
+                : data.approved_at ||
+                  data.manager_approved_at ||
+                  data.authorized_approved_at
             }
             approverName={approverName}
           />

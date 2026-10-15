@@ -161,7 +161,11 @@ function Sidebar() {
               key: item.key,
               label: (
                 <Link to={normalizeLegacySidebarUrl(item.url) as string}>
-                  <span className="capitalize">{item.title}</span>
+                  <span className="capitalize">
+                    {item.url === '/admin/request-forms'
+                      ? 'Đơn Xin Phép'
+                      : item.title}
+                  </span>
                 </Link>
               ),
               icon: renderSidebarIcon(item.icon)
@@ -173,7 +177,11 @@ function Sidebar() {
           key: perm.key,
           label: (
             <Link to={normalizeLegacySidebarUrl(perm.url) as string}>
-              <span className="capitalize">{perm.name}</span>
+              <span className="capitalize">
+                {perm.url === '/admin/request-forms'
+                  ? 'Đơn Xin Phép'
+                  : perm.name}
+              </span>
             </Link>
           ),
           icon: renderPermissionIcon(perm)

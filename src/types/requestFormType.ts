@@ -247,6 +247,7 @@ export interface UpdateRequestFormDto {
 
 // Filter/Query params
 export interface RequestFormFilters {
+  search?: string;
   type?: RequestFormType;
   status?: RequestFormStatus;
   employee_id?: string;

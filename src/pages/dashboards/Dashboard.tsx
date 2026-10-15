@@ -299,7 +299,7 @@ export default function Dashboard() {
   const supervisorWidget: WidgetType | null = useMemo(() => {
     if (!isSupervisor) return null;
     return {
-      title: 'Duyệt Đơn Xin Phép',
+      title: 'Đơn Xin Phép',
       icon: <MdApproval />,
       navLink: '/admin/request-forms'
     };

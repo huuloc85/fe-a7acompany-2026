@@ -14,6 +14,14 @@ export interface RequestFormUser {
   role?: string | { id?: string | number; name: string };
 }
 
+export function requiresManagerApproval(
+  record: Pick<RequestForm, 'employee_id'>
+): boolean {
+  return [...SUPERVISOR_IDS, '22122900', '23080100', '23011400'].includes(
+    String(record.employee_id)
+  );
+}
+
 /**
  * Get user approval type based on role and supervisor IDs
  * @param user - Current user
@@ -72,6 +80,14 @@ export function getUserSignatureType(
 
   // For delegation forms, no signature needed
   if (record.type === 'don_xin_tang_ca') {
+    if (requiresManagerApproval(record)) {
+      return userType === 'manager' &&
+        String(user.id) !== String(record.employee_id) &&
+        !record.has_manager_signature &&
+        !record.digital_signature_manager
+        ? 'manager'
+        : null;
+    }
     return userType === 'supervisor' &&
       String(user.id) === String(record.supervisor_id) &&
       String(user.id) !== String(record.employee_id) &&
@@ -152,6 +168,19 @@ export function canUserApproveReject(
 
   // For delegation forms
   if (record.type === 'don_xin_tang_ca') {
+    if (requiresManagerApproval(record)) {
+      const manager =
+        userType === 'manager' &&
+        String(user.id) !== String(record.employee_id);
+      return {
+        canApprove:
+          manager &&
+          !!(
+            record.has_applicant_signature || record.digital_signature_applicant
+          ),
+        canReject: manager
+      };
+    }
     const assigned =
       userType === 'supervisor' &&
       String(user.id) === String(record.supervisor_id) &&
@@ -262,6 +291,14 @@ export function needsSignatures(_record: RequestForm): boolean {
  */
 export function areSignaturesComplete(record: RequestForm): boolean {
   if (record.type === 'don_xin_tang_ca') {
+    if (requiresManagerApproval(record)) {
+      return (
+        !!(
+          record.has_applicant_signature || record.digital_signature_applicant
+        ) &&
+        !!(record.has_manager_signature || record.digital_signature_manager)
+      );
+    }
     return (
       (!!record.has_applicant_signature ||
         !!record.digital_signature_applicant) &&
@@ -284,7 +321,7 @@ export function areSignaturesComplete(record: RequestForm): boolean {
 
   if (
     createdBySupervisor ||
-    [...SUPERVISOR_IDS, '20122900', '23030100', '17031400'].includes(
+    [...SUPERVISOR_IDS, '22122900', '23080100', '23011400'].includes(
       String(record.employee_id)
     )
   ) {

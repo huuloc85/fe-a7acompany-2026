@@ -1,4 +1,5 @@
 import React from 'react';
+import { REQUEST_FORM_FACTORY_MANAGER_NAME } from '@/constants/requestForm';
 import { Table, Tag, Button, Space, Tooltip, Pagination, Spin } from 'antd';
 import {
   EyeOutlined,
@@ -21,11 +22,33 @@ import {
 } from '@/types/requestFormType';
 import {
   isRequestCreatedBySupervisor,
+  requiresManagerApproval,
   getEffectiveStatus
 } from '@/utils/requestFormUtil';
 
 // Danh sách nhân viên nộp đơn thẳng cho quản lý, bỏ qua tổ trưởng
-const DIRECT_TO_MANAGER_IDS = ['20122900', '23030100', '17031400'] as const;
+const DIRECT_TO_MANAGER_IDS = ['22122900', '23080100', '23011400'] as const;
+
+const PendingApproverName = ({
+  record,
+  manager = false
+}: {
+  record: RequestForm;
+  manager?: boolean;
+}) => (
+  <div className="mt-1 text-xs font-medium text-gray-800">
+    {manager ? (
+      REQUEST_FORM_FACTORY_MANAGER_NAME
+    ) : record.supervisor?.name ? (
+      record.supervisor.name
+    ) : (
+      <EmployeeNameDisplay
+        employeeId={String(record.supervisor_id || '')}
+        fallback="Chưa xác định tổ trưởng"
+      />
+    )}
+  </div>
+);
 
 interface RequestFormTableProps {
   data?: RequestForm[];
@@ -43,6 +66,7 @@ interface RequestFormTableProps {
   onReject?: (record: RequestForm) => void;
   onSignDelegation?: (record: RequestForm) => void; // Thêm cho ký đơn ủy quyền
   isAdmin?: boolean;
+  isSuperAdmin?: boolean;
   currentUserId?: string; // Có thể là user.id hoặc user.role.id tùy context
   userType?: 'admin' | 'supervisor'; // Thêm để biết loại user
   hideSignDelegation?: boolean; // Thêm để ẩn button ký đơn ủy quyền
@@ -59,6 +83,7 @@ export const DataTable: React.FC<RequestFormTableProps> = ({
   onReject,
   onSignDelegation,
   isAdmin = false,
+  isSuperAdmin = false,
   currentUserId,
   userType,
   hideSignDelegation = false
@@ -144,6 +169,7 @@ export const DataTable: React.FC<RequestFormTableProps> = ({
   };
 
   const canDelete = (record: RequestForm): boolean => {
+    if (isSuperAdmin && onDelete) return true;
     // ❌ Admin không được xóa đơn
     if (isAdmin) return false;
 
@@ -181,6 +207,19 @@ export const DataTable: React.FC<RequestFormTableProps> = ({
     // ❌ Status phải là pending
     if (record.status !== 'pending') return false;
     if (record.type === 'don_xin_tang_ca') {
+      if (requiresManagerApproval(record)) {
+        return (
+          isAdmin &&
+          (!currentUserId ||
+            (ALLOWED_APPROVER_IDS as readonly string[]).includes(
+              currentUserId
+            )) &&
+          String(currentUserId) !== String(record.employee_id) &&
+          !!(
+            record.has_applicant_signature || record.digital_signature_applicant
+          )
+        );
+      }
       return (
         userType === 'supervisor' &&
         String(currentUserId) === String(record.supervisor_id) &&
@@ -243,7 +282,7 @@ export const DataTable: React.FC<RequestFormTableProps> = ({
       if (hasManagerSignature) {
         return (
           hasSupervisorSignature ||
-          ['20122900', '23030100', '17031400'].includes(
+          ['22122900', '23080100', '23011400'].includes(
             String(record.employee_id)
           )
         );
@@ -258,6 +297,16 @@ export const DataTable: React.FC<RequestFormTableProps> = ({
   const canReject = (record: RequestForm): boolean => {
     // ❌ Status phải là pending
     if (record.status !== 'pending') return false;
+    if (record.type === 'don_xin_tang_ca' && requiresManagerApproval(record)) {
+      return (
+        isAdmin &&
+        (!currentUserId ||
+          (ALLOWED_APPROVER_IDS as readonly string[]).includes(
+            currentUserId
+          )) &&
+        String(currentUserId) !== String(record.employee_id)
+      );
+    }
 
     // ✅ ĐẶC BIỆT: Đơn Ủy Quyền
     if (record.type === 'giay_uy_quyen') {
@@ -434,11 +483,28 @@ export const DataTable: React.FC<RequestFormTableProps> = ({
             record.has_applicant_signature ||
             !!record.digital_signature_applicant;
           return (
-            <div>
-              <div>Người làm đơn</div>
-              <Tag color={signed ? 'green' : 'orange'}>
-                {signed ? 'Đã ký' : 'Chưa ký'}
-              </Tag>
+            <div className="text-center">
+              <div className="mb-1 text-xs font-medium text-gray-800">
+                Người làm đơn
+              </div>
+              <div
+                className={`mb-1 flex items-center justify-center text-xs ${signed ? 'font-medium text-gray-800' : 'text-gray-400'}`}
+              >
+                <span className={`mr-1 ${signed ? 'text-green-600' : ''}`}>
+                  {signed ? '✓' : '○'}
+                </span>
+                <span>{signed ? 'Đã ký' : 'Chưa ký'}</span>
+              </div>
+              <div className="space-y-0.5 text-xs">
+                <div className="truncate font-medium text-gray-800">
+                  {record.employee?.name || 'Người làm đơn'}
+                </div>
+                {signed && record.created_at && (
+                  <div className="text-blue-600">
+                    {dayjs(record.created_at).format('DD/MM HH:mm')}
+                  </div>
+                )}
+              </div>
             </div>
           );
         }
@@ -580,9 +646,12 @@ export const DataTable: React.FC<RequestFormTableProps> = ({
                 )}
               </div>
             ) : (
-              <div className="flex items-center justify-center text-xs text-gray-400">
-                <span className="mr-1">○</span>
-                <span>Chưa ký</span>
+              <div>
+                <div className="flex items-center justify-center text-xs text-gray-400">
+                  <span className="mr-1">○</span>
+                  <span>Chưa ký</span>
+                </div>
+                <PendingApproverName record={record} />
               </div>
             )}
           </div>
@@ -601,15 +670,59 @@ export const DataTable: React.FC<RequestFormTableProps> = ({
       responsive: ['lg'],
       render: (record: RequestForm) => {
         if (record.type === 'don_xin_tang_ca') {
-          const signed =
-            record.has_supervisor_signature ||
-            !!record.digital_signature_supervisor;
+          const manager = requiresManagerApproval(record);
+          const actor = manager
+            ? record.manager_approved_by
+            : record.supervisor_approved_by;
+          const signer =
+            (manager
+              ? record.managerApprovedBy || record.manager_approved_by_employee
+              : record.supervisorApprovedBy ||
+                record.supervisor_approved_by_employee) ||
+            (typeof actor === 'object' && actor !== null ? actor : null);
+          const signedAt = manager
+            ? record.manager_approved_at
+            : record.supervisor_approved_at;
+          const signed = requiresManagerApproval(record)
+            ? record.has_manager_signature || !!record.digital_signature_manager
+            : record.has_supervisor_signature ||
+              !!record.digital_signature_supervisor;
           return (
-            <div>
-              <div>Tổ trưởng</div>
-              <Tag color={signed ? 'green' : 'orange'}>
-                {signed ? 'Đã ký' : 'Chưa ký'}
-              </Tag>
+            <div className="text-center">
+              <div className="mb-1 text-xs font-medium text-gray-800">
+                {manager ? 'Quản lý nhà máy' : 'Tổ trưởng'}
+              </div>
+              <div
+                className={`mb-1 flex items-center justify-center text-xs ${signed ? 'font-medium text-gray-800' : 'text-gray-400'}`}
+              >
+                <span className={`mr-1 ${signed ? 'text-green-600' : ''}`}>
+                  {signed ? '✓' : '○'}
+                </span>
+                <span>{signed ? 'Đã ký' : 'Chưa ký'}</span>
+              </div>
+              {signed ? (
+                <div className="space-y-0.5 text-xs">
+                  <div className="truncate font-medium text-gray-800">
+                    {signer?.name || (
+                      <EmployeeNameDisplay
+                        employeeId={
+                          actor && typeof actor !== 'object'
+                            ? String(actor)
+                            : undefined
+                        }
+                        fallback="Chưa xác định người ký"
+                      />
+                    )}
+                  </div>
+                  {signedAt && (
+                    <div className="text-blue-600">
+                      {dayjs(signedAt).format('DD/MM HH:mm')}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <PendingApproverName record={record} manager={manager} />
+              )}
             </div>
           );
         }
@@ -741,9 +854,12 @@ export const DataTable: React.FC<RequestFormTableProps> = ({
                 )}
               </div>
             ) : (
-              <div className="flex items-center justify-center text-xs text-gray-400">
-                <span className="mr-1">○</span>
-                <span>Chưa ký</span>
+              <div>
+                <div className="flex items-center justify-center text-xs text-gray-400">
+                  <span className="mr-1">○</span>
+                  <span>Chưa ký</span>
+                </div>
+                <PendingApproverName record={record} manager />
               </div>
             )}
           </div>
@@ -771,6 +887,29 @@ export const DataTable: React.FC<RequestFormTableProps> = ({
       render: (date: string, record: RequestForm) => {
         const effectiveStatus = getEffectiveStatus(record);
         const createdBySupervisor = isRequestCreatedBySupervisor(record);
+
+        if (record.status === 'rejected') {
+          const rejectedBy =
+            record.approvedBy ||
+            record.approved_by_employee ||
+            (typeof record.approved_by === 'object'
+              ? record.approved_by
+              : null);
+          return (
+            <div>
+              {date && (
+                <span className="whitespace-nowrap text-gray-600">
+                  {dayjs(date).format('DD/MM/YYYY HH:mm')}
+                </span>
+              )}
+              <div className="mt-0.5 text-xs text-gray-500">
+                {rejectedBy?.name
+                  ? `Từ chối bởi: ${rejectedBy.name}`
+                  : 'Chưa có thông tin người từ chối'}
+              </div>
+            </div>
+          );
+        }
 
         // Đơn Ủy Quyền: Hiển thị ngày người được ủy quyền duyệt
         if (record.type === 'giay_uy_quyen') {
@@ -806,27 +945,6 @@ export const DataTable: React.FC<RequestFormTableProps> = ({
                 {approverName && (
                   <div className="mt-0.5 text-xs text-gray-500">
                     Bởi: {approverName}
-                  </div>
-                )}
-              </div>
-            );
-          } else if (record.status === 'rejected' && date) {
-            const approverInfo =
-              record.approved_by && typeof record.approved_by === 'object'
-                ? record.approved_by
-                : null;
-            const approverName = approverInfo
-              ? (approverInfo as { name: string }).name
-              : null;
-
-            return (
-              <div>
-                <span className="whitespace-nowrap text-gray-600">
-                  {dayjs(date).format('DD/MM/YYYY HH:mm')}
-                </span>
-                {approverName && (
-                  <div className="mt-0.5 text-xs text-gray-500">
-                    Từ chối bởi: {approverName}
                   </div>
                 )}
               </div>
@@ -875,28 +993,6 @@ export const DataTable: React.FC<RequestFormTableProps> = ({
               {approverName && (
                 <div className="mt-0.5 text-xs text-gray-500">
                   Duyệt bởi: {approverName}
-                </div>
-              )}
-            </div>
-          );
-        } else if (record.status === 'rejected' && date) {
-          const approverInfo =
-            record.approvedBy ||
-            (record.approved_by && typeof record.approved_by === 'object'
-              ? record.approved_by
-              : null);
-          const approverName = approverInfo
-            ? (approverInfo as { name: string }).name
-            : null;
-
-          return (
-            <div>
-              <span className="whitespace-nowrap text-gray-600">
-                {dayjs(date).format('DD/MM/YYYY HH:mm')}
-              </span>
-              {approverName && (
-                <div className="mt-0.5 text-xs text-gray-500">
-                  Từ chối bởi: {approverName}
                 </div>
               )}
             </div>
@@ -1072,9 +1168,7 @@ export const DataTable: React.FC<RequestFormTableProps> = ({
     ? {
         ...pagination,
         ...customPaginationProps,
-        size: 'default' as const,
-        showQuickJumper: true,
-        position: ['topRight', 'bottomRight'] as ('topRight' | 'bottomRight')[]
+        position: ['bottomRight'] as 'bottomRight'[]
       }
     : (false as const);
 
@@ -1120,10 +1214,12 @@ export const DataTable: React.FC<RequestFormTableProps> = ({
           record.has_authorized_signature || record.digital_signature_authorized
         )
       : record.type === 'don_xin_tang_ca'
-        ? !!(
-            record.has_supervisor_signature ||
-            record.digital_signature_supervisor
-          )
+        ? requiresManagerApproval(record)
+          ? !!(record.has_manager_signature || record.digital_signature_manager)
+          : !!(
+              record.has_supervisor_signature ||
+              record.digital_signature_supervisor
+            )
         : !!(record.has_manager_signature || record.digital_signature_manager);
     const sig1Label = isDelegation
       ? 'Người UQ'
@@ -1133,14 +1229,17 @@ export const DataTable: React.FC<RequestFormTableProps> = ({
     const sig2Label = isDelegation
       ? 'Người được UQ'
       : record.type === 'don_xin_tang_ca'
-        ? 'Tổ trưởng'
+        ? requiresManagerApproval(record)
+          ? 'Quản lý'
+          : 'Tổ trưởng'
         : 'Quản lý';
 
     // Approver info
-    const approverInfo =
-      record.approved_by && typeof record.approved_by === 'object'
-        ? (record.approved_by as { name: string }).name
-        : null;
+    const approvedBy =
+      record.approvedBy ||
+      record.approved_by_employee ||
+      (typeof record.approved_by === 'object' ? record.approved_by : null);
+    const approverInfo = approvedBy?.name;
 
     return (
       <div
@@ -1199,6 +1298,35 @@ export const DataTable: React.FC<RequestFormTableProps> = ({
           </span>
         </div>
 
+        {!isDelegation && (
+          <div className="mb-2 space-y-1">
+            {record.type !== 'don_xin_tang_ca' &&
+              !sig1Done &&
+              !requiresManagerApproval(record) && (
+                <div>
+                  <span className="text-xs text-gray-400">
+                    Tổ trưởng — Chưa ký
+                  </span>
+                  <PendingApproverName record={record} />
+                </div>
+              )}
+            {!sig2Done && (
+              <div>
+                <span className="text-xs text-gray-400">
+                  {sig2Label} — Chưa ký
+                </span>
+                <PendingApproverName
+                  record={record}
+                  manager={
+                    record.type !== 'don_xin_tang_ca' ||
+                    requiresManagerApproval(record)
+                  }
+                />
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Row 4: Dates */}
         <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-gray-500">
           <span>
@@ -1213,10 +1341,14 @@ export const DataTable: React.FC<RequestFormTableProps> = ({
               {approverInfo && ` (${approverInfo})`}
             </span>
           )}
-          {effectiveStatus === 'rejected' && record.approved_at && (
+          {effectiveStatus === 'rejected' && (
             <span className="text-red-500">
-              ❌ Từ chối: {dayjs(record.approved_at).format('DD/MM/YY')}
-              {approverInfo && ` (${approverInfo})`}
+              ❌ Từ chối:{' '}
+              {record.approved_at &&
+                dayjs(record.approved_at).format('DD/MM/YY')}
+              {approverInfo
+                ? ` (${approverInfo})`
+                : ' Chưa có thông tin người từ chối'}
             </span>
           )}
         </div>

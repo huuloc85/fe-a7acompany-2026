@@ -40,7 +40,7 @@ import {
 import { User } from '@/types/authType';
 
 // Danh sách nhân viên nộp đơn thẳng cho quản lý, bỏ qua tổ trưởng
-const DIRECT_TO_MANAGER_IDS = ['20122900', '23030100', '17031400'] as const;
+const DIRECT_TO_MANAGER_IDS = ['22122900', '23080100', '23011400'] as const;
 
 interface CreateRequestFormProps {
   onSuccess?: () => void;
@@ -389,21 +389,25 @@ TP.Hồ Chí Minh, ngày ${dayjs().date()} tháng ${dayjs().month() + 1} năm ${
       }
       case 'don_xin_tang_ca': {
         const data = formData as Record<string, unknown>;
+        const approver =
+          isCurrentUserSupervisor || canSubmitDirectToManager
+            ? 'Quản lý nhà máy'
+            : 'Tổ trưởng';
         return `Họ và tên: ${cleanName(userInfo?.name)}     Giới tính: ${getGenderText(userInfo?.gender)}     Chức vụ: ${getRoleName()}
 
-Kính xin Tổ trưởng cho tôi được tăng ca ngày ${dayjs(data.ngay_ap_dung as string).format('DD/MM/YYYY')}.
+Kính xin ${approver} cho tôi được tăng ca ngày ${dayjs(data.ngay_ap_dung as string).format('DD/MM/YYYY')}.
 Ca làm: ${Number(data.ca_lam) === 2 ? 'Ca đêm' : 'Ca ngày'}
 Số giờ tăng ca: theo chấm công thực tế.
 Lý do: ${data.ly_do}
 
-Kính trình Tổ trưởng xem xét và phê duyệt.
+Kính trình ${approver} xem xét và phê duyệt.
 Tôi xin chân thành cảm ơn!
 
 TP.Hồ Chí Minh, ngày ${dayjs().date()} tháng ${dayjs().month() + 1} năm ${dayjs().year()}
 
-                    Người làm đơn                                Tổ trưởng
+                    Người làm đơn                                ${approver}
 
-           [Vùng chữ ký điện tử]                     ${getSupervisorName()}
+           [Vùng chữ ký điện tử]                     ${approver === 'Tổ trưởng' ? getSupervisorName() : '[Quản lý nhà máy cần ký tại đây]'}
 
            ${cleanName(userInfo?.name)}`;
       }
@@ -550,8 +554,8 @@ TP.Hồ Chí Minh, ngày ${dayjs().date()} tháng ${dayjs().month() + 1} năm ${
     // (không phải ủy quyền, không phải supervisor, và không phải người nộp thẳng cho quản lý)
     if (
       values.type !== 'giay_uy_quyen' &&
-      (values.type === 'don_xin_tang_ca' ||
-        (!isCurrentUserSupervisor && !canSubmitDirectToManager)) &&
+      !isCurrentUserSupervisor &&
+      !canSubmitDirectToManager &&
       !supervisorId
     ) {
       message.warning('Vui lòng chọn tổ trưởng để duyệt đơn');
@@ -609,7 +613,7 @@ TP.Hồ Chí Minh, ngày ${dayjs().date()} tháng ${dayjs().month() + 1} năm ${
 
     // Thêm supervisor_id cho đơn thường (không phải đơn ủy quyền)
     if (values.type !== 'giay_uy_quyen') {
-      if (isCurrentUserSupervisor && values.type !== 'don_xin_tang_ca') {
+      if (isCurrentUserSupervisor) {
         // Nếu user là supervisor, set supervisor_id = chính user đó
         payload.supervisor_id = currentUser!.id.toString();
       } else if (supervisorId) {
@@ -824,8 +828,8 @@ TP.Hồ Chí Minh, ngày ${dayjs().date()} tháng ${dayjs().month() + 1} năm ${
         {/* Supervisor Selection - Chỉ hiển thị cho đơn thường và user không phải supervisor và không phải direct to manager */}
         {selectedType &&
           selectedType !== 'giay_uy_quyen' &&
-          (selectedType === 'don_xin_tang_ca' ||
-            (!isCurrentUserSupervisor && !canSubmitDirectToManager)) && (
+          !isCurrentUserSupervisor &&
+          !canSubmitDirectToManager && (
             <Card>
               <Form.Item
                 label="Tổ trưởng"
@@ -886,7 +890,6 @@ TP.Hồ Chí Minh, ngày ${dayjs().date()} tháng ${dayjs().month() + 1} năm ${
         {/* Thông báo cho supervisor */}
         {selectedType &&
           selectedType !== 'giay_uy_quyen' &&
-          selectedType !== 'don_xin_tang_ca' &&
           isCurrentUserSupervisor && (
             <Card className="border-blue-200 bg-blue-50">
               <div className="text-center text-blue-700">
@@ -900,7 +903,6 @@ TP.Hồ Chí Minh, ngày ${dayjs().date()} tháng ${dayjs().month() + 1} năm ${
         {/* Thông báo cho người nộp thẳng quản lý */}
         {selectedType &&
           selectedType !== 'giay_uy_quyen' &&
-          selectedType !== 'don_xin_tang_ca' &&
           !isCurrentUserSupervisor &&
           canSubmitDirectToManager && (
             <Card className="border-green-200 bg-green-50">

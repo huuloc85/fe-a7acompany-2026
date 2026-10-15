@@ -19,9 +19,12 @@ import {
 } from '@/types/requestFormType';
 import { useAuth } from '@hooks/useAuth';
 import { getUserApprovalType } from '@/utils/requestFormUtil';
+import { normalizeRoleName } from '@/utils/authUtil';
 
 export default function RequestFormList() {
   const { user } = useAuth();
+  const isSuperAdmin =
+    normalizeRoleName(user?.role?.name || '') === 'super admin';
   const isSupervisor = getUserApprovalType(user) === 'supervisor';
   const approvalService = isSupervisor
     ? requestFormService.supervisor
@@ -33,7 +36,7 @@ export default function RequestFormList() {
 
   // Constants
   const DEFAULT_FILTERS: RequestFormFiltersType = {
-    per_page: 15,
+    per_page: 20,
     page: 1,
     from_date: dayjs().startOf('year').format('YYYY-MM-DD'),
     to_date: dayjs().endOf('year').format('YYYY-MM-DD')
@@ -75,6 +78,33 @@ export default function RequestFormList() {
   };
 
   // Approval mutation với optimistic updates
+  const deleteMutation = useMutation({
+    mutationFn: adminRequestFormService.delete,
+    onSuccess: () => {
+      message.success('Đã xoá đơn');
+      closeModals();
+      invalidateAdminRequestForms();
+      queryClient.invalidateQueries({
+        predicate: (query) => String(query.queryKey[0]).includes('request-form')
+      });
+    },
+    onError: () => {
+      message.error('Không thể xoá đơn. Vui lòng thử lại.');
+    }
+  });
+
+  const confirmDelete = (record: RequestForm) => {
+    if (!isSuperAdmin) return;
+    Modal.confirm({
+      title: `Xoá đơn #${record.id}?`,
+      content: `Đơn của ${record.employee?.name || record.employee_id} sẽ bị xoá khỏi danh sách. Nếu đây là đơn tăng ca đã duyệt, bảng công có thể chuyển sang chưa được duyệt. Bản sao đơn và chữ ký được giữ trên máy chủ để khôi phục khi cần.`,
+      okText: 'Xoá đơn',
+      cancelText: 'Huỷ',
+      okButtonProps: { danger: true },
+      onOk: () => deleteMutation.mutateAsync(record.id)
+    });
+  };
+
   const approveRejectMutation = useMutation({
     mutationFn: async ({
       id,
@@ -223,30 +253,12 @@ export default function RequestFormList() {
 
   const requestForms = useMemo(() => data?.data || [], [data?.data]);
 
-  // Client-side search by employee name or ID
-  const [searchText, setSearchText] = useState('');
-
-  const filteredRequestForms = useMemo(() => {
-    if (!searchText.trim()) return requestForms;
-    const keyword = searchText.trim().toLowerCase();
-    return requestForms.filter((form) => {
-      const name = form.employee?.name?.toLowerCase() || '';
-      const id = form.employee?.id?.toString() || '';
-      return name.includes(keyword) || id.includes(keyword);
-    });
-  }, [requestForms, searchText]);
-
-  const getFilteredTotal = () => {
-    if (searchText.trim()) return filteredRequestForms.length;
-    return data?.total || 0;
-  };
-
   // Event handlers
   const handlers = {
     tableChange: (page: number, pageSize?: number) => {
       setFilters((prev) => ({
         ...prev,
-        page,
+        page: pageSize && pageSize !== prev.per_page ? 1 : page,
         per_page: pageSize || prev.per_page
       }));
     },
@@ -281,7 +293,10 @@ export default function RequestFormList() {
     },
 
     filtersChange: (newFilters: RequestFormFiltersType) => {
-      setFilters(newFilters);
+      setFilters({ ...newFilters, page: 1 });
+    },
+    searchChange: (search: string) => {
+      setFilters((prev) => ({ ...prev, search, page: 1 }));
     },
     clearFilters: () => {
       setFilters({
@@ -327,7 +342,7 @@ export default function RequestFormList() {
             <div className="ml-auto flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 dark:border-gray-600 dark:bg-gray-800">
               <span className="text-xs text-gray-500">
                 📋 Tổng:{' '}
-                <strong className="text-blue-600">{getFilteredTotal()}</strong>{' '}
+                <strong className="text-blue-600">{data?.total || 0}</strong>{' '}
                 đơn
               </span>
             </div>
@@ -340,8 +355,8 @@ export default function RequestFormList() {
               onFiltersChange={handlers.filtersChange}
               onClearFilters={handlers.clearFilters}
               isAdmin={true}
-              searchText={searchText}
-              onSearchTextChange={setSearchText}
+              searchText={filters.search || ''}
+              onSearchTextChange={handlers.searchChange}
             />
           </div>
 
@@ -359,12 +374,14 @@ export default function RequestFormList() {
           {/* ── Table ───────────────────────────────────────────── */}
           <Spin spinning={isLoading}>
             <DataTable
-              data={filteredRequestForms}
+              data={requestForms}
               loading={isLoading}
               pagination={pagination}
               onView={handlers.view}
               onApprove={handlers.approve}
               onReject={handlers.reject}
+              onDelete={isSuperAdmin ? confirmDelete : undefined}
+              isSuperAdmin={isSuperAdmin}
               isAdmin={true}
               currentUserId={user?.id}
               userType={userType || undefined}
