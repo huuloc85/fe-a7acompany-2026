@@ -15,6 +15,7 @@ export interface Cap7AState {
   remote_allowed: boolean;
   camera_ready: boolean;
   model_ready: boolean;
+  worker_alive?: boolean;
   plc_ok: boolean;
   total: number;
   ok: number;
@@ -40,6 +41,36 @@ export const getCap7AStatus = () =>
   axiosPrivate.get<unknown, Cap7AStatus>('/api/cap7a/status', {
     timeout: 12000
   });
+
+export interface Cap7ADaily {
+  available: boolean;
+  date: string;
+  received_at_ms?: number;
+  reset_at_ms?: number;
+  reset_pending?: boolean;
+  report: {
+    total: number;
+    ok: number;
+    ng: number;
+    unconfirmed: number;
+    ok_percent: number | null;
+    warning: boolean;
+    hours: { hour: number; ok: number; ng: number; unconfirmed: number }[];
+  } | null;
+}
+
+export const getCap7ADaily = (date: string) =>
+  axiosPrivate.get<unknown, Cap7ADaily>('/api/cap7a/daily', {
+    params: { date },
+    timeout: 12000
+  });
+
+export const resetCap7ADaily = (date: string) =>
+  axiosPrivate.post<unknown, Cap7ADaily>(
+    '/api/cap7a/daily/reset',
+    { date },
+    { timeout: 15000 }
+  );
 
 export const sendCap7ACommand = (
   session: string,
