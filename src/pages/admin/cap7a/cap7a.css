@@ -61,14 +61,6 @@
 }
 
 @media (min-width: 1100px) {
-  .cap7a-page {
-    min-height: var(--cap7a-height, calc(100dvh - 120px));
-  }
-
-  .cap7a-page > :not(.cap7a-workspace) {
-    flex-shrink: 0;
-  }
-
   .cap7a-workspace {
     flex: none;
     grid-template-columns: minmax(0, 1fr) minmax(340px, 390px);

@@ -338,6 +338,7 @@ export default function HistoryPage() {
                 Chọn ngày
               </label>
               <DatePicker
+                format="DD/MM/YYYY"
                 placeholder="Chọn ngày"
                 value={date}
                 className="!rounded-lg"

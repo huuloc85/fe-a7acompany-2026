@@ -2,16 +2,8 @@ import { TotalMonthQuantityType } from '@/types/totalMonthQuantityType';
 import { Bar } from '@ant-design/plots';
 import { uiStore } from '@stores/uiStore';
 import { useStore } from '@tanstack/react-store';
-import { Card, Badge } from 'antd';
+import DashboardChartCard from '@/components/dashboard/DashboardChartCard';
 import { memo, useEffect } from 'react';
-import {
-  FaArrowUp,
-  FaArrowDown,
-  FaChartBar,
-  FaEquals,
-  FaBoxOpen,
-  FaClipboardList
-} from 'react-icons/fa';
 
 type ProductDataType = {
   product: string;
@@ -77,9 +69,9 @@ export const ProductChart = memo(function ProductChart({
       radiusTopRight: 6,
       radiusBottomLeft: 6,
       radiusBottomRight: 6,
-      fill: 'linear-gradient(0deg, #93c5fd 0%, #3b82f6 50%, #2563eb 100%)',
+      fill: '#3b82f6',
       fillOpacity: 0.9,
-      cursor: 'pointer',
+      cursor: 'default',
       maxWidth: 28
     },
     state: {
@@ -129,7 +121,8 @@ export const ProductChart = memo(function ProductChart({
         {
           field: 'quantity',
           name: 'Số lượng',
-          valueFormatter: (value: number) => `${formatNumber(value)} sản phẩm`
+          valueFormatter: (value: number) =>
+            `${Number(value).toLocaleString('vi-VN')} cái`
         }
       ]
     },
@@ -156,133 +149,43 @@ export const ProductChart = memo(function ProductChart({
   const statCards = [
     {
       label: 'Cao nhất',
-      value: maxQuantity,
-      icon: <FaArrowUp className="text-emerald-500" />
+      value: maxQuantity
     },
     {
       label: 'Trung bình',
-      value: avgQuantity,
-      icon: <FaEquals className="text-blue-500" />
+      value: avgQuantity
     },
     {
       label: 'Tổng cộng',
-      value: totalQuantity,
-      icon: <FaChartBar className="text-indigo-500" />
+      value: totalQuantity
     },
     {
       label: 'Thấp nhất',
-      value: minQuantity,
-      icon: <FaArrowDown className="text-amber-500" />
+      value: minQuantity
     }
   ];
 
   return (
-    <div className="h-full w-full">
-      <Card
-        className="liquid-glass-card dashboard-liquid-chart !rounded-[26px]"
-        title={
-          <div className="flex items-center gap-3">
-            <div>
-              <h3 className="mb-1 text-lg font-bold text-gray-800 uppercase dark:text-white">
-                Top Sản Phẩm Xuất Hàng
-              </h3>
-              <p className="flex items-center gap-2 text-sm font-normal text-gray-500 dark:text-gray-400">
-                <Badge count={chartData.length} showZero color="#6b7280" />
-                <span>
-                  {chartData.length} sản phẩm hàng đầu theo số lượng xuất hàng
-                  theo tháng {data[0]?.month || 'N/A'}
-                </span>
-              </p>
-            </div>
-          </div>
-        }
-        extra={
-          <div className="hidden items-center gap-4 lg:flex">
-            <span className="liquid-glass-control inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold text-blue-600 dark:text-blue-300">
-              <FaBoxOpen aria-hidden="true" />
-              Top sản phẩm
-            </span>
-          </div>
-        }
-      >
-        {/* Stats Cards */}
-        <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-          {statCards.map((stat, i) => (
-            <div
-              key={i}
-              className="dashboard-stat-card liquid-glass-control rounded-2xl p-4"
-            >
-              <div className="flex items-center gap-2 text-xs font-medium text-gray-500 dark:text-gray-400">
-                {stat.icon} {stat.label}
-              </div>
-              <div className="mt-1 text-xl font-bold tracking-tight text-gray-900 tabular-nums dark:text-white">
-                {formatNumber(stat.value)}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Chart */}
-        <div className="relative">
-          <div className="liquid-glass-control dashboard-chart-surface w-full rounded-2xl p-4">
-            <div
-              className="dashboard-chart-canvas w-full"
-              style={{ height: 'clamp(300px, 50vh, 400px)' }}
-            >
-              <Bar {...config} height={undefined} autoFit={true} />
-            </div>
-          </div>
-
-          {chartData.length === 0 && (
-            <div className="liquid-glass-card absolute inset-0 flex items-center justify-center rounded-2xl">
-              <div className="p-6 text-center">
-                <p className="mb-1 text-base font-medium text-gray-600 dark:text-gray-300">
-                  Chưa có dữ liệu sản phẩm
-                </p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Dữ liệu sản phẩm sẽ xuất hiện tại đây
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Production Analysis */}
-        {chartData.length > 0 && (
-          <div className="liquid-glass-control mt-6 rounded-2xl p-4">
-            <h4 className="mb-3 flex items-center gap-2 text-sm font-bold text-gray-800 dark:text-white">
-              <FaClipboardList className="text-gray-400" aria-hidden="true" />
-              Báo cáo sản lượng
-            </h4>
-            <div className="grid grid-cols-1 gap-3 text-sm md:grid-cols-3">
-              <div className="liquid-glass-control flex items-center justify-between rounded-xl p-3">
-                <span className="text-gray-500 dark:text-gray-400">
-                  Sản phẩm chính:
-                </span>
-                <span className="font-semibold text-gray-900 dark:text-white">
-                  {chartData[0]?.product || 'N/A'}
-                </span>
-              </div>
-              <div className="liquid-glass-control flex items-center justify-between rounded-xl p-3">
-                <span className="text-gray-500 dark:text-gray-400">
-                  Sản lượng cao nhất:
-                </span>
-                <span className="font-semibold text-emerald-600">
-                  {formatNumber(maxQuantity)}
-                </span>
-              </div>
-              <div className="liquid-glass-control flex items-center justify-between rounded-xl p-3">
-                <span className="text-gray-500 dark:text-gray-400">
-                  Chênh lệch:
-                </span>
-                <span className="font-semibold text-blue-600">
-                  {formatNumber(maxQuantity - minQuantity)}
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
-      </Card>
-    </div>
+    <DashboardChartCard
+      title="Top sản phẩm xuất hàng"
+      description={`${chartData.length} sản phẩm có sản lượng cao nhất · Tháng ${data[0]?.month || '—'}`}
+      unit="Số lượng (cái) · K: nghìn · M: triệu · B: tỷ"
+      stats={statCards.map((stat) => ({
+        label: stat.label,
+        value: formatNumber(stat.value)
+      }))}
+      empty={chartData.length === 0}
+      footer={
+        chartData[0] && (
+          <span>
+            Dẫn đầu: <strong>{chartData[0].product}</strong> ·{' '}
+            {maxQuantity.toLocaleString('vi-VN')} cái. Các chỉ số chỉ tính trên{' '}
+            {chartData.length} sản phẩm hiển thị.
+          </span>
+        )
+      }
+    >
+      <Bar {...config} height={380} autoFit />
+    </DashboardChartCard>
   );
 });

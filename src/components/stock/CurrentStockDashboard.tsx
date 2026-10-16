@@ -1,6 +1,7 @@
+import AppSearchInput from '@/components/common/AppSearchInput';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Table, Typography, message, Spin, Input, Select, Drawer } from 'antd';
-import { InfoCircleOutlined, SearchOutlined } from '@ant-design/icons';
+import { Table, Typography, message, Spin, Select, Drawer } from 'antd';
+import { InfoCircleOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import AppButton from '@/components/common/AppButton';
 import RefreshButton from '@/components/common/RefreshButton';
@@ -924,12 +925,9 @@ const CurrentStockDashboard: React.FC = () => {
               (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
             }
           />
-          <Input
+          <AppSearchInput
             placeholder="Tìm lot..."
-            allowClear={false}
-            suffix={<SearchOutlined />}
-            size="small"
-            className="stock-search-input !w-full sm:!w-[160px]"
+            className="!w-full sm:!w-[160px]"
             onChange={(e) => handleLotSearch(e.target.value)}
           />
           <RefreshButton

@@ -1,11 +1,12 @@
+import AppSearchInput from '@/components/common/AppSearchInput';
 import { QueryParams } from '@/types/queryParams';
 import BackButton from '@components/common/BackButton';
 import ComponentCard from '@components/common/ComponentCard';
 import RefreshButton from '@components/common/RefreshButton';
 import { useCrudList } from '@hooks/useCrudList';
 import { empScheduleService } from '@services/workScheduleService';
-import { Alert, Empty, Input, Select, Spin, Tag } from 'antd';
-import { SearchOutlined } from '@ant-design/icons';
+import { Alert, Empty, Select, Spin, Tag } from 'antd';
+
 import dayjs from 'dayjs';
 import { debounce } from 'lodash';
 import { useState, useEffect } from 'react';
@@ -96,10 +97,8 @@ export const ScheduleList = () => {
                 <FaSearch className="mr-1 inline-block text-gray-400" />
                 Tìm kiếm
               </label>
-              <Input
-                className="max-w-sm !rounded-lg"
-                allowClear
-                suffix={<SearchOutlined />}
+              <AppSearchInput
+                className="max-w-sm"
                 placeholder="Nhập tiêu đề lịch làm việc..."
                 onChange={(e) => {
                   const inputValue = e.target.value;

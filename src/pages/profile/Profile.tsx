@@ -27,12 +27,12 @@ export const Profile = () => {
       <BackButton to="/" />
 
       {/* ── User Profile Card ────────────────────────── */}
-      <div className="mb-4 rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
-        <div className="border-b border-gray-200 px-4 py-3 sm:px-6 sm:py-4">
-          <h3 className="flex items-center gap-3 text-lg font-medium text-gray-800 uppercase sm:text-2xl dark:text-white/90">
+      <div className="ui-card liquid-glass-card mb-6 overflow-hidden rounded-2xl">
+        <div className="ui-card-header flex flex-col justify-center px-4 py-3 text-left sm:px-6 sm:py-4">
+          <h2 className="ui-page-title !m-0 flex items-center gap-3 text-xl leading-snug font-semibold text-gray-800 uppercase sm:text-2xl dark:text-white/90">
             <FaUser className="text-blue-500" />
             Hồ sơ
-          </h3>
+          </h2>
         </div>
         <div className="p-6">
           <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">

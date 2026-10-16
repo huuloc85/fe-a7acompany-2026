@@ -445,8 +445,8 @@ export const ExportModal = () => {
           disabledDate={isOutsideAttendanceWindow}
           style={{ width: '100%' }}
           placeholder={['Từ ngày', 'Đến ngày']}
-          format="YYYY-MM-DD"
-          inputReadOnly
+          format="DD/MM/YYYY"
+          inputReadOnly={false}
           value={dateRange}
           onChange={(dateRange) => {
             if (dateRange && dateRange[0] && dateRange[1]) {

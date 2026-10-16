@@ -9,6 +9,7 @@ import {
 } from '@tanstack/react-router';
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools';
 import { queryClient } from '@/lib/queryClient';
+import AppButton from '@components/common/AppButton';
 
 const showDevtools =
   import.meta.env.DEV && import.meta.env.VITE_ENABLE_DEVTOOLS === 'true';
@@ -34,9 +35,9 @@ export const Route = createRootRouteWithContext<RouterContext>()({
   ),
   errorComponent: ({ error }) => (
     <QueryClientProvider client={queryClient}>
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
-        <div className="w-full max-w-md rounded-2xl border border-gray-100 bg-white p-6 text-center shadow-sm">
-          <h1 className="text-lg font-semibold text-gray-800">
+      <div className="error-page-shell glass-app-shell flex min-h-screen items-center justify-center px-4 py-6">
+        <div className="error-page-card liquid-glass-card w-full max-w-md rounded-2xl p-6 text-center sm:p-8">
+          <h1 className="text-lg font-semibold text-gray-800 uppercase">
             Không thể hiển thị trang
           </h1>
           <p className="mt-2 text-sm text-gray-500">
@@ -48,19 +49,12 @@ export const Route = createRootRouteWithContext<RouterContext>()({
             </pre>
           )}
           <div className="mt-5 flex justify-center gap-2">
-            <Link
-              to="/"
-              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white"
-            >
-              Về trang chủ
+            <Link to="/">
+              <AppButton tone="primary">Về trang chủ</AppButton>
             </Link>
-            <button
-              type="button"
-              onClick={() => window.location.reload()}
-              className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700"
-            >
+            <AppButton onClick={() => window.location.reload()}>
               Tải lại
-            </button>
+            </AppButton>
           </div>
         </div>
       </div>

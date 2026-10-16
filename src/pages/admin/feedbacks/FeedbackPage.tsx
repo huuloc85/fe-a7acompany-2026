@@ -1,3 +1,4 @@
+import AppSearchInput from '@/components/common/AppSearchInput';
 import { isAllowRole } from '@utils/authUtil';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@hooks/useAuth';
@@ -22,13 +23,7 @@ import {
   Drawer,
   Image
 } from 'antd';
-import {
-  FaCommentDots,
-  FaReply,
-  FaTrashAlt,
-  FaEye,
-  FaSearch
-} from 'react-icons/fa';
+import { FaCommentDots, FaReply, FaTrashAlt, FaEye } from 'react-icons/fa';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import 'dayjs/locale/vi';
@@ -369,16 +364,14 @@ export default function FeedbackPage() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
-              <Input
+              <AppSearchInput
                 placeholder="Tìm kiếm..."
-                prefix={<FaSearch className="text-xs text-gray-300" />}
                 value={search}
                 onChange={(e) => {
                   setSearch(e.target.value);
                   setPage(1);
                 }}
-                allowClear
-                className="!w-full !rounded-lg sm:!w-[200px]"
+                className="!w-full sm:!w-[200px]"
               />
               <Select
                 allowClear

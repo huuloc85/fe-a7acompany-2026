@@ -18,6 +18,7 @@ export const PageLayout = ({ title }: PageLayoutProps) => {
       variants={shouldReduceMotion ? undefined : LIST_CONTAINER_VARIANTS}
       initial="initial"
       animate="animate"
+      className="ui-page"
     >
       <motion.div
         variants={
@@ -29,10 +30,10 @@ export const PageLayout = ({ title }: PageLayoutProps) => {
             : SECTION_ITEM_VARIANTS
         }
         transition={shouldReduceMotion ? { duration: 0 } : SURFACE_TRANSITION}
-        className="mb-6 flex flex-wrap items-center justify-between gap-3"
+        className="ui-page-header mb-6 flex flex-wrap items-center gap-3 py-3 text-left sm:py-4"
       >
         <h2
-          className="text-xl font-semibold text-gray-800 dark:text-white/90"
+          className="ui-page-title !m-0 text-xl leading-snug font-semibold text-gray-800 uppercase sm:text-2xl dark:text-white/90"
           x-text="pageName"
         >
           {title}

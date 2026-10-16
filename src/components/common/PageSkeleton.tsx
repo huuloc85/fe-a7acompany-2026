@@ -42,7 +42,7 @@ export default function PageSkeleton({
           variants={shouldReduceMotion ? undefined : SECTION_ITEM_VARIANTS}
           transition={shouldReduceMotion ? { duration: 0 } : SURFACE_TRANSITION}
         >
-          <Card className="!rounded-xl">
+          <Card className="ui-card liquid-glass-card !rounded-2xl">
             <Skeleton
               active
               avatar={avatar}

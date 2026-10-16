@@ -1,15 +1,15 @@
+import AppSearchInput from '@/components/common/AppSearchInput';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Table,
   Typography,
   message,
   Spin,
-  Input,
   Select,
   Drawer,
   DatePicker
 } from 'antd';
-import { InfoCircleOutlined, SearchOutlined } from '@ant-design/icons';
+import { InfoCircleOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
 import AppButton from '@/components/common/AppButton';
@@ -1069,15 +1069,12 @@ const ProductStockSummary: React.FC = () => {
             allowClear={false}
             size="small"
             className="!w-full sm:!w-[130px]"
-            format="MM/YYYY"
+            format="DD/MM/YYYY"
             onChange={(value) => setMonth(value || dayjs())}
           />
-          <Input
+          <AppSearchInput
             placeholder="Tìm..."
-            allowClear={false}
-            suffix={<SearchOutlined />}
-            size="small"
-            className="stock-search-input !w-full sm:!w-[160px]"
+            className="!w-full sm:!w-[160px]"
             onChange={(e) => setSearchText(e.target.value)}
           />
           <RefreshButton refresh={loadData} isLoading={loading} size="small" />

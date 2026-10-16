@@ -139,10 +139,7 @@ export default function ProductQuantityAdd() {
                     ]}
                     initialValue={dayjs()}
                   >
-                    <DatePicker
-                      format={'DD-MM-YYYY'}
-                      style={{ width: '100%' }}
-                    />
+                    <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
                   </Form.Item>
                   <Form.Item
                     label="Loại sản lượng"

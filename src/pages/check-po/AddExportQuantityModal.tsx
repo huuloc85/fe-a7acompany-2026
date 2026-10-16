@@ -1,3 +1,4 @@
+import AppSearchInput from '@/components/common/AppSearchInput';
 import { AddPoExportRequest } from '@/types/purchaseOrdersType';
 import { ProductType } from '@/types/productType';
 import AppButton from '@components/common/AppButton';
@@ -53,7 +54,6 @@ import {
 } from 'react-icons/fa';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import * as XLSX from 'xlsx';
-import { SearchOutlined } from '@ant-design/icons';
 
 dayjs.extend(customParseFormat);
 
@@ -2022,10 +2022,7 @@ export const AddExportQuantityModal: React.FC<AddExportQuantityModalProps> = ({
                 </Tag>
               )}
             </div>
-            <Input
-              allowClear
-              suffix={<SearchOutlined />}
-              size="small"
+            <AppSearchInput
               placeholder="Tìm mã hoặc tên sản phẩm..."
               className="!w-full sm:!w-72"
               value={manualSearch}

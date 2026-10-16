@@ -218,6 +218,7 @@ export default function DailySchedule() {
           <div className="flex items-center gap-2">
             <FaCalendarAlt className="text-blue-500" />
             <DatePicker
+              format="DD/MM/YYYY"
               id="admin-date-picker"
               placeholder="Chọn ngày"
               value={dayjs(params['filter[date]'])}

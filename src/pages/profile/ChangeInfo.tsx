@@ -163,7 +163,7 @@ export const ChangeInfo = () => {
                 }
               ]}
             >
-              <DatePicker style={{ width: '100%' }} />
+              <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
             </Form.Item>
             <Form.Item<FormField>
               label="CCCD"

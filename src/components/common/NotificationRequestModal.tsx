@@ -65,15 +65,7 @@ export const NotificationRequestModal: React.FC<
           </Title>
         </div>
 
-        <div
-          style={{
-            background: '#f6ffed',
-            border: '1px solid #b7eb8f',
-            borderRadius: '6px',
-            padding: '12px',
-            marginTop: '16px'
-          }}
-        >
+        <div className="liquid-glass-control rounded-xl p-3">
           <Text type="secondary" style={{ fontSize: '13px' }}>
             💡 <strong>Lưu ý:</strong> Bạn có thể tắt thông báo bất kỳ lúc nào
             trong cài đặt trình duyệt

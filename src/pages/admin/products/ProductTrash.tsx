@@ -1,5 +1,6 @@
-import { Input, Table, TableColumnsType, TableProps, Select } from 'antd';
-import { SearchOutlined } from '@ant-design/icons';
+import AppSearchInput from '@/components/common/AppSearchInput';
+import { Table, TableColumnsType, TableProps, Select } from 'antd';
+
 import React, { useState } from 'react';
 
 import { ProductType } from '@/types/productType';
@@ -292,11 +293,9 @@ export default function ProductTrash() {
             }));
           }}
         />
-        <Input
+        <AppSearchInput
           className="col-span-1"
           placeholder="Tìm kiếm sản phẩm"
-          allowClear
-          suffix={<SearchOutlined />}
           onChange={(e) => {
             const inputValue = e.target.value;
             handleSearch(inputValue);

@@ -145,7 +145,11 @@ export const AddQuantityModal: React.FC<AddQuantityModalProps> = ({
                 className="!mb-0"
                 rules={[{ required: true, message: 'Chọn ngày' }]}
               >
-                <DatePicker placeholder="Chọn ngày" className="!rounded-lg" />
+                <DatePicker
+                  format="DD/MM/YYYY"
+                  placeholder="Chọn ngày"
+                  className="!rounded-lg"
+                />
               </Form.Item>
               <Form.Item<FormFields>
                 label="Loại sản lượng"

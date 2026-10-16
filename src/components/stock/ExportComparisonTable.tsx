@@ -1,6 +1,6 @@
+import AppSearchInput from '@/components/common/AppSearchInput';
 import {
   DatePicker,
-  Input,
   Table,
   TableColumnsType,
   TableProps,
@@ -11,7 +11,6 @@ import { useQuery } from '@tanstack/react-query';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 import React, { useEffect, useMemo, useState } from 'react';
-import { FaSearch } from 'react-icons/fa';
 
 import AppButton from '@/components/common/AppButton';
 import { ProductType } from '@/types/productType';
@@ -577,13 +576,10 @@ const ExportComparisonTable: React.FC = () => {
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2 rounded-lg border border-gray-100 bg-gray-50/50 px-3 py-2.5 dark:border-gray-700 dark:bg-gray-800/50">
-        <div className="flex flex-1 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 sm:flex-none dark:border-gray-600 dark:bg-gray-800">
-          <FaSearch className="text-xs text-gray-400" />
-          <Input
+        <div className="min-w-0 flex-1 sm:flex-none">
+          <AppSearchInput
             placeholder="Tìm sản phẩm..."
-            allowClear
-            size={isMobile ? 'small' : 'middle'}
-            className="!w-full min-w-[140px] !border-0 !shadow-none sm:!w-56"
+            className="!w-full sm:!w-56"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
@@ -591,6 +587,7 @@ const ExportComparisonTable: React.FC = () => {
         <div className="flex w-full items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 sm:w-auto dark:border-gray-600 dark:bg-gray-800">
           <span className="text-xs text-gray-500">Tháng:</span>
           <DatePicker
+            format="DD/MM/YYYY"
             picker="month"
             value={month}
             size={isMobile ? 'small' : 'middle'}

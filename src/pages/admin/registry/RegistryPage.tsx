@@ -1,5 +1,6 @@
+import AppSearchInput from '@/components/common/AppSearchInput';
 import { useQuery } from '@tanstack/react-query';
-import { Input, Select, Table, Tag, Tooltip, message } from 'antd';
+import { Select, Table, Tag, Tooltip, message } from 'antd';
 import type { TableColumnsType, TableProps } from 'antd';
 import { useMemo, useState, useCallback } from 'react';
 import { FaCopy, FaSearch, FaServer } from 'react-icons/fa';
@@ -439,12 +440,10 @@ export default function RegistryPage() {
                 <FaSearch className="mr-1 inline-block text-gray-400" />
                 Tìm kiếm
               </label>
-              <Input
+              <AppSearchInput
                 placeholder="URI, permission, action..."
-                allowClear
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="!rounded-lg"
               />
             </div>
 

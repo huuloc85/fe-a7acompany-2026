@@ -254,6 +254,7 @@ export default function StampForm() {
                     className="!mb-0"
                   >
                     <DatePicker
+                      format="DD/MM/YYYY"
                       style={{ width: '100%' }}
                       className="!rounded-lg"
                       placeholder="Chọn ngày"
@@ -465,7 +466,7 @@ export default function StampForm() {
       {/* ── Preview Section ──────────────────────────────────── */}
       {stampData && (
         <div ref={previewRef} tabIndex={-1} className="mt-4 outline-none">
-          <ComponentCard title="Xem trước khi in">
+          <ComponentCard title="Xem trước khi in" uppercaseTitle={false}>
             <div className="space-y-5">
               {/* Print Info Header */}
               <div

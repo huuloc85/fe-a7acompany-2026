@@ -170,7 +170,7 @@ export const AddSalary: React.FC<AddSalaryProps> = ({ onCreated }) => {
           >
             <DatePicker
               style={{ width: '100%' }}
-              format="YYYY-MM-DD"
+              format="DD/MM/YYYY"
               disabled
             />
           </Form.Item>
@@ -181,7 +181,7 @@ export const AddSalary: React.FC<AddSalaryProps> = ({ onCreated }) => {
           >
             <DatePicker
               style={{ width: '100%' }}
-              format="YYYY-MM-DD"
+              format="DD/MM/YYYY"
               disabled
             />
           </Form.Item>

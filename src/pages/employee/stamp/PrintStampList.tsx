@@ -298,6 +298,7 @@ export const PrintStampList = () => {
                 Ngày:
               </label>
               <DatePicker
+                format="DD/MM/YYYY"
                 value={date}
                 className="!w-full !rounded-lg sm:!w-auto"
                 onChange={(value) => {

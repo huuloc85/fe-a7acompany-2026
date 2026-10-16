@@ -1,19 +1,6 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import {
-  Alert,
-  Empty,
-  Radio,
-  Select,
-  Spin,
-  Tabs,
-  TabsProps,
-  Button,
-  Modal,
-  message,
-  Tag
-} from 'antd';
+import { useQuery } from '@tanstack/react-query';
+import { Alert, Empty, Radio, Select, Spin, Tabs, TabsProps, Tag } from 'antd';
 import PayrollSnapshot from '@/components/salaries/PayrollSnapshot';
-import { publishPayroll } from '@/services/PayrollPublicationService';
 import dayjs from 'dayjs';
 import { useEffect, useMemo, useState } from 'react';
 import {
@@ -50,14 +37,15 @@ const formatVND = (value: number | null | undefined) => {
 
 export default function SalaryList() {
   const isMobile = useIsMobile();
-  const [publishing, setPublishing] = useState(false);
   const [company, setCompany] = useState<CompanyType>('vvp');
-  const [selectedSalaryId, setSelectedSalaryId] = useState<string | null>(null);
+  const [requestedSalaryId, setSelectedSalaryId] = useState<string | null>(
+    null
+  );
   const [selectedSalaryDetailId, setSelectedSalaryDetailId] = useState<
     number | null
   >(null);
 
-  const { data, pagination, queryResult } = useCrudList({
+  const { data, queryResult } = useCrudList({
     service: salariesService,
     queryKey: 'salaries',
     initialFilters: {
@@ -68,8 +56,18 @@ export default function SalaryList() {
 
   const { isLoading, isFetching, refetch } = queryResult;
 
-  const salaries = useMemo(() => data || [], [data]);
-  const total = pagination.total || 0;
+  const salaries = useMemo(
+    () => (data || []).filter((item) => item.status === 'published'),
+    [data]
+  );
+  const total = salaries.length;
+  const selectedSalaryId = salaries.some(
+    (item) => String(item.id) === requestedSalaryId
+  )
+    ? requestedSalaryId
+    : salaries[0]
+      ? String(salaries[0].id)
+      : null;
 
   const {
     data: vvpSalaryData,
@@ -79,8 +77,7 @@ export default function SalaryList() {
   } = useQuery({
     queryKey: ['adminSalaryPreview', selectedSalaryId, 'vvp'],
     queryFn: () => fetchSalary({ id: selectedSalaryId!, company: 'vvp' }),
-    enabled: !!selectedSalaryId,
-    placeholderData: keepPreviousData
+    enabled: !!selectedSalaryId
   });
 
   const {
@@ -91,8 +88,7 @@ export default function SalaryList() {
   } = useQuery({
     queryKey: ['adminSalaryPreview', selectedSalaryId, 'a7a'],
     queryFn: () => fetchSalary({ id: selectedSalaryId!, company: 'a7a' }),
-    enabled: !!selectedSalaryId,
-    placeholderData: keepPreviousData
+    enabled: !!selectedSalaryId
   });
 
   const selectedSalaryData = company === 'vvp' ? vvpSalaryData : a7aSalaryData;
@@ -120,7 +116,7 @@ export default function SalaryList() {
     () =>
       salaries.map((item) => ({
         value: String(item.id),
-        label: `${item.title}${item.status === 'draft' ? ' — Bản nháp' : ''}`,
+        label: item.title,
         startDate: item.start_date,
         endDate: item.end_date
       })),
@@ -173,11 +169,6 @@ export default function SalaryList() {
       total: vvp + a7a
     };
   }, [a7aSalaryData, vvpSalaryData]);
-
-  useEffect(() => {
-    if (selectedSalaryId || !salaries.length) return;
-    setSelectedSalaryId(String(salaries[0].id));
-  }, [salaries, selectedSalaryId]);
 
   useEffect(() => {
     setSelectedSalaryDetailId(null);
@@ -306,50 +297,7 @@ export default function SalaryList() {
               Tính lương
             </AppButton>
           </Link>
-          {selectedSalary && (
-            <Tag color={selectedSalary.status === 'draft' ? 'blue' : 'green'}>
-              {selectedSalary.status === 'draft' ? 'Bản nháp' : 'Đã công bố'}
-            </Tag>
-          )}
-          {selectedSalary?.status === 'draft' && (
-            <Button
-              type="primary"
-              loading={publishing}
-              disabled={
-                isDetailFetching ||
-                isDetailError ||
-                selectedSalaryData?.manager?.id !== selectedSalary.id
-              }
-              onClick={() => {
-                const id = selectedSalary.id;
-                const revision = selectedSalaryData?.manager?.revision;
-                if (revision == null) return;
-                Modal.confirm({
-                  title: 'Duyệt và công bố bảng lương?',
-                  content:
-                    'Nhân viên sẽ xem được phiếu lương của mình. Bản công bố không thể ghi đè.',
-                  okText: 'Duyệt / Công bố',
-                  cancelText: 'Hủy',
-                  onOk: async () => {
-                    setPublishing(true);
-                    try {
-                      await publishPayroll(Number(id), revision);
-                      await refetch();
-                      message.success('Đã công bố bảng lương.');
-                    } catch {
-                      message.error(
-                        'Chưa công bố được. Kiểm tra quyền duyệt và tải lại bản mới nhất.'
-                      );
-                    } finally {
-                      setPublishing(false);
-                    }
-                  }
-                });
-              }}
-            >
-              Duyệt / Công bố
-            </Button>
-          )}
+          {selectedSalary && <Tag color="green">Đã công bố</Tag>}
           {selectedSalary &&
             !(
               selectedSalary.calculator_key &&
@@ -510,7 +458,7 @@ export default function SalaryList() {
                 tabBarStyle={isMobile ? { marginBottom: 12 } : undefined}
               />
             ) : (
-              <Empty description="Không có dữ liệu bảng lương" />
+              <Empty description="Chưa có bảng lương chính thức được công bố" />
             )}
           </Spin>
         </div>

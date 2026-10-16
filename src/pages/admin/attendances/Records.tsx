@@ -1,9 +1,9 @@
+import AppSearchInput from '@/components/common/AppSearchInput';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import {
   Button,
   DatePicker,
-  Input,
   Select,
   Switch,
   Table,
@@ -15,7 +15,6 @@ import dayjs from 'dayjs';
 import { debounce } from 'lodash';
 import { useState } from 'react';
 import type { Dayjs } from 'dayjs';
-import { SearchOutlined } from '@ant-design/icons';
 
 import { QueryParams } from '@/types/queryParams';
 import { EmployeeListModal } from '@components/attendances/EmployeeListModal';
@@ -366,9 +365,9 @@ export default function Records() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
         <DatePicker
           picker="month"
-          format="YYYY-MM"
+          format="DD/MM/YYYY"
           placeholder="Chọn tháng"
-          inputReadOnly
+          inputReadOnly={false}
           value={filterType === 'month' ? month : null}
           onChange={(value) => {
             const selectedMonth = value ? dayjs(value) : dayjs();
@@ -384,8 +383,9 @@ export default function Records() {
           }}
         />
         <DatePicker.RangePicker
+          format="DD/MM/YYYY"
           placeholder={['Chọn ngày bắt đầu', 'Chọn ngày kết thúc']}
-          inputReadOnly
+          inputReadOnly={false}
           value={filterType === 'range' ? dateRange : null}
           onChange={(value) => {
             if (value && value[0] && value[1]) {
@@ -431,10 +431,8 @@ export default function Records() {
             }));
           }}
         />
-        <Input
+        <AppSearchInput
           placeholder="Tìm kiếm nhân viên"
-          allowClear
-          suffix={<SearchOutlined />}
           onChange={(e) => {
             const inputValue = e.target.value;
             if (/^\d+$/.test(inputValue)) {

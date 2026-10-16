@@ -1,6 +1,7 @@
+import AppSearchInput from '@/components/common/AppSearchInput';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Table, Card, Input, Select, Typography, message } from 'antd';
-import { SearchOutlined } from '@ant-design/icons';
+import { Table, Card, Select, Typography, message } from 'antd';
+
 import RefreshButton from '@/components/common/RefreshButton';
 import { customPaginationProps } from '@components/custom/PaginationProps.custom';
 
@@ -285,13 +286,10 @@ const TransactionList: React.FC = () => {
             </Text>
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <Input
+            <AppSearchInput
               placeholder="Tìm kiếm..."
-              allowClear={false}
-              className="stock-search-input !w-full sm:!w-[160px]"
-              suffix={<SearchOutlined />}
+              className="!w-full sm:!w-[160px]"
               onChange={(e) => handleSearch(e.target.value)}
-              size="small"
             />
             <Select
               placeholder="Loại"

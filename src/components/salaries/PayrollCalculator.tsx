@@ -1,3 +1,4 @@
+import AppSearchInput from '@/components/common/AppSearchInput';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -6,7 +7,7 @@ import {
   savePayrollDraft
 } from '@/services/PayrollPublicationService';
 import type { PayrollPublication } from '@/services/PayrollPublicationService';
-import { SearchOutlined } from '@ant-design/icons';
+
 import { payrollBanks, payrollBankBin } from '@/utils/payrollBanks';
 import PayrollBankLabel from './PayrollBankLabel';
 import {
@@ -903,6 +904,7 @@ export default function PayrollCalculator() {
               <div>
                 <div>Tháng lương (kỳ 16–15)</div>
                 <DatePicker
+                  format="DD/MM/YYYY"
                   aria-label="Tháng lương"
                   picker="month"
                   value={month}
@@ -922,6 +924,7 @@ export default function PayrollCalculator() {
               <div>
                 <div>Lấy công đến ngày</div>
                 <DatePicker
+                  format="DD/MM/YYYY"
                   aria-label="Lấy công đến ngày"
                   value={dayjs(throughDate)}
                   allowClear={false}
@@ -1130,14 +1133,11 @@ export default function PayrollCalculator() {
             />
           )}
           <div className="vvp-payroll-toolbar">
-            <Input
-              className="vvp-employee-search"
+            <AppSearchInput
               aria-label="Tìm mã hoặc tên nhân viên"
-              prefix={<SearchOutlined aria-hidden />}
               placeholder="Tìm mã hoặc tên nhân viên"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              allowClear
               style={{ maxWidth: 360 }}
             />
             {publicationError && (

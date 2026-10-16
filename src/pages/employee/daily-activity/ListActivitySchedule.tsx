@@ -245,6 +245,7 @@ export const ListActivity = () => {
                 Chọn ngày
               </label>
               <DatePicker
+                format="DD/MM/YYYY"
                 id="month-picker"
                 placeholder="Chọn ngày"
                 value={dayjs(params['filter[date]'])}

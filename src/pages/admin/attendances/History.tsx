@@ -1,9 +1,9 @@
+import AppSearchInput from '@/components/common/AppSearchInput';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import {
   Button,
   DatePicker,
-  Input,
   Select,
   Table,
   TableColumnsType,
@@ -12,7 +12,6 @@ import {
 import { debounce } from 'lodash';
 import { useState } from 'react';
 import dayjs from 'dayjs';
-import { SearchOutlined } from '@ant-design/icons';
 
 import {
   attendanceUpdateFields,
@@ -257,9 +256,9 @@ export const History = () => {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
         <DatePicker
           picker="month"
-          format="YYYY-MM"
+          format="DD/MM/YYYY"
           placeholder="Chọn tháng"
-          inputReadOnly
+          inputReadOnly={false}
           onChange={(value) => {
             setParams((prev) => ({
               ...prev,
@@ -270,8 +269,9 @@ export const History = () => {
           }}
         />
         <DatePicker.RangePicker
+          format="DD/MM/YYYY"
           placeholder={['Chọn ngày bắt đầu', 'Chọn ngày kết thúc']}
-          inputReadOnly
+          inputReadOnly={false}
           onChange={(value) => {
             setParams((prev) => ({
               ...prev,
@@ -300,10 +300,8 @@ export const History = () => {
             }));
           }}
         />
-        <Input
+        <AppSearchInput
           placeholder="Tìm kiếm nhân viên"
-          allowClear
-          suffix={<SearchOutlined />}
           onChange={(e) => {
             const inputValue = e.target.value;
             if (/^\d+$/.test(inputValue)) {

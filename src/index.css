@@ -335,6 +335,46 @@ body {
   background: transparent !important;
 }
 
+/* Shared page geometry. Keep route content constrained without imposing a
+   second visual system on feature-specific components. */
+.ui-content,
+.ui-route-content,
+.ui-page,
+.ui-card {
+  width: 100%;
+  min-width: 0;
+}
+
+.ui-page-header {
+  min-height: 28px;
+}
+
+.ui-card-header {
+  border-bottom: 1px solid rgba(100, 116, 139, 0.4);
+  border-top-left-radius: inherit;
+  border-top-right-radius: inherit;
+  background: rgba(241, 245, 249, 0.6);
+}
+
+.dark .ui-card-header {
+  border-bottom-color: rgba(148, 163, 184, 0.45);
+  background: rgba(30, 41, 59, 0.5);
+}
+
+/* Optical alignment: uppercase glyphs sit above the center of their line box.
+   Keep symmetric header padding and compensate only the visible title. */
+.ui-page-title.uppercase {
+  position: relative;
+  top: 2px;
+}
+
+.error-page-shell {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  background: var(--glass-page-bg);
+}
+
 .glass-panel,
 .glass-card,
 .glass-button,
@@ -4436,6 +4476,29 @@ html body #root .header-action-btn {
     transform 0.15s ease;
 }
 
+/* Icon-only theme switch must not inherit text-button horizontal padding. */
+html body #root .appearance-toggle-btn svg.appearance-water-icon {
+  color: #06b6d4 !important;
+  fill: #06b6d4 !important;
+}
+
+html body #root .theme-toggle-btn svg.theme-sun-icon {
+  color: #eab308 !important;
+  fill: #eab308 !important;
+}
+
+html body #root .theme-toggle-btn.header-action-btn {
+  padding: 0 !important;
+  width: 40px;
+  height: 40px;
+}
+
+html body #root .theme-toggle-btn.header-action-btn > svg {
+  width: 22px !important;
+  height: 22px !important;
+  flex-shrink: 0;
+}
+
 html body #root .header-action-btn:hover:not(:disabled) {
   transform: translateY(-1px);
 }
@@ -4912,6 +4975,27 @@ html
   font-size: 14px !important;
   line-height: 1 !important;
   color: rgba(71, 85, 105, 0.9) !important;
+}
+
+/* Shared search geometry for page toolbars and modal/drawer filters. */
+html body .app-search-input.ant-input-affix-wrapper,
+html body #root .app-search-input.ant-input-affix-wrapper {
+  height: 40px !important;
+  min-height: 40px !important;
+  min-width: 0;
+  padding: 4px 11px !important;
+  border-radius: 8px !important;
+  font-size: 14px !important;
+  align-items: center;
+}
+
+html body .app-search-input.ant-input-affix-wrapper > input.ant-input,
+html body #root .app-search-input.ant-input-affix-wrapper > input.ant-input {
+  height: auto !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  line-height: 1.5 !important;
+  font-size: inherit !important;
 }
 
 /* Auth page keeps the login CTA stronger than the generic liquid button rules. */
@@ -7145,7 +7229,7 @@ html:not(.legacy-ui-mode).dark
 .dashboard-redesign .dashboard-widget-card {
   min-height: 144px;
   isolation: isolate;
-  animation: dashboard-card-enter 560ms var(--motion-ease-emphasized) both;
+  animation: none;
 }
 
 .dashboard-redesign
@@ -7301,23 +7385,12 @@ html body #root .dashboard-redesign .dashboard-widget-card:hover {
   border-color: rgba(37, 99, 235, 0.32) !important;
   box-shadow:
     0 2px 4px rgba(15, 23, 42, 0.04),
-    0 12px 28px rgba(37, 99, 235, 0.1) !important;
+    0 4px 12px rgba(37, 99, 235, 0.08) !important;
 }
 
-/* Left accent: hidden until hover. Decorative blob removed. */
+/* Hover keeps the card geometry stable; no side stripe or decorative blob. */
 html body #root .dashboard-redesign .dashboard-widget-card::before {
-  content: '' !important;
-  display: block !important;
-  inset: 14px auto 14px 0;
-  width: 3px;
-  border-radius: 0 3px 3px 0;
-  background: var(--dashboard-accent);
-  opacity: 0 !important;
-  transition: opacity var(--motion-duration-normal) var(--motion-ease-standard);
-}
-
-html body #root .dashboard-redesign .dashboard-widget-card:hover::before {
-  opacity: 1 !important;
+  content: none !important;
 }
 
 html body #root .dashboard-redesign .dashboard-widget-card::after {
@@ -7441,6 +7514,28 @@ html body #root .dashboard-redesign .dashboard-stat-card::after {
 }
 
 /* Keyboard focus for widget links/buttons. */
+.dashboard-report-card {
+  container-type: inline-size;
+}
+
+html body #root .dashboard-redesign .dashboard-report-card > .ant-card-head {
+  padding: 16px 20px;
+}
+
+html body #root .dashboard-redesign .dashboard-report-card > .ant-card-body {
+  padding: 20px;
+}
+
+.dashboard-report-card .ant-card-head-title {
+  white-space: normal;
+}
+
+@container (min-width: 520px) {
+  .dashboard-report-stats {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
 .dashboard-redesign .dashboard-widget-grid :where(a, button):focus-visible {
   border-radius: 22px;
   outline: 2px solid var(--dashboard-accent);
@@ -7455,7 +7550,7 @@ html.dark body #root .dashboard-redesign .dashboard-widget-card {
 
 html.dark body #root .dashboard-redesign .dashboard-widget-card:hover {
   border-color: rgba(96, 165, 250, 0.4) !important;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
 }
 
 html.dark body #root .dashboard-redesign {

@@ -4,9 +4,9 @@ import AppButton from '@components/common/AppButton';
 export default function NotFound() {
   return (
     <>
-      <div className="relative z-1 flex min-h-screen flex-col items-center justify-center overflow-hidden p-6">
-        <div className="mx-auto w-full max-w-[242px] text-center sm:max-w-[472px]">
-          <h1 className="text-title-md xl:text-title-2xl mb-8 font-bold text-gray-800 dark:text-white/90">
+      <div className="error-page-shell relative z-1 flex min-h-screen flex-col items-center justify-center overflow-hidden p-6">
+        <div className="error-page-card liquid-glass-card mx-auto w-full max-w-md rounded-2xl p-6 text-center sm:p-8">
+          <h1 className="text-title-md xl:text-title-2xl mb-8 font-bold text-gray-800 uppercase dark:text-white/90">
             ERROR
           </h1>
 

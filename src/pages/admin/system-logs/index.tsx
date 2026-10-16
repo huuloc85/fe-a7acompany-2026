@@ -1,3 +1,4 @@
+import AppSearchInput from '@/components/common/AppSearchInput';
 import { useState, useEffect, useRef } from 'react';
 import {
   Button,
@@ -7,8 +8,7 @@ import {
   Tabs,
   TabsProps,
   Table,
-  Tag,
-  Input
+  Tag
 } from 'antd';
 import { filterSystemLogs } from '@/utils/systemLogs';
 import { getApiErrorMessage } from '@/utils/apiError';
@@ -476,8 +476,7 @@ export default function SystemLogsPage() {
             </div>
           </div>
 
-          <Input.Search
-            allowClear
+          <AppSearchInput
             placeholder="Tìm mã lỗi (request_id) hoặc nội dung log"
             value={search}
             onChange={(event) => setSearch(event.target.value)}

@@ -63,7 +63,7 @@ export const NotificationPermissionCard: React.FC<
 
   if (!isSupported) {
     return (
-      <Card>
+      <Card className="ui-card liquid-glass-card !rounded-2xl">
         <Alert
           message="Không hỗ trợ"
           description="Trình duyệt của bạn không hỗ trợ thông báo đẩy"
@@ -76,7 +76,7 @@ export const NotificationPermissionCard: React.FC<
   }
 
   return (
-    <Card>
+    <Card className="ui-card liquid-glass-card !rounded-2xl">
       <Space direction="vertical" size="middle" style={{ width: '100%' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <BellOutlined style={{ fontSize: '24px', color: '#1890ff' }} />

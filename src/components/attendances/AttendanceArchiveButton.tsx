@@ -1,3 +1,4 @@
+import AppSearchInput from '@/components/common/AppSearchInput';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { OvertimeApprovalStatus } from './OvertimeApprovalStatus';
@@ -7,7 +8,6 @@ import {
   Alert,
   Button,
   DatePicker,
-  Input,
   Modal,
   Select,
   Space,
@@ -190,6 +190,7 @@ export default function AttendanceArchiveButton() {
           />
           <Space wrap>
             <DatePicker
+              format="DD/MM/YYYY"
               aria-label="Tháng lưu trữ"
               picker="month"
               value={month}
@@ -217,11 +218,10 @@ export default function AttendanceArchiveButton() {
                 setPage(1);
               }}
             />
-            <Input
+            <AppSearchInput
               aria-label="Tìm nhân viên lưu trữ"
               placeholder="Nhập mã hoặc tên…"
               value={search}
-              allowClear
               disabled={exporting}
               onChange={(event) => {
                 setSearch(event.target.value);

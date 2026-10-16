@@ -113,7 +113,7 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
             classNames={{
               popup: { root: 'dynamic-form-date-picker-dropdown' }
             }}
-            inputReadOnly
+            inputReadOnly={false}
             placement="bottomLeft"
             style={{ width: '100%' }}
             format="DD/MM/YYYY"
@@ -140,6 +140,7 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
       case 'datetime':
         return (
           <DatePicker
+            format="DD/MM/YYYY HH:mm:ss"
             {...commonProps}
             style={{ width: '100%' }}
             showTime

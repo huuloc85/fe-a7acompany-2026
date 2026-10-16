@@ -1,3 +1,4 @@
+import AppSearchInput from '@/components/common/AppSearchInput';
 import { QueryParams } from '@/types/queryParams';
 import {
   ActionGroup,
@@ -28,7 +29,6 @@ import {
   TableColumnsType,
   TableProps,
   Tag,
-  Input,
   message
 } from 'antd';
 import type { Dayjs } from 'dayjs';
@@ -571,11 +571,8 @@ export default function HistoryPrintStamp() {
                   <FaSearch className="mr-1 inline-block text-indigo-500" />
                   Sản phẩm
                 </label>
-                <Input
-                  prefix={<FaSearch className="text-gray-400" />}
+                <AppSearchInput
                   placeholder="Tìm tên sản phẩm..."
-                  allowClear
-                  className="!rounded-lg"
                   onChange={(e) => {
                     const value = e.target.value;
                     if (searchTimeoutRef.current) {
@@ -955,7 +952,7 @@ export default function HistoryPrintStamp() {
       {/* Print Preview Section */}
       {selectedRecord && (
         <div ref={printPreviewRef} tabIndex={-1} className="mt-8 outline-none">
-          <ComponentCard title="Xem trước khi in">
+          <ComponentCard title="Xem trước khi in" uppercaseTitle={false}>
             <div className="space-y-5">
               {/* Print Info Header */}
               <div className="flex flex-wrap items-start justify-between gap-4 rounded-xl border border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50 p-5 dark:border-gray-700 dark:from-blue-900/20 dark:to-indigo-900/20">

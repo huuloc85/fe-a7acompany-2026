@@ -1,12 +1,12 @@
-import { DatePicker, Input, Tabs, TabsProps } from 'antd';
+import AppSearchInput from '@/components/common/AppSearchInput';
+import { DatePicker, Tabs, TabsProps } from 'antd';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 import { useState } from 'react';
 import {
   FaCalendarDay,
   FaExclamationTriangle,
-  FaCalendarWeek,
-  FaSearch
+  FaCalendarWeek
 } from 'react-icons/fa';
 import { FaCheckDouble, FaTruck, FaWarehouse } from 'react-icons/fa6';
 
@@ -182,13 +182,10 @@ export const PoList = () => {
           <ExportPoModal />
 
           <div className="ml-auto flex w-full flex-wrap items-center gap-3 md:w-auto">
-            <div className="flex flex-1 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 lg:flex-none dark:border-gray-600 dark:bg-gray-800">
-              <FaSearch className="text-xs text-gray-400" />
-              <Input
+            <div className="min-w-0 flex-1 lg:flex-none">
+              <AppSearchInput
                 placeholder="Tìm sản phẩm..."
-                allowClear
-                size={isMobile ? 'small' : 'middle'}
-                className="!w-full min-w-[120px] !border-0 !shadow-none lg:!w-48"
+                className="!w-full lg:!w-48"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -196,6 +193,7 @@ export const PoList = () => {
             <div className="flex w-full items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 sm:w-auto dark:border-gray-600 dark:bg-gray-800">
               <span className="text-xs text-gray-500">📅 Tháng:</span>
               <DatePicker
+                format="DD/MM/YYYY"
                 picker="month"
                 value={month}
                 size={isMobile ? 'small' : 'middle'}

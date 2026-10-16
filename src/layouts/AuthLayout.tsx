@@ -25,7 +25,7 @@ export default function AuthLayout() {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6, delay: 0.1, ease: 'easeOut' }}
-          className="liquid-glass-panel auth-visual-panel relative z-1 hidden flex-1 items-center justify-center rounded-l-[32px] p-8 lg:flex"
+          className="liquid-glass-panel auth-visual-panel relative z-1 hidden flex-1 items-center justify-center rounded-2xl p-8 lg:flex"
         >
           <GridShape />
           <div className="flex max-w-xs flex-col items-center">

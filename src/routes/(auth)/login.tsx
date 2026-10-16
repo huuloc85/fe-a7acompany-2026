@@ -237,7 +237,7 @@ function RouteComponent() {
       className={
         isMidAutumn
           ? 'mid-autumn-login'
-          : 'liquid-glass-card auth-glass-card flex min-w-0 flex-col items-center rounded-[28px] px-6 py-8 sm:px-8'
+          : 'liquid-glass-card auth-glass-card flex min-w-0 flex-col items-center rounded-2xl px-6 py-8 sm:px-8'
       }
     >
       {/* ── Logo ── */}
@@ -255,12 +255,12 @@ function RouteComponent() {
           <span className="mid-autumn-login-greeting">
             MỘT NGÀY MỚI, CÙNG NHAU
           </span>
-          <h1>Chào mừng trở lại.</h1>
+          <h1 className="uppercase">Chào mừng trở lại.</h1>
           <p>Đăng nhập để bắt đầu ngày làm việc của bạn.</p>
         </div>
       ) : (
         <div className="mb-6 text-center">
-          <h1 className="mb-1 text-2xl font-bold text-black dark:text-white">
+          <h1 className="mb-1 text-2xl font-bold text-black uppercase dark:text-white">
             Đăng Nhập
           </h1>
           <p className="text-sm text-black/40 dark:text-gray-500">

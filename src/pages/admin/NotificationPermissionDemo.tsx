@@ -48,7 +48,7 @@ export default function NotificationPermissionDemo() {
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
         {/* Header */}
         <div>
-          <Title level={2}>
+          <Title level={2} className="uppercase">
             <BellOutlined style={{ marginRight: '8px', color: '#1890ff' }} />
             Demo Yêu Cầu Quyền Thông Báo
           </Title>
@@ -59,7 +59,10 @@ export default function NotificationPermissionDemo() {
         </div>
 
         {/* Notification Permission Card */}
-        <ComponentCard title="1. Notification Permission Card">
+        <ComponentCard
+          title="1. Notification Permission Card"
+          uppercaseTitle={false}
+        >
           <Paragraph>
             Component card hiển thị trạng thái quyền thông báo và cho phép người
             dùng cấp quyền:
@@ -71,7 +74,10 @@ export default function NotificationPermissionDemo() {
         </ComponentCard>
 
         {/* Notification Permission Button */}
-        <ComponentCard title="2. Notification Permission Button">
+        <ComponentCard
+          title="2. Notification Permission Button"
+          uppercaseTitle={false}
+        >
           <Paragraph>
             Component button đơn giản để yêu cầu quyền thông báo:
           </Paragraph>
@@ -92,7 +98,10 @@ export default function NotificationPermissionDemo() {
         </ComponentCard>
 
         {/* Notification Permission Modal */}
-        <ComponentCard title="3. Notification Permission Modal">
+        <ComponentCard
+          title="3. Notification Permission Modal"
+          uppercaseTitle={false}
+        >
           <Paragraph>Modal để yêu cầu quyền thông báo:</Paragraph>
           <Button
             type="primary"
@@ -111,7 +120,7 @@ export default function NotificationPermissionDemo() {
         </ComponentCard>
 
         {/* Current Status */}
-        <ComponentCard title="4. Trạng Thái Hiện Tại">
+        <ComponentCard title="4. Trạng Thái Hiện Tại" uppercaseTitle={false}>
           <Row gutter={[16, 16]}>
             <Col xs={24} sm={12}>
               <Card size="small">
@@ -139,7 +148,7 @@ export default function NotificationPermissionDemo() {
         </ComponentCard>
 
         {/* Usage Guide */}
-        <ComponentCard title="5. Hướng Dẫn Sử Dụng">
+        <ComponentCard title="5. Hướng Dẫn Sử Dụng" uppercaseTitle={false}>
           <Space direction="vertical" size="middle">
             <div>
               <Title level={4}>Hook: useNotificationPermission</Title>

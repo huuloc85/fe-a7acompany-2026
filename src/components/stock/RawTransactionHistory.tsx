@@ -1,7 +1,7 @@
+import AppSearchInput from '@/components/common/AppSearchInput';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Table,
-  Input,
   Select,
   Typography,
   message,
@@ -10,7 +10,7 @@ import {
   Tag,
   Tooltip
 } from 'antd';
-import { SearchOutlined, DeleteOutlined } from '@ant-design/icons';
+import { DeleteOutlined } from '@ant-design/icons';
 import AppButton from '@/components/common/AppButton';
 import RefreshButton from '@/components/common/RefreshButton';
 import {
@@ -751,13 +751,10 @@ const RawTransactionHistory: React.FC = () => {
               <Option value="in">Nhập</Option>
               <Option value="out">Xuất</Option>
             </Select>
-            <Input
+            <AppSearchInput
               placeholder="Tìm..."
-              allowClear={false}
-              className="stock-search-input !w-full sm:!w-[160px]"
-              suffix={<SearchOutlined />}
+              className="!w-full sm:!w-[160px]"
               onChange={(e) => setSearchText(e.target.value)}
-              size="small"
             />
             <RefreshButton
               onClick={() => loadTransactions(paginationMeta.current_page)}

@@ -1,3 +1,4 @@
+import AppSearchInput from '@/components/common/AppSearchInput';
 import { useAuth } from '@hooks/useAuth';
 import { getApiErrorMessage } from '@/utils/apiError';
 import { useIsMobile } from '@hooks/useIsMobile';
@@ -24,7 +25,7 @@ import {
   Tooltip,
   Typography
 } from 'antd';
-import { SearchOutlined } from '@ant-design/icons';
+
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   FaCircle,
@@ -2449,17 +2450,15 @@ function AdminManager() {
             ]}
             className="!w-32"
           />
-          <Input
+          <AppSearchInput
             placeholder="Tìm tên, tài khoản..."
-            allowClear
-            suffix={<SearchOutlined />}
             onPressEnter={(e) =>
               setSearch((e.target as HTMLInputElement).value)
             }
             onChange={(e) => {
               if (!e.target.value) setSearch('');
             }}
-            className="!w-56 !rounded-lg"
+            className="!w-full sm:!w-56"
           />
           <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 dark:border-gray-600 dark:bg-gray-800">
             <FaUsers className="text-xs text-slate-500" />

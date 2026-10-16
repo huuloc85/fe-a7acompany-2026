@@ -1,15 +1,15 @@
 export default function Blank() {
   return (
     <>
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+      <div className="mb-6 flex flex-wrap items-center gap-3 py-3 text-left sm:py-4">
         <h2
-          className="text-xl font-semibold text-gray-800 dark:text-white/90"
+          className="ui-page-title !m-0 text-xl leading-snug font-semibold text-gray-800 uppercase sm:text-2xl dark:text-white/90"
           x-text="pageName"
         >
           Blank Page
         </h2>
       </div>
-      <div className="min-h-screen rounded-2xl border border-gray-200 bg-white px-5 py-7 xl:px-10 xl:py-12 dark:border-gray-800 dark:bg-white/[0.03]">
+      <div className="ui-card liquid-glass-card rounded-2xl px-5 py-7 xl:px-10 xl:py-12">
         {/* start remove */}
         <div className="mx-auto w-full max-w-[630px] text-center">
           <h3 className="text-theme-xl mb-4 font-semibold text-gray-800 sm:text-2xl dark:text-white/90">

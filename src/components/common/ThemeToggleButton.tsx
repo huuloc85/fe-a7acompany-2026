@@ -1,22 +1,29 @@
-import { Badge } from 'antd';
+import { Tooltip } from 'antd';
 import React from 'react';
 
-import { toggleTheme } from '@stores/uiStore';
+import { toggleTheme, uiStore } from '@stores/uiStore';
+import { useStore } from '@tanstack/react-store';
 
 import { FaRegMoon, FaSun } from 'react-icons/fa';
 
 export const ThemeToggleButton: React.FC = () => {
+  const isDark = useStore(uiStore, (state) => state.theme === 'dark');
+  const label = isDark ? 'Chuyển sang chế độ sáng' : 'Chuyển sang chế độ tối';
   return (
-    <>
-      <Badge count="Beta" color="blue" offset={[-40, 0]} size="small">
-        <button
-          onClick={toggleTheme}
-          className="hover:text-dark-900 relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
-        >
-          <FaSun className="hidden text-xl dark:block" />
-          <FaRegMoon className="text-xl dark:hidden" />
-        </button>
-      </Badge>
-    </>
+    <Tooltip title={label}>
+      <button
+        type="button"
+        aria-label={label}
+        aria-pressed={isDark}
+        onClick={toggleTheme}
+        className="theme-toggle-btn header-action-btn liquid-glass-control relative flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-gray-600 transition-colors hover:text-blue-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 dark:text-gray-300 dark:hover:text-white"
+      >
+        {isDark ? (
+          <FaRegMoon aria-hidden className="text-xl" />
+        ) : (
+          <FaSun aria-hidden className="theme-sun-icon text-xl" />
+        )}
+      </button>
+    </Tooltip>
   );
 };

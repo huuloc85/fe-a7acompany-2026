@@ -71,7 +71,7 @@ export default function NotificationDemo() {
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
         {/* Header */}
         <div>
-          <Title level={2}>
+          <Title level={2} className="uppercase">
             <BellOutlined style={{ marginRight: '8px', color: '#1890ff' }} />
             Test Modal Hệ Thống
           </Title>
@@ -82,7 +82,7 @@ export default function NotificationDemo() {
         </div>
 
         {/* Current Status */}
-        <ComponentCard title="Trạng Thái Hiện Tại">
+        <ComponentCard title="Trạng Thái Hiện Tại" uppercaseTitle={false}>
           <Row gutter={[16, 16]}>
             <Col xs={24} sm={8}>
               <Card size="small">
@@ -123,7 +123,7 @@ export default function NotificationDemo() {
         </ComponentCard>
 
         {/* Manual Test */}
-        <ComponentCard title="Test Modal Thủ Công">
+        <ComponentCard title="Test Modal Thủ Công" uppercaseTitle={false}>
           <Space direction="vertical" size="middle" style={{ width: '100%' }}>
             <Alert
               message="Lưu ý"
@@ -231,7 +231,7 @@ export default function NotificationDemo() {
           </Space>
         </ComponentCard>
 
-        <ComponentCard title="Test Quyền Thông Báo">
+        <ComponentCard title="Test Quyền Thông Báo" uppercaseTitle={false}>
           <Space wrap>
             <Button
               icon={<ExperimentOutlined />}
@@ -253,7 +253,7 @@ export default function NotificationDemo() {
         </ComponentCard>
 
         {/* How it Works */}
-        <ComponentCard title="Cách Hoạt Động">
+        <ComponentCard title="Cách Hoạt Động" uppercaseTitle={false}>
           <Space direction="vertical" size="middle">
             <div>
               <Title level={4}>1. Khi Admin Đăng Nhập</Title>

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Button, Checkbox, Input, Modal, message } from 'antd';
+import { Input, Modal, message } from 'antd';
+import Button from '@/components/common/AppButton';
 import RFB from '@novnc/novnc/lib/rfb';
 import axiosPrivate from '@/api/axiosInstance';
 import { getApiErrorMessage } from '@/utils/apiError';
@@ -30,21 +31,30 @@ export default function ScreenViewer() {
   }, []);
   const connection = useRef<RFB | null>(null);
   const generation = useRef(0);
+  const submittedPassword = useRef('');
   const [status, setStatus] = useState('Chưa kết nối màn hình');
   const [active, setActive] = useState(false);
   const [passwordNeeded, setPasswordNeeded] = useState(false);
   const [password, setPassword] = useState('');
-  const [rememberPassword, setRememberPassword] = useState(false);
-  const forgetPassword = () => {
+  useEffect(() => {
+    // Remove the previous persistent cache; passwords now live only in this tab.
     try {
       localStorage.removeItem(VNC_PASSWORD_KEY);
-      setRememberPassword(false);
+    } catch {
+      /* Storage unavailable. */
+    }
+  }, []);
+  const forgetPassword = () => {
+    submittedPassword.current = '';
+    try {
+      sessionStorage.removeItem(VNC_PASSWORD_KEY);
       setPassword('');
     } catch {
       message.warning('Trình duyệt không cho phép xóa mật khẩu đã lưu.');
     }
   };
   const disconnect = () => {
+    submittedPassword.current = '';
     generation.current += 1;
     connection.current?.disconnect();
     connection.current = null;
@@ -63,6 +73,9 @@ export default function ScreenViewer() {
 
   const connect = async () => {
     const current = ++generation.current;
+    submittedPassword.current = '';
+    const authSession = localStorage.getItem('auth_session_id');
+    let triedSavedPassword = false;
     setActive(true);
     setStatus('Đang kết nối…');
     try {
@@ -81,24 +94,64 @@ export default function ScreenViewer() {
       rfb.scaleViewport = true;
       rfb.resizeSession = false;
       rfb.addEventListener('connect', () => {
-        if (generation.current === current)
-          setStatus('Đang xem · Chỉ đọc · Tự gia hạn khi còn quyền');
+        if (generation.current !== current) return;
+        if (
+          submittedPassword.current &&
+          authSession &&
+          authSession === localStorage.getItem('auth_session_id')
+        ) {
+          try {
+            sessionStorage.setItem(
+              VNC_PASSWORD_KEY,
+              JSON.stringify({
+                sessionId: authSession,
+                password: submittedPassword.current
+              })
+            );
+          } catch {
+            message.warning('Không lưu được mật khẩu trong phiên web.');
+          }
+        }
+        submittedPassword.current = '';
+        setStatus('Đang xem · Chỉ đọc · Tự gia hạn khi còn quyền');
       });
       rfb.addEventListener('credentialsrequired', () => {
         if (generation.current !== current) return;
         try {
-          const saved = localStorage.getItem(VNC_PASSWORD_KEY) ?? '';
-          setPassword(saved);
-          setRememberPassword(!!saved);
+          const saved = JSON.parse(
+            sessionStorage.getItem(VNC_PASSWORD_KEY) ?? 'null'
+          );
+          if (
+            !triedSavedPassword &&
+            authSession &&
+            authSession === localStorage.getItem('auth_session_id') &&
+            saved?.sessionId === authSession &&
+            typeof saved.password === 'string' &&
+            saved.password
+          ) {
+            triedSavedPassword = true;
+            submittedPassword.current = saved.password;
+            rfb.sendCredentials({ password: saved.password });
+            return;
+          }
+          sessionStorage.removeItem(VNC_PASSWORD_KEY);
         } catch {
-          setPassword('');
-          setRememberPassword(false);
+          /* Ask manually if session storage is unavailable or invalid. */
         }
+        setPassword('');
         setPasswordNeeded(true);
+      });
+      rfb.addEventListener('securityfailure', () => {
+        if (generation.current !== current) return;
+        forgetPassword();
+        message.error(
+          'Xác thực VNC thất bại. Bấm Xem màn hình để nhập lại mật khẩu.'
+        );
       });
       rfb.addEventListener('disconnect', () => {
         if (generation.current !== current) return;
         connection.current = null;
+        submittedPassword.current = '';
         setActive(false);
         setPasswordNeeded(false);
         setPassword('');
@@ -122,9 +175,6 @@ export default function ScreenViewer() {
         <Button disabled={!active} onClick={disconnect}>
           Ngắt
         </Button>
-        <Button type="text" onClick={forgetPassword}>
-          Quên mật khẩu VNC
-        </Button>
         <span className="min-w-0 text-xs">{status}</span>
       </div>
       <div
@@ -138,15 +188,7 @@ export default function ScreenViewer() {
         cancelText="Huỷ"
         onCancel={disconnect}
         onOk={() => {
-          try {
-            if (rememberPassword)
-              localStorage.setItem(VNC_PASSWORD_KEY, password);
-            else localStorage.removeItem(VNC_PASSWORD_KEY);
-          } catch {
-            message.warning(
-              'Không lưu được mật khẩu; vẫn kết nối cho phiên này.'
-            );
-          }
+          submittedPassword.current = password;
           connection.current?.sendCredentials({ password });
           setPassword('');
           setPasswordNeeded(false);
@@ -157,15 +199,8 @@ export default function ScreenViewer() {
           value={password}
           onChange={(event) => setPassword(event.target.value)}
         />
-        <Checkbox
-          checked={rememberPassword}
-          onChange={(event) => setRememberPassword(event.target.checked)}
-        >
-          Nhớ mật khẩu VNC trên máy này
-        </Checkbox>
         <p className="mt-2 text-xs">
-          Chỉ bật trên máy riêng. Mật khẩu lưu trong trình duyệt, không được mã
-          hóa bởi ứng dụng. Không dùng trên máy chung.
+          Tự nhớ mật khẩu trong phiên web của tab này.
         </p>
       </Modal>
     </div>

@@ -15,7 +15,6 @@ dayjs.extend(utc);
 
 // Calendar dates stay in Vietnam time, independent of the device timezone.
 const vietnamToday = () => dayjs(dayjs().utcOffset(7).format('YYYY-MM-DD'));
-const dateFormat = 'DD/MM/YYYY';
 
 const statusLabels = {
   pending: 'Đang chờ',
@@ -150,10 +149,10 @@ export default function AttendanceImportButton() {
                     className="w-full"
                     style={{ minHeight: 44 }}
                     locale={viVN}
-                    format={dateFormat}
+                    format="DD/MM/YYYY"
                     placeholder="DD/MM/YYYY"
                     value={range[index]}
-                    inputReadOnly
+                    inputReadOnly={false}
                     allowClear={false}
                     needConfirm={false}
                     getPopupContainer={(trigger) => trigger.ownerDocument.body}

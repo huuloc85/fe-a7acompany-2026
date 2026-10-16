@@ -1091,8 +1091,8 @@ const AttendancePageContent = () => {
                   placeholder="Chọn tháng"
                   value={month}
                   picker="month"
-                  format="MM-YYYY"
-                  inputReadOnly
+                  format="DD/MM/YYYY"
+                  inputReadOnly={false}
                   onChange={handleMonthChange}
                   allowClear={false}
                   style={{ width: 110 }}
@@ -1173,8 +1173,8 @@ const AttendancePageContent = () => {
                   placeholder="Chọn tháng"
                   value={month}
                   picker="month"
-                  format="MM-YYYY"
-                  inputReadOnly
+                  format="DD/MM/YYYY"
+                  inputReadOnly={false}
                   onChange={handleMonthChange}
                   allowClear={false}
                   style={{ width: 140 }}

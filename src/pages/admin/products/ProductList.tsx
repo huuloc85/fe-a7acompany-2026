@@ -1,10 +1,11 @@
+import AppSearchInput from '@/components/common/AppSearchInput';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 import { debounce } from 'lodash';
 
-import { DatePicker, Input, Modal, Select, Tabs, TabsProps } from 'antd';
-import { SearchOutlined } from '@ant-design/icons';
+import { DatePicker, Modal, Select, Tabs, TabsProps } from 'antd';
+
 import { useMemo, useState } from 'react';
 import { FaSearch, FaRulerCombined, FaTag } from 'react-icons/fa';
 import {
@@ -296,6 +297,7 @@ export default function ProductList() {
                   📅 Tháng
                 </label>
                 <DatePicker
+                  format="DD/MM/YYYY"
                   value={month}
                   picker="month"
                   placeholder="Chọn tháng"
@@ -390,11 +392,8 @@ export default function ProductList() {
                   <FaSearch className="mr-1 inline-block text-gray-400" />
                   Tìm kiếm
                 </label>
-                <Input
+                <AppSearchInput
                   placeholder="Tìm kiếm sản phẩm..."
-                  allowClear
-                  suffix={<SearchOutlined />}
-                  className="!rounded-lg"
                   onChange={(e) => {
                     const inputValue = e.target.value;
                     handleSearch(inputValue);

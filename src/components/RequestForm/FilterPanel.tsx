@@ -1,5 +1,6 @@
+import AppSearchInput from '@/components/common/AppSearchInput';
 import React from 'react';
-import { Row, Col, Select, Button, Input } from 'antd';
+import { Row, Col, Select, Button } from 'antd';
 import { ClearOutlined } from '@ant-design/icons';
 import {
   type RequestFormFilters as RequestFormFiltersType,
@@ -50,13 +51,11 @@ export const FilterPanel: React.FC<RequestFormFiltersProps> = ({
               <label className="text-xs font-medium text-gray-700 sm:text-sm">
                 Tìm nhân viên
               </label>
-              <Input
+              <AppSearchInput
                 placeholder="Nhập tên hoặc MSNV"
-                allowClear
                 value={searchText}
                 onChange={(e) => onSearchTextChange(e.target.value)}
                 className="w-full"
-                size="middle"
               />
             </div>
           </Col>

@@ -1,10 +1,11 @@
+import AppSearchInput from '@/components/common/AppSearchInput';
 import { QueryParams } from '@/types/queryParams';
 import ComponentCard from '@components/common/ComponentCard';
 import RefreshButton from '@components/common/RefreshButton';
 import { fetchEmpSalaries, fetchSalaryDetail } from '@services/SalaryService';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { Alert, Empty, Input, Select, Spin, Tag } from 'antd';
-import { SearchOutlined } from '@ant-design/icons';
+import { Alert, Empty, Select, Spin, Tag } from 'antd';
+
 import dayjs from 'dayjs';
 import { debounce } from 'lodash';
 import { useEffect, useState } from 'react';
@@ -118,10 +119,8 @@ export default function SalariesList() {
                 <FaSearch className="mr-1 inline-block text-gray-400" />
                 Tìm kiếm
               </label>
-              <Input
-                className="max-w-sm !rounded-lg"
-                allowClear
-                suffix={<SearchOutlined />}
+              <AppSearchInput
+                className="max-w-sm"
                 placeholder="Nhập tiêu đề bảng lương..."
                 onChange={(e) => {
                   const inputValue = e.target.value;

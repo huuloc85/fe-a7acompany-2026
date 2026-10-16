@@ -663,7 +663,14 @@ export default function Dashboard() {
                 Xin chào
               </p>
               <h1 className="mt-0.5 text-2xl font-bold text-black sm:text-3xl dark:text-white">
-                {user?.name?.replace(/[()]/g, '').split(' ').pop() || 'Bạn'}{' '}
+                {(
+                  user?.name?.replace(/[()]/g, '').trim().split(/\s+/).pop() ||
+                  'Bạn'
+                )
+                  .toLocaleLowerCase('vi-VN')
+                  .replace(/^./u, (letter) =>
+                    letter.toLocaleUpperCase('vi-VN')
+                  )}{' '}
                 <span className="inline-block">{greeting.emoji}</span>
               </h1>
               {greeting.text && (

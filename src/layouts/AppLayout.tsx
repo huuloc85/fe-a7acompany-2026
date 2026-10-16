@@ -317,7 +317,10 @@ function AppLayout() {
           <Sidebar />
           <Layout>
             <Header />
-            <Content style={{ overflow: 'initial' }} className="glass-main p-4">
+            <Content
+              style={{ overflow: 'initial' }}
+              className="glass-main ui-content min-w-0 p-4"
+            >
               {messages.length > 0 && (
                 <div className="mb-4">
                   <MarqueeAlert messages={messages} />
@@ -327,6 +330,7 @@ function AppLayout() {
                 initial={{ opacity: 0, scale: 0.98, y: 10 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 transition={{ duration: 0.3, ease: 'easeOut' }}
+                className="ui-route-content min-w-0"
               >
                 <Outlet />
               </motion.div>

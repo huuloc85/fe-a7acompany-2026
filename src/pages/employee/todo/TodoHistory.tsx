@@ -77,7 +77,7 @@ export const TodoHistory = () => {
                     value={month}
                     onChange={(date) => setMonth(date)}
                     placeholder="Chọn tháng"
-                    format="YYYY-MM"
+                    format="DD/MM/YYYY"
                     picker="month"
                     className="!rounded-lg"
                   />

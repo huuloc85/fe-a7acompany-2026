@@ -1,8 +1,8 @@
+import AppSearchInput from '@/components/common/AppSearchInput';
 import { useParams } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import {
   Drawer,
-  Input,
   Select,
   Spin,
   Table,
@@ -13,7 +13,7 @@ import {
   Tag
 } from 'antd';
 import dayjs from 'dayjs';
-import { SearchOutlined } from '@ant-design/icons';
+
 import { CSSProperties, useEffect, useMemo, useState, useRef } from 'react';
 import {
   FaCalendarCheck,
@@ -64,13 +64,14 @@ interface HNHCGroupedData {
 
 const normalizeText = (value?: string | null) => value?.toLowerCase().trim();
 
-const QC_LEADER_EMPLOYEE_IDS = ['24030400', '21120700', '19010400'] as const;
-const WAREHOUSE_LEADER_EMPLOYEE_IDS = ['24021900', '22022200'] as const;
+// Current employee IDs, aligned with backend AttendanceEmployeeCode mappings.
+const QC_LEADER_EMPLOYEE_IDS = ['24070400', '22120701', '25060400'] as const;
+const WAREHOUSE_LEADER_EMPLOYEE_IDS = ['24061901', '22022200'] as const;
 const MOLD_LEADER_EMPLOYEE_IDS = [
-  '20050400',
-  '24050201',
-  '25080800',
-  '26030301'
+  '22120400',
+  '24110201',
+  '25110800',
+  '26050301'
 ] as const;
 const PRODUCTION_LEADER_CATEGORY_NAMES = [
   'Nhóm Đi Xoay Ca - Hàng Nhật',
@@ -894,11 +895,8 @@ export default function Detail({
               <FaSearch className="mr-1 inline-block text-gray-400" />
               Tìm kiếm nhân viên
             </label>
-            <Input
+            <AppSearchInput
               placeholder="Mã hoặc tên nhân viên..."
-              allowClear
-              suffix={<SearchOutlined />}
-              className="!rounded-lg"
               onChange={(e) => {
                 const inputValue = e.target.value;
                 if (/^\d+$/.test(inputValue)) {

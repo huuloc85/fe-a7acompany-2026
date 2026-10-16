@@ -1,7 +1,7 @@
+import AppSearchInput from '@/components/common/AppSearchInput';
 import { Link } from '@tanstack/react-router';
 import {
   Avatar,
-  Input,
   Modal,
   Pagination,
   Spin,
@@ -17,7 +17,6 @@ import { FaFingerprint } from 'react-icons/fa6';
 import { LuUserRoundPlus } from 'react-icons/lu';
 import { BiTrash } from 'react-icons/bi';
 import { useIsMobile } from '@hooks/useIsMobile';
-import { SearchOutlined } from '@ant-design/icons';
 
 import { useCrudList } from '@/hooks/useCrudList';
 import { EmployeeType } from '@/types/employeeType';
@@ -305,11 +304,8 @@ export default function EmployeeList() {
                 <FaSearch className="mr-1 inline-block text-gray-400" />
                 Tìm kiếm nhân viên
               </label>
-              <Input
+              <AppSearchInput
                 placeholder="Mã hoặc tên nhân viên..."
-                allowClear
-                suffix={<SearchOutlined />}
-                className="!rounded-lg"
                 onChange={(e) => {
                   const inputValue = e.target.value;
                   if (/^\d+$/.test(inputValue)) {

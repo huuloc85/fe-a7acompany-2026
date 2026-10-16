@@ -1,6 +1,6 @@
 import { Link, LinkProps } from '@tanstack/react-router';
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 
 export interface WidgetProps {
   title: string;
@@ -22,28 +22,24 @@ const DashboardWidget: React.FC<WidgetProps> = ({
   isLoading = false,
   isMidAutumn = false
 }: WidgetProps) => {
+  const reduceMotion = useReducedMotion();
   const content = (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
+      initial={reduceMotion ? false : { opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{
         duration: 0.25,
         ease: 'easeOut'
       }}
-      whileHover={{ y: -2 }}
-      whileTap={{ scale: 0.98 }}
       className="group relative h-full"
     >
       <div
         className={
           isMidAutumn
             ? 'mid-autumn-widget relative flex h-full min-h-[132px] flex-col items-center justify-center gap-3 rounded-[22px] p-5 text-center transition-all duration-300'
-            : 'dashboard-widget-card liquid-glass-card relative flex h-full min-h-[132px] flex-col items-center justify-center gap-3 rounded-[22px] p-5 text-center transition-all duration-300 lg:hover:border-blue-200 lg:hover:shadow-[0_22px_46px_rgba(37,99,235,0.16)] dark:lg:hover:border-blue-400/30'
+            : 'dashboard-widget-card liquid-glass-card relative flex h-full min-h-[132px] flex-col items-center justify-center gap-3 rounded-[22px] p-5 text-center'
         }
       >
-        <div className="absolute inset-0 bg-[linear-gradient(145deg,rgba(255,255,255,0.26),transparent_38%),linear-gradient(180deg,rgba(255,255,255,0.18),transparent_62%)] opacity-70 transition-opacity duration-300 lg:group-hover:opacity-100 dark:bg-[linear-gradient(145deg,rgba(255,255,255,0.08),transparent_38%),linear-gradient(180deg,rgba(255,255,255,0.07),transparent_62%)]" />
-        <div className="absolute inset-x-8 top-0 h-px bg-white/80 dark:bg-white/20" />
-
         {/* Icon */}
         <motion.div
           className={

@@ -1,3 +1,4 @@
+import AppSearchInput from '@/components/common/AppSearchInput';
 import { DailyQuantitiesType } from '@/types/dailyQuantitiesType';
 import {
   PurchaseOrdersHistoryResponse,
@@ -26,7 +27,6 @@ import {
   Empty,
   Form,
   FormProps,
-  Input,
   InputNumber,
   message,
   Popconfirm,
@@ -46,7 +46,6 @@ import { FaCheck, FaTimes } from 'react-icons/fa';
 import { FaTrash, FaChevronDown, FaChevronUp } from 'react-icons/fa6';
 import { IconHistory } from '@components/icons';
 import { useIsMobile } from '@hooks/useIsMobile';
-import { SearchOutlined } from '@ant-design/icons';
 
 // ── Types ────────────────────────────────────────────────────
 interface FormFields {
@@ -1251,6 +1250,7 @@ export const PoHistoryModal: React.FC<PoHistoryModalProps> = ({
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 bg-white p-4 sm:px-6 sm:py-3 dark:border-gray-700 dark:bg-gray-900">
           <div className="flex w-full flex-wrap items-center gap-3 lg:w-auto">
             <DatePicker
+              format="DD/MM/YYYY"
               picker="month"
               value={month}
               size={isMobile ? 'small' : 'middle'}
@@ -1276,12 +1276,9 @@ export const PoHistoryModal: React.FC<PoHistoryModalProps> = ({
                 }))}
               />
             )}
-            <Input
+            <AppSearchInput
               placeholder="Tìm sản phẩm hoặc tên file..."
-              allowClear
-              suffix={<SearchOutlined />}
-              size={isMobile ? 'small' : 'middle'}
-              className="!h-10 !w-full !rounded-lg sm:!w-[300px]"
+              className="!w-full sm:!w-[300px]"
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
             />

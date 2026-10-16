@@ -25,7 +25,11 @@ export const AppearanceToggleButton = () => {
         }`}
       >
         <span className="appearance-toggle-btn__icon">
-          {isLiquid ? <FaTint /> : <FaRegWindowMaximize />}
+          {isLiquid ? (
+            <FaTint className="appearance-water-icon" />
+          ) : (
+            <FaRegWindowMaximize />
+          )}
         </span>
         <span className="appearance-toggle-btn__label">{label}</span>
       </button>
