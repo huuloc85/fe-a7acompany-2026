@@ -213,7 +213,13 @@ export default function ScreenViewer() {
           'Xác thực VNC thất bại. Bấm Xem màn hình để nhập lại mật khẩu.'
         );
       });
-      rfb.addEventListener('disconnect', failed);
+      rfb.addEventListener('disconnect', () => {
+        // noVNC can emit this event after it has already transitioned to
+        // disconnected; clear the ref before cleanup so we do not call
+        // disconnect() on the same RFB object a second time.
+        if (connection.current === rfb) connection.current = null;
+        failed();
+      });
     } catch (error) {
       if (generation.current !== current) return;
       const code = (error as { response?: { status?: number } }).response
