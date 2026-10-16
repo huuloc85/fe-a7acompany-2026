@@ -111,7 +111,12 @@ export default function ScreenViewer() {
       );
       const waiting = generation.current;
       retryTimer.current = setTimeout(() => {
-        if (generation.current === waiting) void connect(true);
+        if (generation.current !== waiting) return;
+        if (authSession !== localStorage.getItem('auth_session_id')) {
+          disconnect();
+          return;
+        }
+        void connect(true);
       }, delay);
     };
     const armTimeout = () => {
