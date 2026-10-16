@@ -20,6 +20,7 @@ export const SalaryChart = memo(function SalaryChart({
   const isDark = theme === 'dark';
 
   const chartData: salaryDataType[] = data
+    .filter((item) => item.status === 'published')
     .map((item) => ({
       month: item.title.replace('Bảng Lương Tháng ', ''),
       total: item.total,
@@ -42,13 +43,13 @@ export const SalaryChart = memo(function SalaryChart({
   // Utility function to format currency
   const formatCurrency = (value: number) => {
     if (value >= 1000000000) {
-      return `${(value / 1000000000).toFixed(value >= 10000000000 ? 0 : 1)}B`;
+      return `${(value / 1000000000).toFixed(value >= 10000000000 ? 0 : 1)} Tỷ`;
     }
     if (value >= 1000000) {
-      return `${(value / 1000000).toFixed(value >= 10000000 ? 0 : 1)}M`;
+      return `${(value / 1000000).toFixed(value >= 10000000 ? 0 : 1)} Triệu`;
     }
     if (value >= 1000) {
-      return `${(value / 1000).toFixed(value >= 10000 ? 0 : 1)}K`;
+      return `${(value / 1000).toFixed(value >= 10000 ? 0 : 1)} Nghìn`;
     }
     return `${value.toLocaleString('vi-VN')}`;
   };
@@ -183,7 +184,7 @@ export const SalaryChart = memo(function SalaryChart({
           ? `${chartData.length} kỳ lương · ${chartData[0].month} — ${latestMonth.month}`
           : 'Theo dõi tổng chi phí lương theo kỳ'
       }
-      unit="Tổng lương (VND) · K: nghìn · M: triệu · B: tỷ"
+      unit="Tổng lương (VND)"
       stats={statCards.map((stat) => ({
         label: stat.label,
         value: formatCurrency(stat.value)
@@ -191,13 +192,30 @@ export const SalaryChart = memo(function SalaryChart({
       empty={chartData.length === 0}
       footer={
         latestMonth && (
-          <span>
-            Kỳ gần nhất: <strong>{latestMonth.month}</strong> ·{' '}
-            {latestMonth.total.toLocaleString('vi-VN')} ₫
-            {previousMonth && previousMonth.total > 0
-              ? ` · ${growthRate > 0 ? '+' : ''}${growthRate.toFixed(1)}% so với kỳ trước`
-              : ''}
-          </span>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="!m-0 font-medium">
+                Kỳ gần nhất: <strong>{latestMonth.month}</strong>
+              </p>
+              <p className="!mt-1 !mb-0 text-xl font-bold text-blue-700 tabular-nums sm:text-2xl dark:text-blue-300">
+                {latestMonth.total.toLocaleString('vi-VN')} ₫
+              </p>
+            </div>
+            {previousMonth && previousMonth.total > 0 && (
+              <span
+                className={`rounded-lg border px-3 py-2 font-semibold ${
+                  growthRate > 0
+                    ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                    : growthRate < 0
+                      ? 'border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300'
+                      : 'border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300'
+                }`}
+              >
+                {growthRate > 0 ? '+' : ''}
+                {growthRate.toFixed(1)}% so với kỳ trước
+              </span>
+            )}
+          </div>
         )
       }
     >

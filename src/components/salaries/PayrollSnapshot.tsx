@@ -189,7 +189,7 @@ export default function PayrollSnapshot({ draft }: { draft: PayrollDraft }) {
   if (!selected)
     return <Empty description="Không có bảng lương của công ty này" />;
   return (
-    <div className="space-y-4">
+    <div className="grid min-w-0 gap-5">
       <Table
         bordered
         size="small"
@@ -216,6 +216,7 @@ export default function PayrollSnapshot({ draft }: { draft: PayrollDraft }) {
       />
       <Select
         className="w-full"
+        size="large"
         showSearch
         optionFilterProp="label"
         value={selected.profile.employeeId}

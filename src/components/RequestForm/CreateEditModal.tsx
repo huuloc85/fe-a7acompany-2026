@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useObjectUrl } from '@/hooks/useObjectUrl';
 import {
   Form,
   Select,
@@ -88,6 +89,7 @@ const CreateEditModalContent: React.FC<CreateRequestFormProps> = ({
     canvasSignature: undefined
   });
   const [showSignaturePad, setShowSignaturePad] = useState<boolean>(!editData); // Ẩn khi edit, hiện khi tạo mới
+  const signaturePreview = useObjectUrl(signature.file);
   const { selectedEmployee } = useEmployeeSelection();
   const queryClient = useQueryClient();
 
@@ -1077,7 +1079,7 @@ TP.Hồ Chí Minh, ngày ${dayjs().date()} tháng ${dayjs().month() + 1} năm ${
                                       uid: '1',
                                       name: signature.file.name,
                                       status: 'done' as const,
-                                      url: URL.createObjectURL(signature.file)
+                                      url: signaturePreview
                                     }
                                   ]
                                 : []

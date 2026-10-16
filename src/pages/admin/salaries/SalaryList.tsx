@@ -1,5 +1,22 @@
-import { useQuery } from '@tanstack/react-query';
-import { Alert, Empty, Radio, Select, Spin, Tabs, TabsProps, Tag } from 'antd';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useStore } from '@tanstack/react-store';
+import { authStore } from '@/stores/authStore';
+import { isAllowRole } from '@/utils/authUtil';
+import {
+  Alert,
+  Empty,
+  Modal,
+  Radio,
+  Select,
+  Spin,
+  Tabs,
+  TabsProps,
+  Tag,
+  message
+} from 'antd';
+import { publishPayroll } from '@/services/PayrollPublicationService';
+import { getApiErrorMessage } from '@/utils/apiError';
+import { QUERY_KEYS } from '@/constants/queryKeys';
 import PayrollSnapshot from '@/components/salaries/PayrollSnapshot';
 import dayjs from 'dayjs';
 import { useEffect, useMemo, useState } from 'react';
@@ -37,6 +54,17 @@ const formatVND = (value: number | null | undefined) => {
 
 export default function SalaryList() {
   const isMobile = useIsMobile();
+  const queryClient = useQueryClient();
+  const { mutateAsync: publish, isPending: isPublishing } = useMutation({
+    mutationFn: ({ id, revision }: { id: number; revision: number }) =>
+      publishPayroll(id, revision)
+  });
+  const { user } = useStore(authStore);
+  const canViewDrafts = isAllowRole(user, ['super admin', 'admin', 'co admin']);
+  const [requestedStatus, setRequestedStatus] = useState<'published' | 'draft'>(
+    'published'
+  );
+  const salaryStatus = canViewDrafts ? requestedStatus : 'published';
   const [company, setCompany] = useState<CompanyType>('vvp');
   const [requestedSalaryId, setSelectedSalaryId] = useState<string | null>(
     null
@@ -57,8 +85,8 @@ export default function SalaryList() {
   const { isLoading, isFetching, refetch } = queryResult;
 
   const salaries = useMemo(
-    () => (data || []).filter((item) => item.status === 'published'),
-    [data]
+    () => (data || []).filter((item) => item.status === salaryStatus),
+    [data, salaryStatus]
   );
   const total = salaries.length;
   const selectedSalaryId = salaries.some(
@@ -111,6 +139,63 @@ export default function SalaryList() {
     () => salaries.find((item) => String(item.id) === selectedSalaryId) || null,
     [salaries, selectedSalaryId]
   );
+
+  // Use the revision returned with the snapshot, not a newer list revision.
+  const previewManager = selectedSalaryData?.manager;
+  const canPublish =
+    canViewDrafts &&
+    salaryStatus === 'draft' &&
+    selectedSalary?.status === 'draft' &&
+    !!selectedSalary.calculator_key &&
+    previewManager?.status === 'draft' &&
+    String(previewManager.id) === selectedSalaryId &&
+    typeof previewManager.revision === 'number' &&
+    previewManager.revision > 0 &&
+    !!selectedSalaryData?.snapshot?.rows.length &&
+    !isDetailLoading &&
+    !isDetailFetching &&
+    !isDetailError &&
+    !isPublishing;
+
+  const confirmPublication = () => {
+    if (!canPublish || !previewManager || !selectedSalary) return;
+    const id = Number(previewManager.id);
+    const revision = previewManager.revision!;
+    Modal.confirm({
+      title: 'Duyệt và công bố bảng lương?',
+      content: `Công bố "${selectedSalary.title}"? Nhân viên sẽ xem được phiếu lương của mình. Bảng đã công bố không thể ghi đè trực tiếp.`,
+      okText: 'Duyệt và công bố',
+      cancelText: 'Hủy',
+      onOk: async () => {
+        try {
+          await publish({ id, revision });
+        } catch (error) {
+          message.error(
+            getApiErrorMessage(
+              error,
+              'Chưa công bố được. Vui lòng tải lại và kiểm tra bản nháp mới nhất.'
+            )
+          );
+          throw error;
+        }
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.DASHBOARD] }),
+          queryClient.invalidateQueries({ queryKey: ['salaries'] }),
+          queryClient.invalidateQueries({ queryKey: ['adminSalaryPreview'] })
+        ]);
+        setRequestedStatus('published');
+        setSelectedSalaryId(String(id));
+        message.success('Đã duyệt và công bố bảng lương.');
+      }
+    });
+  };
+
+  useEffect(() => {
+    const salaryCompany = selectedSalary?.calculator_key?.split(':')[0];
+    if (salaryCompany === 'vvp' || salaryCompany === 'a7a') {
+      setCompany(salaryCompany);
+    }
+  }, [selectedSalary?.calculator_key]);
 
   const salaryOptions = useMemo(
     () =>
@@ -289,6 +374,20 @@ export default function SalaryList() {
   return (
     <ComponentCard title="Quản lý bảng lương">
       <div className="space-y-5">
+        {canViewDrafts && (
+          <Tabs
+            activeKey={salaryStatus}
+            onChange={(key) => {
+              setRequestedStatus(key === 'draft' ? 'draft' : 'published');
+              setSelectedSalaryId(null);
+              setSelectedSalaryDetailId(null);
+            }}
+            items={[
+              { key: 'published', label: 'Bảng lương chính thức' },
+              { key: 'draft', label: 'Bảng lương nháp' }
+            ]}
+          />
+        )}
         {/* ── Action Bar ────────────────────────────────────────── */}
         <div className="flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/50">
           <RefreshButton refresh={refetch} isLoading={isFetching} />
@@ -297,7 +396,23 @@ export default function SalaryList() {
               Tính lương
             </AppButton>
           </Link>
-          {selectedSalary && <Tag color="green">Đã công bố</Tag>}
+          {canViewDrafts &&
+            salaryStatus === 'draft' &&
+            selectedSalary?.calculator_key && (
+              <AppButton
+                tone="primary"
+                loading={isPublishing}
+                disabled={!canPublish}
+                onClick={confirmPublication}
+              >
+                Duyệt và công bố
+              </AppButton>
+            )}
+          {selectedSalary && (
+            <Tag color={salaryStatus === 'draft' ? 'orange' : 'green'}>
+              {salaryStatus === 'draft' ? 'Bản nháp' : 'Đã công bố'}
+            </Tag>
+          )}
           {selectedSalary &&
             !(
               selectedSalary.calculator_key &&
@@ -458,7 +573,13 @@ export default function SalaryList() {
                 tabBarStyle={isMobile ? { marginBottom: 12 } : undefined}
               />
             ) : (
-              <Empty description="Chưa có bảng lương chính thức được công bố" />
+              <Empty
+                description={
+                  salaryStatus === 'draft'
+                    ? 'Chưa có bảng lương nháp được lưu'
+                    : 'Chưa có bảng lương chính thức được công bố'
+                }
+              />
             )}
           </Spin>
         </div>

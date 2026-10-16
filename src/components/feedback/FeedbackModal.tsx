@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { useObjectUrl } from '@/hooks/useObjectUrl';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Modal, Input, Select, message } from 'antd';
 import {
@@ -56,7 +57,7 @@ export default function FeedbackModal({ open, onClose }: FeedbackModalProps) {
     content: ''
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const imagePreview = useObjectUrl(imageFile);
 
   const createMutation = useMutation({
     mutationFn: (payload: CreateFeedbackPayload) => createMyFeedback(payload),
@@ -72,7 +73,7 @@ export default function FeedbackModal({ open, onClose }: FeedbackModalProps) {
   const resetForm = () => {
     setForm({ type: 'suggestion', subject: '', content: '' });
     setImageFile(null);
-    setImagePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const handleSubmit = () => {
@@ -90,6 +91,7 @@ export default function FeedbackModal({ open, onClose }: FeedbackModalProps) {
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = '';
     if (!file) return;
 
     if (!ACCEPTED_TYPES.includes(file.type)) {
@@ -102,14 +104,10 @@ export default function FeedbackModal({ open, onClose }: FeedbackModalProps) {
     }
 
     setImageFile(file);
-    const reader = new FileReader();
-    reader.onload = (ev) => setImagePreview(ev.target?.result as string);
-    reader.readAsDataURL(file);
   };
 
   const removeImage = () => {
     setImageFile(null);
-    setImagePreview(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 

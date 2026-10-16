@@ -1,4 +1,5 @@
 import AppSearchInput from '@/components/common/AppSearchInput';
+import { QUERY_KEYS } from '@/constants/queryKeys';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -589,6 +590,9 @@ export default function PayrollCalculator() {
             publicationData.id,
             publicationData.revision
           );
+          void queryClient.invalidateQueries({
+            queryKey: [QUERY_KEYS.DASHBOARD]
+          });
           setPublication({ key: publicationKey, data: response.data });
           void queryClient.invalidateQueries({ queryKey: ['salaries'] });
           void queryClient.invalidateQueries({

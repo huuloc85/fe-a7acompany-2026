@@ -1,4 +1,4 @@
-import { FileType, getBase64 } from '@utils/fileType';
+import { useObjectUrl } from '@/hooks/useObjectUrl';
 import { Image, Upload, UploadFile, UploadProps } from 'antd';
 import ImgCrop from 'antd-img-crop';
 import React, { useEffect, useState } from 'react';
@@ -14,7 +14,9 @@ export const UploadImage: React.FC<UploadImageProps> = ({
 }) => {
   const [images, setImages] = React.useState<UploadFile[]>(imageList || []);
   const [isPreviewOpen, setIsPreviewOpen] = useState<boolean>(false);
-  const [previewImage, setPreviewImage] = useState<string>('');
+  const [previewFile, setPreviewFile] = useState<UploadFile>();
+  const previewUrl = useObjectUrl(previewFile?.originFileObj);
+  const previewImage = previewFile?.url || previewUrl || previewFile?.preview;
 
   useEffect(() => {
     const list = imageList?.();
@@ -23,11 +25,8 @@ export const UploadImage: React.FC<UploadImageProps> = ({
     }
   }, [setImages, imageList]);
 
-  const handlePreview = async (file: UploadFile) => {
-    if (!file.url && !file.preview && file.originFileObj) {
-      file.preview = await getBase64(file.originFileObj as FileType);
-    }
-    setPreviewImage(file.url || (file.preview as string));
+  const handlePreview = (file: UploadFile) => {
+    setPreviewFile(file);
     setIsPreviewOpen(true);
   };
 
@@ -64,7 +63,7 @@ export const UploadImage: React.FC<UploadImageProps> = ({
           preview={{
             visible: isPreviewOpen,
             onVisibleChange: (visible) => setIsPreviewOpen(visible),
-            afterOpenChange: (visible) => !visible && setPreviewImage('')
+            afterOpenChange: (visible) => !visible && setPreviewFile(undefined)
           }}
           src={previewImage}
         />

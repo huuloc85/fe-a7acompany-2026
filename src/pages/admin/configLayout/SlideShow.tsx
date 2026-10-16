@@ -4,7 +4,7 @@ import ComponentCard from '@components/common/ComponentCard';
 import { SlideCarousel } from '@components/SlideCarousel';
 import { deleteImage, fetchImages, uploadImage } from '@services/UploadService';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { FileType, getBase64 } from '@utils/fileType';
+import { useObjectUrl } from '@/hooks/useObjectUrl';
 import { Image, message, Spin, Upload, UploadFile, UploadProps } from 'antd';
 import ImgCrop from 'antd-img-crop';
 import React, { useEffect, useState } from 'react';
@@ -13,19 +13,18 @@ import { AiOutlineUpload } from 'react-icons/ai';
 export const SlideShow = () => {
   const [images, setImages] = React.useState<UploadFile[]>([]);
   const [isPreviewOpen, setIsPreviewOpen] = useState<boolean>(false);
-  const [previewImage, setPreviewImage] = useState<string>('');
+  const [previewFile, setPreviewFile] = useState<UploadFile>();
+  const previewUrl = useObjectUrl(previewFile?.originFileObj);
+  const previewImage = previewFile?.url || previewUrl || previewFile?.preview;
 
-  const handlePreview = async (file: UploadFile) => {
-    if (!file.url && !file.preview && file.originFileObj) {
-      file.preview = await getBase64(file.originFileObj as FileType);
-    }
-    setPreviewImage(file.url || (file.preview as string));
+  const handlePreview = (file: UploadFile) => {
+    setPreviewFile(file);
     setIsPreviewOpen(true);
   };
 
   const queryClient = useQueryClient();
 
-  const { mutate: upload } = useMutation({
+  const { mutateAsync: upload, isPending: isUploading } = useMutation({
     mutationKey: ['uploadImage'],
     mutationFn: (formData: FormData) => uploadImage(formData),
     onMutate: () => {
@@ -45,11 +44,11 @@ export const SlideShow = () => {
         content: 'Tải lên thành công',
         key: 'upload'
       });
-      queryClient.invalidateQueries();
+      queryClient.invalidateQueries({ queryKey: ['images'] });
     }
   });
 
-  const { mutate: deleteImg } = useMutation({
+  const { mutateAsync: deleteImg } = useMutation({
     mutationKey: ['deleteImage'],
     mutationFn: (id: string) => deleteImage(id),
     onMutate: () => {
@@ -63,14 +62,13 @@ export const SlideShow = () => {
         content: 'Xóa thất bại',
         key: 'delete'
       });
-      queryClient.invalidateQueries();
     },
     onSuccess: () => {
       message.success({
         content: 'Xóa thành công',
         key: 'delete'
       });
-      queryClient.invalidateQueries();
+      queryClient.invalidateQueries({ queryKey: ['images'] });
     }
   });
 
@@ -78,19 +76,38 @@ export const SlideShow = () => {
     listType: 'picture-card',
     fileList: images,
     accept: '.jpg,.jpeg,.png',
+    disabled: isUploading,
+    beforeUpload: (file) => {
+      if (!['image/jpeg', 'image/png', 'image/jpg'].includes(file.type)) {
+        message.error('Chỉ có thể upload file JPG/PNG!');
+        return Upload.LIST_IGNORE;
+      }
+      if (file.size > 2 * 1024 * 1024) {
+        message.error('Ảnh không được vượt quá 2MB!');
+        return Upload.LIST_IGNORE;
+      }
+      return true;
+    },
     customRequest: ({ file, onSuccess, onError }) => {
       const formData = new FormData();
       formData.append('image', file as File);
-      upload(formData);
-      if (onError) {
-        onError(new Error('Upload failed'));
-      }
-      if (onSuccess) {
-        onSuccess(file);
-      }
+      void upload(formData).then(
+        (response) => onSuccess?.(response),
+        (error: Error) => onError?.(error)
+      );
     },
-    onRemove: (file) => {
-      deleteImg(file.uid);
+    onRemove: async (file) => {
+      if (file.status === 'uploading') return false;
+      const id =
+        file.response?.id ??
+        imageList?.data.find((image) => image.id === file.uid)?.id;
+      if (!id) return true;
+      try {
+        await deleteImg(id);
+        return true;
+      } catch {
+        return false;
+      }
     },
     onChange: (info) => {
       setImages(info.fileList);
@@ -125,7 +142,13 @@ export const SlideShow = () => {
     <ComponentCard title="Chỉnh sửa Slide show">
       <SlideCarousel images={imageList?.data || []} />
       <Spin spinning={isLoading}>
-        <ImgCrop aspect={5 / 2}>
+        <ImgCrop
+          aspect={5 / 2}
+          beforeCrop={(file) =>
+            ['image/jpeg', 'image/png', 'image/jpg'].includes(file.type) &&
+            file.size <= 2 * 1024 * 1024
+          }
+        >
           <Upload {...uploadProp}>
             <div className="py-5">
               <div className="flex justify-center">
@@ -142,7 +165,7 @@ export const SlideShow = () => {
           preview={{
             visible: isPreviewOpen,
             onVisibleChange: (visible) => setIsPreviewOpen(visible),
-            afterOpenChange: (visible) => !visible && setPreviewImage('')
+            afterOpenChange: (visible) => !visible && setPreviewFile(undefined)
           }}
           src={previewImage}
         />

@@ -61,7 +61,7 @@ export default function DashboardChartCard({
           </div>
         )}
         {!empty && footer && (
-          <div className="mt-4 border-t border-slate-200/70 pt-4 text-xs leading-relaxed text-gray-500 dark:border-slate-700 dark:text-gray-400">
+          <div className="mt-5 rounded-xl border border-l-4 border-blue-200 border-l-blue-500 bg-blue-50 px-4 py-4 text-sm leading-relaxed text-slate-700 sm:text-base dark:border-blue-800 dark:border-l-blue-400 dark:bg-blue-950/40 dark:text-slate-200">
             {footer}
           </div>
         )}

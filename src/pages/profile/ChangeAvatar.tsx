@@ -5,7 +5,8 @@ import { useMutation } from '@tanstack/react-query';
 import { Avatar, Button, message, Typography, Upload } from 'antd';
 import ImgCrop from 'antd-img-crop';
 import type { RcFile, UploadFile } from 'antd/es/upload/interface';
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
+import { useObjectUrl } from '@/hooks/useObjectUrl';
 import { FaImage, FaUser } from 'react-icons/fa';
 
 const { Text } = Typography;
@@ -28,9 +29,8 @@ export const ChangeAvatar = ({
   showCard = true
 }: ChangeAvatarProps) => {
   const { user } = authStore.state;
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [fileList, setFileList] = useState<UploadFile[]>([]);
-  const [isCropCancelled, setIsCropCancelled] = useState<boolean>(false);
+  const previewImage = useObjectUrl(fileList[0]?.originFileObj);
 
   const { mutate: updateAvatar, isPending } = useMutation({
     mutationKey: ['changeAvatar'],
@@ -59,7 +59,6 @@ export const ChangeAvatar = ({
       }
 
       // Clear preview and file list
-      setPreviewImage(null);
       setFileList([]);
 
       // Call parent onSuccess callback if provided
@@ -75,50 +74,23 @@ export const ChangeAvatar = ({
     }
   });
 
-  const beforeUpload = (file: RcFile) => {
+  const beforeUpload = (file: RcFile, notify = true) => {
     const isJpgOrPng =
       file.type === 'image/jpeg' ||
       file.type === 'image/png' ||
       file.type === 'image/jpg';
     if (!isJpgOrPng) {
-      message.error('Chỉ có thể upload file JPG/PNG!');
+      if (notify) message.error('Chỉ có thể upload file JPG/PNG!');
       return false;
     }
-    const isLt2M = file.size / 1024 / 1024 < 2;
+    const isLt2M = file.size / 1024 / 1024 <= 2;
     if (!isLt2M) {
-      message.error('Ảnh phải nhỏ hơn 2MB!');
+      if (notify) message.error('Ảnh không được vượt quá 2MB!');
       return false;
     }
 
-    return true; // Allow upload to proceed to cropping
+    return true;
   };
-
-  const handleChange = useCallback(
-    (info: { fileList: UploadFile[] }) => {
-      // Check if crop was cancelled
-      if (isCropCancelled) {
-        setIsCropCancelled(false); // Reset flag
-        return; // Don't process the change
-      }
-
-      setFileList(info.fileList);
-
-      // Create preview from the latest file
-      if (info.fileList.length > 0) {
-        const latestFile = info.fileList[info.fileList.length - 1];
-        if (latestFile.originFileObj) {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            setPreviewImage(e.target?.result as string);
-          };
-          reader.readAsDataURL(latestFile.originFileObj);
-        }
-      } else {
-        setPreviewImage(null);
-      }
-    },
-    [isCropCancelled]
-  );
 
   const handleUpload = () => {
     if (fileList.length > 0 && fileList[0].originFileObj) {
@@ -127,7 +99,6 @@ export const ChangeAvatar = ({
   };
 
   const handleRemove = () => {
-    setPreviewImage(null);
     setFileList([]);
   };
 
@@ -171,26 +142,26 @@ export const ChangeAvatar = ({
             modalCancel="Hủy"
             resetText="Đặt lại"
             quality={0.9}
-            onModalCancel={() => {
-              setIsCropCancelled(true);
-            }}
-            onModalOk={() => {
-              setIsCropCancelled(false);
-            }}
+            beforeCrop={(file) => beforeUpload(file, false)}
           >
             <Upload
               accept="image/jpeg,image/png,image/jpg"
-              beforeUpload={beforeUpload}
-              onChange={handleChange}
+              beforeUpload={(file) => {
+                if (!beforeUpload(file)) return Upload.LIST_IGNORE;
+                setFileList([
+                  {
+                    uid: file.uid,
+                    name: file.name,
+                    originFileObj: file
+                  }
+                ]);
+                return false;
+              }}
+              maxCount={1}
               fileList={fileList}
               disabled={isPending}
               showUploadList={false}
               className="block"
-              customRequest={({ onSuccess }) => {
-                setTimeout(() => {
-                  onSuccess?.('ok');
-                }, 0);
-              }}
             >
               <Button
                 size="large"
