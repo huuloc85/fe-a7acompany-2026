@@ -144,7 +144,7 @@ function FilterBar({
         <DatePicker
           picker="month"
           disabledDate={isOutsideAttendanceWindow}
-          format="DD/MM/YYYY"
+          format="MM/YYYY"
           placeholder="Chọn tháng"
           inputReadOnly={false}
           value={monthValue}
@@ -158,7 +158,7 @@ function FilterBar({
           Khoảng thời gian
         </label>
         <DatePicker.RangePicker
-          format="DD/MM/YYYY"
+          format="MM/YYYY"
           disabledDate={isOutsideAttendanceWindow}
           placeholder={['Từ ngày', 'Đến ngày']}
           inputReadOnly={false}

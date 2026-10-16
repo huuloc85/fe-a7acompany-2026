@@ -1,4 +1,5 @@
 import ComponentCard from '@components/common/ComponentCard';
+import { useOnboarding } from '@/components/onboarding/OnboardingContext';
 import { changeAvatar } from '@services/ProfileService';
 import { authStore, updateUserImage } from '@stores/authStore';
 import { useMutation } from '@tanstack/react-query';
@@ -29,6 +30,7 @@ export const ChangeAvatar = ({
   showCard = true
 }: ChangeAvatarProps) => {
   const { user } = authStore.state;
+  const { recordTask } = useOnboarding();
   const [fileList, setFileList] = useState<UploadFile[]>([]);
   const previewImage = useObjectUrl(fileList[0]?.originFileObj);
 
@@ -42,6 +44,7 @@ export const ChangeAvatar = ({
       });
     },
     onSuccess: (response: unknown) => {
+      recordTask('avatar_updated');
       const typedResponse = response as ChangeAvatarResponse;
       message.success({
         content: 'Cập nhật ảnh đại diện thành công',
@@ -83,12 +86,6 @@ export const ChangeAvatar = ({
       if (notify) message.error('Chỉ có thể upload file JPG/PNG!');
       return false;
     }
-    const isLt2M = file.size / 1024 / 1024 <= 2;
-    if (!isLt2M) {
-      if (notify) message.error('Ảnh không được vượt quá 2MB!');
-      return false;
-    }
-
     return true;
   };
 

@@ -587,7 +587,7 @@ const ExportComparisonTable: React.FC = () => {
         <div className="flex w-full items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 sm:w-auto dark:border-gray-600 dark:bg-gray-800">
           <span className="text-xs text-gray-500">Tháng:</span>
           <DatePicker
-            format="DD/MM/YYYY"
+            format="MM/YYYY"
             picker="month"
             value={month}
             size={isMobile ? 'small' : 'middle'}

@@ -115,7 +115,7 @@ export const AddWorkSchedule: React.FC<AddWorkScheduleProps> = ({
           >
             <DatePicker
               style={{ width: '100%' }}
-              format="DD/MM/YYYY"
+              format="MM/YYYY"
               picker="month"
             />
           </Form.Item>

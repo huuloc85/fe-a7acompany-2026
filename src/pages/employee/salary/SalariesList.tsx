@@ -148,7 +148,10 @@ export default function SalariesList() {
                 <div className="rounded-xl border border-emerald-100 bg-emerald-50/40 p-4 dark:border-emerald-900/50 dark:bg-emerald-950/20">
                   <div className="mb-5 flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
                     <div className="min-w-0">
-                      <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+                      <h2
+                        data-tour="salary-heading"
+                        className="text-base font-semibold text-gray-900 dark:text-white"
+                      >
                         Phiếu lương đang xem
                       </h2>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -157,7 +160,10 @@ export default function SalariesList() {
                           : 'Đang tải phiếu lương'}
                       </p>
                     </div>
-                    <div className="w-full xl:w-[360px]">
+                    <div
+                      data-tour="salary-period"
+                      className="w-full xl:w-[360px]"
+                    >
                       <label className="mb-1.5 flex items-center gap-2 text-xs font-medium text-gray-500 dark:text-gray-400">
                         <FaCalendarAlt className="text-emerald-500" />
                         Đổi kỳ lương
@@ -172,7 +178,7 @@ export default function SalariesList() {
                         optionFilterProp="label"
                         size="large"
                         suffixIcon={<FaCalendarAlt className="text-gray-400" />}
-                        dropdownStyle={{ minWidth: 340 }}
+                        styles={{ popup: { root: { minWidth: 340 } } }}
                         optionRender={(option) => {
                           const data = option.data as {
                             label: string;

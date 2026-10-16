@@ -92,7 +92,7 @@ export const ScheduleList = () => {
 
           {/* ── Filter Bar ──────────────────────────────────────── */}
           <div className="rounded-xl border border-gray-100 bg-white/80 p-4 backdrop-blur-sm dark:border-gray-700 dark:bg-gray-800/50">
-            <div className="flex flex-col gap-1">
+            <div data-tour="schedule-search" className="flex flex-col gap-1">
               <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
                 <FaSearch className="mr-1 inline-block text-gray-400" />
                 Tìm kiếm
@@ -134,7 +134,10 @@ export const ScheduleList = () => {
                       </p>
                     )}
                   </div>
-                  <div className="w-full xl:w-[360px]">
+                  <div
+                    data-tour="schedule-select"
+                    className="w-full xl:w-[360px]"
+                  >
                     <label className="mb-1.5 flex items-center gap-2 text-xs font-medium text-gray-500 dark:text-gray-400">
                       <FaCalendarAlt className="text-blue-500" />
                       Đổi lịch làm việc

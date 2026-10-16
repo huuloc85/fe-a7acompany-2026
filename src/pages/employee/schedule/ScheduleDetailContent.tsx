@@ -205,51 +205,63 @@ export const ScheduleDetailContent = ({
       </div>
 
       {/* ── Additional Schedules (WC, eat room, etc.) ──────── */}
-      {scheduleData.some((item) => item.is_eat_room) && (
-        <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800/50">
-          <h3 className="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">
-            🍽️ Lịch trực phòng ăn
-          </h3>
-          <ScheduleWcListSection
-            dataSource={scheduleData.filter((item) => item.is_eat_room)}
-            loading={isLoading}
-          />
-        </div>
-      )}
+      {scheduleData.some(
+        (item) =>
+          item.is_eat_room ||
+          item.is_wc_trash ||
+          item.is_wc_clean_women ||
+          item.is_wc_clean_men
+      ) && (
+        <div data-tour="schedule-cleaning-duty" className="space-y-4">
+          {scheduleData.some((item) => item.is_eat_room) && (
+            <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800/50">
+              <h3 className="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">
+                🍽️ Lịch trực phòng ăn
+              </h3>
+              <ScheduleWcListSection
+                dataSource={scheduleData.filter((item) => item.is_eat_room)}
+                loading={isLoading}
+              />
+            </div>
+          )}
 
-      {scheduleData.some((item) => item.is_wc_trash) && (
-        <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800/50">
-          <h3 className="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">
-            🗑️ Lịch đổ rác WC
-          </h3>
-          <ScheduleWcListSection
-            dataSource={scheduleData.filter((item) => item.is_wc_trash)}
-            loading={isLoading}
-          />
-        </div>
-      )}
+          {scheduleData.some((item) => item.is_wc_trash) && (
+            <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800/50">
+              <h3 className="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">
+                🗑️ Lịch đổ rác WC
+              </h3>
+              <ScheduleWcListSection
+                dataSource={scheduleData.filter((item) => item.is_wc_trash)}
+                loading={isLoading}
+              />
+            </div>
+          )}
 
-      {scheduleData.some((item) => item.is_wc_clean_women) && (
-        <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800/50">
-          <h3 className="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">
-            🚺 Lịch trực WC nữ
-          </h3>
-          <ScheduleWcListSection
-            dataSource={scheduleData.filter((item) => item.is_wc_clean_women)}
-            loading={isLoading}
-          />
-        </div>
-      )}
+          {scheduleData.some((item) => item.is_wc_clean_women) && (
+            <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800/50">
+              <h3 className="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">
+                🚺 Lịch trực WC nữ
+              </h3>
+              <ScheduleWcListSection
+                dataSource={scheduleData.filter(
+                  (item) => item.is_wc_clean_women
+                )}
+                loading={isLoading}
+              />
+            </div>
+          )}
 
-      {scheduleData.some((item) => item.is_wc_clean_men) && (
-        <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800/50">
-          <h3 className="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">
-            🚹 Lịch trực WC nam
-          </h3>
-          <ScheduleWcListSection
-            dataSource={scheduleData.filter((item) => item.is_wc_clean_men)}
-            loading={isLoading}
-          />
+          {scheduleData.some((item) => item.is_wc_clean_men) && (
+            <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800/50">
+              <h3 className="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">
+                🚹 Lịch trực WC nam
+              </h3>
+              <ScheduleWcListSection
+                dataSource={scheduleData.filter((item) => item.is_wc_clean_men)}
+                loading={isLoading}
+              />
+            </div>
+          )}
         </div>
       )}
     </div>

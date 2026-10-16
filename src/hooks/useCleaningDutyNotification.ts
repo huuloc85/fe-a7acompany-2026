@@ -39,14 +39,10 @@ export const useCleaningDutyNotification = () => {
       !hasTriggeredAutoShow &&
       shouldShowCleaningDutyNotification()
     ) {
-      // Add a small delay to ensure UI is ready
-      const timer = setTimeout(() => {
-        setCurrentDuties(duties);
-        setModalOpen(true);
-        setHasTriggeredAutoShow(true);
-      }, 1000); // 1 second delay
-
-      return () => clearTimeout(timer);
+      // AppLayout sequences the dialogs once their data is ready.
+      setCurrentDuties(duties);
+      setModalOpen(true);
+      setHasTriggeredAutoShow(true);
     }
   }, [duties, isLoading, isAuthenticated, user, hasTriggeredAutoShow]);
 

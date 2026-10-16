@@ -28,23 +28,16 @@ import {
   RequestForm,
   RequestFormFilters as RequestFormFiltersType
 } from '@/types/requestFormType';
-import {
-  SUPERVISOR_IDS,
-  SUPERVISOR_ROLE_IDS,
-  SUPERVISOR_ROLE_NAMES
-} from '@/constants/supervisors';
-import { getUserApprovalType, isAllowRole } from '@utils/authUtil';
+import { SUPERVISOR_IDS } from '@/constants/supervisors';
+import { getUserApprovalType, isRequestFormSupervisor } from '@utils/authUtil';
 import { FaFileAlt, FaCheckDouble } from 'react-icons/fa';
 
 export default function RequestFormList() {
   const { user } = useAuth();
   const prefetchEmployees = usePrefetchAuthorizableEmployees();
 
-  // Check if user is supervisor
-  const isSupervisor =
-    !!user &&
-    ((SUPERVISOR_IDS as readonly string[]).includes(user.id.toString()) ||
-      isAllowRole(user, [...SUPERVISOR_ROLE_NAMES, ...SUPERVISOR_ROLE_IDS]));
+  // Check if user is supervisor (shared with onboarding step filtering)
+  const isSupervisor = isRequestFormSupervisor(user);
   const userType = getUserApprovalType(user, [...SUPERVISOR_IDS]);
 
   // Active tab state
@@ -519,6 +512,7 @@ export default function RequestFormList() {
           {/* ── Action Bar ──────────────────────────────────── */}
           <div className="flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/50">
             <AppButton
+              data-tour="request-create"
               tone="success"
               onClick={() => setCreateModalVisible(true)}
             >
@@ -534,7 +528,10 @@ export default function RequestFormList() {
           </div>
 
           {/* ── Filter Panel ───────────────────────────────── */}
-          <div className="rounded-xl border border-gray-100 bg-white/80 p-4 backdrop-blur-sm dark:border-gray-700 dark:bg-gray-800/50">
+          <div
+            data-tour="request-filters"
+            className="rounded-xl border border-gray-100 bg-white/80 p-4 backdrop-blur-sm dark:border-gray-700 dark:bg-gray-800/50"
+          >
             <FilterPanel
               filters={filters}
               onFiltersChange={handleFiltersChange}
@@ -577,8 +574,13 @@ export default function RequestFormList() {
             key: 'approval',
             label: (
               <span className="flex items-center gap-2 text-sm font-medium">
-                <FaCheckDouble className="text-emerald-500" />
-                Duyệt đơn
+                <span
+                  data-tour="request-approval-tab"
+                  className="flex items-center gap-2"
+                >
+                  <FaCheckDouble className="text-emerald-500" />
+                  Duyệt đơn
+                </span>
               </span>
             ),
             children: (

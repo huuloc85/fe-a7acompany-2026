@@ -276,6 +276,19 @@ body,
 
 #root {
   min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* Keep the viewport canvas consistent when mobile browsers reach a scroll edge. */
+html {
+  background: var(--glass-page-bg);
+}
+
+@media (hover: none) and (pointer: coarse) {
+  html,
+  body {
+    overscroll-behavior-y: none;
+  }
 }
 
 body {
@@ -289,6 +302,7 @@ body {
 .glass-app-shell {
   position: relative;
   min-height: 100vh;
+  min-height: 100dvh;
   background: var(--glass-page-bg) !important;
 }
 
@@ -4487,13 +4501,15 @@ html body #root .theme-toggle-btn svg.theme-sun-icon {
   fill: #eab308 !important;
 }
 
-html body #root .theme-toggle-btn.header-action-btn {
+html body #root .theme-toggle-btn.header-action-btn,
+html body #root .onboarding-help-btn.header-action-btn {
   padding: 0 !important;
   width: 40px;
   height: 40px;
 }
 
-html body #root .theme-toggle-btn.header-action-btn > svg {
+html body #root .theme-toggle-btn.header-action-btn > svg,
+html body #root .onboarding-help-btn.header-action-btn > svg {
   width: 22px !important;
   height: 22px !important;
   flex-shrink: 0;
@@ -10667,4 +10683,27 @@ html.dark
     border-radius: 7px !important;
     margin-inline-start: 0 !important;
   }
+}
+
+/* Final sidebar active-state override: no colored focus-like border. */
+html
+  body
+  #root
+  :where(.app-sidebar-sider, .app-sidebar-mobile, .app-sidebar-drawer)
+  .sidebar-active-item {
+  border-color: transparent !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.72),
+    0 6px 14px rgba(15, 23, 42, 0.04) !important;
+}
+
+html.dark
+  body
+  #root
+  :where(.app-sidebar-sider, .app-sidebar-mobile, .app-sidebar-drawer)
+  .sidebar-active-item {
+  border-color: transparent !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 8px 18px rgba(15, 23, 42, 0.12) !important;
 }

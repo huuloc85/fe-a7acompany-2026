@@ -1,0 +1,23 @@
+.app-header {
+  container-name: app-header;
+  container-type: inline-size;
+}
+
+.app-header > * {
+  flex-shrink: 0;
+}
+
+/* Use the available header width, including when the sidebar is open. */
+@container app-header (max-width: 440px) {
+  html body #root .app-header .appearance-toggle-btn {
+    width: 40px;
+    min-width: 40px;
+    height: 40px;
+    padding: 0 !important;
+    gap: 0;
+  }
+
+  html body #root .app-header .appearance-toggle-btn__label {
+    display: none;
+  }
+}

@@ -98,6 +98,7 @@ export const UpdateQuantityError = () => {
               <Form<FormValues> {...formProps}>
                 <Form.Item<FormValues>
                   label="Chọn sản phẩm"
+                  data-tour="error-product"
                   name="productId"
                   rules={[
                     { required: true, message: 'Vui lòng chọn sản phẩm' }
@@ -112,6 +113,7 @@ export const UpdateQuantityError = () => {
                 </Form.Item>
                 <Form.Item<FormValues>
                   label="Số lượng sản phẩm lỗi"
+                  data-tour="error-quantity"
                   name="quantity"
                   rules={[
                     {

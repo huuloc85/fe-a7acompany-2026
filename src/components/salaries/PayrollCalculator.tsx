@@ -908,7 +908,7 @@ export default function PayrollCalculator() {
               <div>
                 <div>Tháng lương (kỳ 16–15)</div>
                 <DatePicker
-                  format="DD/MM/YYYY"
+                  format="MM/YYYY"
                   aria-label="Tháng lương"
                   picker="month"
                   value={month}
@@ -928,7 +928,7 @@ export default function PayrollCalculator() {
               <div>
                 <div>Lấy công đến ngày</div>
                 <DatePicker
-                  format="DD/MM/YYYY"
+                  format="MM/YYYY"
                   aria-label="Lấy công đến ngày"
                   value={dayjs(throughDate)}
                   allowClear={false}

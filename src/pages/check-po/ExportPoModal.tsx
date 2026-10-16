@@ -532,7 +532,7 @@ export const ExportPoModal = () => {
             Chọn tháng xuất PO
           </label>
           <DatePicker
-            format="DD/MM/YYYY"
+            format="MM/YYYY"
             picker="month"
             value={month}
             style={{ width: '100%' }}

@@ -412,7 +412,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ id }) => {
               Tháng
             </label>
             <DatePicker
-              format="DD/MM/YYYY"
+              format="MM/YYYY"
               value={month}
               picker="month"
               className="!rounded-lg"

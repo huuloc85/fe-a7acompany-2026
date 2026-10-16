@@ -51,6 +51,7 @@ export default function RequestFormTabs() {
       <BackButton to="/" />
       <ComponentCard title="Quản lý đơn yêu cầu">
         <Tabs
+          data-tour="authorized-requests-tabs"
           activeKey={activeTab}
           onChange={handleTabChange}
           items={tabItems}

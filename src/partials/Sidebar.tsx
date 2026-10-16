@@ -13,7 +13,7 @@ import {
   isAdmin as isAdminRole,
   isAllowRole
 } from '@utils/authUtil';
-import { Drawer, Layout, message } from 'antd';
+import { App as AntApp, Drawer, Layout } from 'antd';
 import React, { useMemo, useState } from 'react';
 import type { IconType } from 'react-icons';
 import * as FaIcons from 'react-icons/fa';
@@ -36,6 +36,7 @@ function Sidebar() {
   const navigate = useNavigate();
   const { appearance, isSidebarClose, isMobile } = useStore(uiStore);
   const { user } = useAuth();
+  const { message: antMessage } = AntApp.useApp();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const isLiquidAppearance = appearance === 'liquid';
@@ -303,7 +304,7 @@ function Sidebar() {
 
     try {
       startLogoutRedirect();
-      message.loading({
+      antMessage.loading({
         content: 'Đang đăng xuất...',
         key: 'logout',
         duration: 0.5
@@ -312,14 +313,14 @@ function Sidebar() {
       await navigate({ to: '/login', replace: true });
       await authLogout();
 
-      message.success({
+      antMessage.success({
         content: 'Đăng xuất thành công!',
         key: 'logout',
         duration: 1
       });
     } catch (error) {
       console.error('Logout error:', error);
-      message.error({
+      antMessage.error({
         content: 'Đã đăng xuất',
         key: 'logout',
         duration: 1

@@ -130,6 +130,7 @@ export const ChooseProduct = () => {
               <Form<FormValues> {...formProps}>
                 <Form.Item<FormValues>
                   label="Chọn sản phẩm"
+                  data-tour="choose-product-select"
                   name="productId"
                   rules={[
                     { required: true, message: 'Vui lòng chọn sản phẩm' }
@@ -150,6 +151,7 @@ export const ChooseProduct = () => {
                 </Form.Item>
                 <Form.Item<FormValues>
                   label="Chọn ca làm việc"
+                  data-tour="choose-product-shift"
                   name="shift"
                   rules={[
                     { required: true, message: 'Vui lòng chọn ca làm việc' }

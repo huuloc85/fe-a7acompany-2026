@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Input, Modal, message } from 'antd';
 import Button from '@/components/common/AppButton';
 import RFB from '@novnc/novnc/lib/rfb';
@@ -31,6 +31,11 @@ export default function ScreenViewer() {
   }, []);
   const connection = useRef<RFB | null>(null);
   const generation = useRef(0);
+  const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const connectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingRequest = useRef<AbortController | null>(null);
+  const resumeHandshake = useRef<(() => void) | null>(null);
+  const retries = useRef(0);
   const submittedPassword = useRef('');
   const [status, setStatus] = useState('Chưa kết nối màn hình');
   const [active, setActive] = useState(false);
@@ -53,48 +58,99 @@ export default function ScreenViewer() {
       message.warning('Trình duyệt không cho phép xóa mật khẩu đã lưu.');
     }
   };
-  const disconnect = () => {
-    submittedPassword.current = '';
+  const release = useCallback(() => {
     generation.current += 1;
-    connection.current?.disconnect();
+    if (retryTimer.current) clearTimeout(retryTimer.current);
+    if (connectTimer.current) clearTimeout(connectTimer.current);
+    retryTimer.current = null;
+    connectTimer.current = null;
+    resumeHandshake.current = null;
+    pendingRequest.current?.abort();
+    pendingRequest.current = null;
+    const old = connection.current;
     connection.current = null;
+    old?.disconnect();
+    target.current?.replaceChildren();
+    submittedPassword.current = '';
+  }, []);
+  const disconnect = () => {
+    release();
     setActive(false);
     setPasswordNeeded(false);
     setPassword('');
     setStatus('Đã ngắt màn hình');
   };
-  useEffect(
-    () => () => {
-      generation.current += 1;
-      connection.current?.disconnect();
-    },
-    []
-  );
+  useEffect(() => release, [release]);
 
-  const connect = async () => {
-    const current = ++generation.current;
+  const connect = async (retry = false) => {
+    release();
+    if (!retry) retries.current = 0;
+    const current = generation.current;
     submittedPassword.current = '';
     const authSession = localStorage.getItem('auth_session_id');
     let triedSavedPassword = false;
     setActive(true);
+    setPasswordNeeded(false);
     setStatus('Đang kết nối…');
+    const failed = () => {
+      if (generation.current !== current) return;
+      release();
+      setPasswordNeeded(false);
+      setPassword('');
+      if (
+        retries.current >= 10 ||
+        authSession !== localStorage.getItem('auth_session_id')
+      ) {
+        setActive(false);
+        setStatus('Chưa kết nối được. Bấm Xem màn hình để thử lại.');
+        return;
+      }
+      const delay = Math.min(3000 * 2 ** retries.current++, 30000);
+      setStatus(
+        `Mất kết nối · Thử lại sau ${delay / 1000}s (${retries.current}/10)`
+      );
+      const waiting = generation.current;
+      retryTimer.current = setTimeout(() => {
+        if (generation.current === waiting) void connect(true);
+      }, delay);
+    };
+    const armTimeout = () => {
+      if (connectTimer.current) clearTimeout(connectTimer.current);
+      connectTimer.current = setTimeout(failed, 25000);
+    };
     try {
+      const controller = new AbortController();
+      pendingRequest.current = controller;
       const session = await axiosPrivate.post<
         unknown,
         { ticket: string; websocket_url: string; view_only: boolean }
-      >('/api/cap7a/screen-sessions', { confirmed: true }, { timeout: 12000 });
+      >(
+        '/api/cap7a/screen-sessions',
+        { confirmed: true },
+        { timeout: 12000, signal: controller.signal }
+      );
       if (generation.current !== current || !target.current) return;
+      pendingRequest.current = null;
       const url = new URL(session.websocket_url);
-      if (url.protocol !== 'wss:' || session.view_only !== true)
-        throw new Error('Invalid screen configuration');
+      if (url.protocol !== 'wss:' || session.view_only !== true) {
+        disconnect();
+        message.error('Cấu hình màn hình không hợp lệ.');
+        return;
+      }
       url.searchParams.set('ticket', session.ticket);
       const rfb = new RFB(target.current, url.toString());
       connection.current = rfb;
       rfb.viewOnly = true;
       rfb.scaleViewport = true;
       rfb.resizeSession = false;
+      resumeHandshake.current = armTimeout;
+      armTimeout();
       rfb.addEventListener('connect', () => {
         if (generation.current !== current) return;
+        if (connectTimer.current) clearTimeout(connectTimer.current);
+        connectTimer.current = null;
+        retries.current = 0;
+        setPasswordNeeded(false);
         if (
           submittedPassword.current &&
           authSession &&
@@ -139,37 +195,44 @@ export default function ScreenViewer() {
           /* Ask manually if session storage is unavailable or invalid. */
         }
         setPassword('');
+        if (connectTimer.current) clearTimeout(connectTimer.current);
+        connectTimer.current = null;
+        setStatus('Chờ nhập mật khẩu VNC');
         setPasswordNeeded(true);
       });
       rfb.addEventListener('securityfailure', () => {
         if (generation.current !== current) return;
         forgetPassword();
+        disconnect();
         message.error(
           'Xác thực VNC thất bại. Bấm Xem màn hình để nhập lại mật khẩu.'
         );
       });
-      rfb.addEventListener('disconnect', () => {
-        if (generation.current !== current) return;
-        connection.current = null;
-        submittedPassword.current = '';
-        setActive(false);
-        setPasswordNeeded(false);
-        setPassword('');
-        setStatus('Đã ngắt / hết phiên. Bấm Xem màn hình để kết nối lại.');
-      });
+      rfb.addEventListener('disconnect', failed);
     } catch (error) {
       if (generation.current !== current) return;
-      disconnect();
-      message.error(
-        getApiErrorMessage(error, 'Chưa kết nối được gateway màn hình.')
-      );
+      const code = (error as { response?: { status?: number } }).response
+        ?.status;
+      if (
+        code &&
+        code >= 400 &&
+        code < 500 &&
+        ![408, 409, 429].includes(code)
+      ) {
+        disconnect();
+        message.error(
+          getApiErrorMessage(error, 'Không được phép xem màn hình.')
+        );
+      } else {
+        failed();
+      }
     }
   };
 
   return (
     <div className="cap7a-viewer">
       <div className="flex flex-wrap items-center gap-3">
-        <Button disabled={active} onClick={connect}>
+        <Button disabled={active} onClick={() => void connect()}>
           Xem màn hình
         </Button>
         <Button disabled={!active} onClick={disconnect}>
@@ -188,6 +251,7 @@ export default function ScreenViewer() {
         cancelText="Huỷ"
         onCancel={disconnect}
         onOk={() => {
+          resumeHandshake.current?.();
           submittedPassword.current = password;
           connection.current?.sendCredentials({ password });
           setPassword('');

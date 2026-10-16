@@ -290,14 +290,17 @@ export default function ProductList() {
           </div>
 
           {/* ── Filter Bar ───────────────────────────────────────────── */}
-          <div className="rounded-xl border border-gray-100 bg-white/80 p-4 backdrop-blur-sm dark:border-gray-700 dark:bg-gray-800/50">
+          <div
+            data-tour="products-filters"
+            className="rounded-xl border border-gray-100 bg-white/80 p-4 backdrop-blur-sm dark:border-gray-700 dark:bg-gray-800/50"
+          >
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
                   📅 Tháng
                 </label>
                 <DatePicker
-                  format="DD/MM/YYYY"
+                  format="MM/YYYY"
                   value={month}
                   picker="month"
                   placeholder="Chọn tháng"
@@ -404,7 +407,13 @@ export default function ProductList() {
           </div>
 
           {/* ── Tabs ─────────────────────────────────────────────────── */}
-          <Tabs items={productTabs} type="card" size="large" animated />
+          <Tabs
+            data-tour="products-tabs"
+            items={productTabs}
+            type="card"
+            size="large"
+            animated
+          />
         </div>
 
         {/* ── Modal ─────────────────────────────────────────────────── */}

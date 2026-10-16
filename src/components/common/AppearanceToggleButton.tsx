@@ -1,9 +1,11 @@
 import { Tooltip } from 'antd';
+import { useActionTooltip } from '@/hooks/useActionTooltip';
 import { toggleAppearance, uiStore } from '@stores/uiStore';
 import { useStore } from '@tanstack/react-store';
 import { FaRegWindowMaximize, FaTint } from 'react-icons/fa';
 
 export const AppearanceToggleButton = () => {
+  const { tooltipProps, triggerProps } = useActionTooltip();
   const { appearance } = useStore(uiStore);
   const isLiquid = appearance === 'liquid';
   const label = isLiquid ? 'Giọt nước' : 'Mặc định';
@@ -12,8 +14,9 @@ export const AppearanceToggleButton = () => {
     : 'Chuyển sang giao diện giọt nước';
 
   return (
-    <Tooltip title={nextLabel}>
+    <Tooltip title={nextLabel} {...tooltipProps}>
       <button
+        {...triggerProps}
         type="button"
         aria-label={nextLabel}
         aria-pressed={isLiquid}

@@ -1069,7 +1069,7 @@ const ProductStockSummary: React.FC = () => {
             allowClear={false}
             size="small"
             className="!w-full sm:!w-[130px]"
-            format="DD/MM/YYYY"
+            format="MM/YYYY"
             onChange={(value) => setMonth(value || dayjs())}
           />
           <AppSearchInput

@@ -27,7 +27,10 @@ export const Profile = () => {
       <BackButton to="/" />
 
       {/* ── User Profile Card ────────────────────────── */}
-      <div className="ui-card liquid-glass-card mb-6 overflow-hidden rounded-2xl">
+      <div
+        data-tour="profile-info"
+        className="ui-card liquid-glass-card mb-6 overflow-hidden rounded-2xl"
+      >
         <div className="ui-card-header flex flex-col justify-center px-4 py-3 text-left sm:px-6 sm:py-4">
           <h2 className="ui-page-title !m-0 flex items-center gap-3 text-xl leading-snug font-semibold text-gray-800 uppercase sm:text-2xl dark:text-white/90">
             <FaUser className="text-blue-500" />
@@ -37,7 +40,7 @@ export const Profile = () => {
         <div className="p-6">
           <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
             {/* Avatar */}
-            <div className="relative inline-block">
+            <div data-tour="profile-avatar" className="relative inline-block">
               <Avatar
                 src={user?.image_url}
                 alt="Profile"

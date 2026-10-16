@@ -256,7 +256,7 @@ export const History = () => {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
         <DatePicker
           picker="month"
-          format="DD/MM/YYYY"
+          format="MM/YYYY"
           placeholder="Chọn tháng"
           inputReadOnly={false}
           onChange={(value) => {
@@ -269,7 +269,7 @@ export const History = () => {
           }}
         />
         <DatePicker.RangePicker
-          format="DD/MM/YYYY"
+          format="MM/YYYY"
           placeholder={['Chọn ngày bắt đầu', 'Chọn ngày kết thúc']}
           inputReadOnly={false}
           onChange={(value) => {

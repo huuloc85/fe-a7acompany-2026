@@ -225,7 +225,7 @@ export const ListActivity = () => {
           </div>
         }
       >
-        <div className="space-y-5">
+        <div data-tour="employee-activity-records" className="space-y-5">
           {/* ── Action Bar ─────────────────────────────────────── */}
           <div className="flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/50">
             <RefreshButton isLoading={isFetching} refresh={refetch} />
@@ -247,6 +247,7 @@ export const ListActivity = () => {
               <DatePicker
                 format="DD/MM/YYYY"
                 id="month-picker"
+                data-tour="employee-activity-date"
                 placeholder="Chọn ngày"
                 value={dayjs(params['filter[date]'])}
                 className="!max-w-xs !rounded-lg"

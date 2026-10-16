@@ -249,6 +249,7 @@ export default function StampForm() {
                   </label>
                   <Form.Item<FormFields>
                     name="date"
+                    data-tour="stamp-create-details"
                     rules={[{ required: true, message: 'Vui lòng chọn ngày' }]}
                     initialValue={dayjs()}
                     className="!mb-0"
@@ -362,6 +363,7 @@ export default function StampForm() {
                   </label>
                   <Form.Item<FormFields>
                     name="startStamp"
+                    data-tour="stamp-create-numbers"
                     rules={[
                       { required: true, message: 'Vui lòng nhập tem bắt đầu' },
                       {
@@ -445,6 +447,7 @@ export default function StampForm() {
                 <button
                   type="submit"
                   ref={submitBtnRef}
+                  data-tour="stamp-create-submit"
                   className="inline-flex items-center gap-2 rounded-lg bg-emerald-500 px-6 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-emerald-600 hover:shadow-md active:scale-[0.97]"
                 >
                   <FaPrint className="text-xs" />

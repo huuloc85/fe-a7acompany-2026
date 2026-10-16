@@ -716,7 +716,7 @@ export const ExportModal = () => {
           style={{ width: '100%' }}
           placeholder={'Chọn tháng'}
           picker="month"
-          format="DD/MM/YYYY"
+          format="MM/YYYY"
           value={month}
           onChange={(value) => {
             setMonth(value ? value.startOf('month') : dayjs().startOf('month'));

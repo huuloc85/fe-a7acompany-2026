@@ -142,6 +142,7 @@ export default function WorkScheduleList() {
                 Kỳ lịch làm việc
               </label>
               <Select
+                data-tour="total-schedules-select"
                 value={selectedId ?? undefined}
                 options={scheduleOptions}
                 onChange={setSelectedId}

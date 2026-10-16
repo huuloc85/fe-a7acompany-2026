@@ -190,7 +190,7 @@ export default function AttendanceArchiveButton() {
           />
           <Space wrap>
             <DatePicker
-              format="DD/MM/YYYY"
+              format="MM/YYYY"
               aria-label="Tháng lưu trữ"
               picker="month"
               value={month}

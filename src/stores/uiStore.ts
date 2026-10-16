@@ -82,6 +82,13 @@ export const toggleSidebar = () => {
   });
 };
 
+export const setSidebarClosed = (closed: boolean) => {
+  uiStore.setState((prevState) => ({
+    ...prevState,
+    isSidebarClose: closed
+  }));
+};
+
 export const toggleTheme = () => {
   uiStore.setState((prevState) => {
     const newState = prevState.theme === 'light' ? 'dark' : 'light';

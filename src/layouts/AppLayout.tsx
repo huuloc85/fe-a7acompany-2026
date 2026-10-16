@@ -1,4 +1,5 @@
 import { Outlet } from '@tanstack/react-router';
+import { OnboardingProvider } from '@/components/onboarding/Onboarding';
 import {
   ConfigProvider,
   Layout,
@@ -26,6 +27,7 @@ import { fetchNotifications } from '@services/NotificationService';
 import {
   hasAppearancePreference,
   setAppearance,
+  setSidebarClosed,
   uiStore,
   updateScreenSize
 } from '@stores/uiStore';
@@ -58,6 +60,11 @@ function AppLayout() {
     };
   }, []);
 
+  // Keep the mobile navigation out of the way until the user opens it.
+  useEffect(() => {
+    if (isMobile) setSidebarClosed(true);
+  }, [isMobile]);
+
   useEffect(() => {
     const sidebarWidth = isMobile ? '0px' : isSidebarClose ? '80px' : '256px';
     document.documentElement.style.setProperty(
@@ -82,20 +89,14 @@ function AppLayout() {
   useEffect(() => {
     if (hasAppearancePreference()) return;
 
-    const timer = window.setTimeout(() => {
-      setShowAppearancePrompt(true);
-    }, 900);
-
-    return () => window.clearTimeout(timer);
+    setShowAppearancePrompt(true);
   }, []);
 
   useEffect(() => {
     if (!isHoliday) return;
     const key = `holiday-modal-dismissed-${new Date().getFullYear()}`;
     if (!localStorage.getItem(key)) {
-      // Delay slightly so the page loads first
-      const t = setTimeout(() => setShowHolidayModal(true), 1500);
-      return () => clearTimeout(t);
+      setShowHolidayModal(true);
     }
   }, [isHoliday]);
 
@@ -306,38 +307,41 @@ function AppLayout() {
           }
         }}
       >
-        <Layout
-          className="glass-app-shell"
-          style={{
-            minHeight: '100vh',
-            borderRadius: borderRadiusLG
-          }}
-          hasSider
+        <OnboardingProvider
+          blocked={isLoginModalSequenceVisible || visibleLoginModals.length > 0}
         >
-          <Sidebar />
-          <Layout>
-            <Header />
-            <Content
-              style={{ overflow: 'initial' }}
-              className="glass-main ui-content min-w-0 p-4"
-            >
-              {messages.length > 0 && (
-                <div className="mb-4">
-                  <MarqueeAlert messages={messages} />
-                </div>
-              )}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.98, y: 10 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                transition={{ duration: 0.3, ease: 'easeOut' }}
-                className="ui-route-content min-w-0"
+          <Layout
+            className="glass-app-shell"
+            style={{
+              borderRadius: borderRadiusLG
+            }}
+            hasSider
+          >
+            <Sidebar />
+            <Layout>
+              <Header />
+              <Content
+                style={{ overflow: 'initial' }}
+                className="glass-main ui-content min-w-0 p-4"
               >
-                <Outlet />
-              </motion.div>
-            </Content>
-            <AppFooter />
+                {messages.length > 0 && (
+                  <div className="mb-4">
+                    <MarqueeAlert messages={messages} />
+                  </div>
+                )}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.98, y: 10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  transition={{ duration: 0.3, ease: 'easeOut' }}
+                  className="ui-route-content min-w-0"
+                >
+                  <Outlet />
+                </motion.div>
+              </Content>
+              <AppFooter />
+            </Layout>
           </Layout>
-        </Layout>
+        </OnboardingProvider>
       </ConfigProvider>
 
       <div

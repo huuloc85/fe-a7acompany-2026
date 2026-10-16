@@ -1,6 +1,7 @@
 import { Button, Tooltip } from 'antd';
 import { BellOutlined, BellFilled } from '@ant-design/icons';
 import { useNotificationPermission } from '@hooks/useNotificationPermission';
+import { useActionTooltip } from '@/hooks/useActionTooltip';
 
 interface NotificationStatusIndicatorProps {
   size?: 'small' | 'middle' | 'large';
@@ -10,6 +11,7 @@ interface NotificationStatusIndicatorProps {
 export const NotificationStatusIndicator: React.FC<
   NotificationStatusIndicatorProps
 > = ({ size = 'small', showText = false }) => {
+  const { tooltipProps, triggerProps } = useActionTooltip();
   const { permission, requestPermission, isLoading, isSupported } =
     useNotificationPermission();
 
@@ -63,8 +65,10 @@ export const NotificationStatusIndicator: React.FC<
   };
 
   return (
-    <Tooltip title={getTooltipTitle()}>
+    <Tooltip title={getTooltipTitle()} {...tooltipProps}>
       <Button
+        {...triggerProps}
+        aria-label={getTooltipTitle()}
         type={getButtonType()}
         icon={getIcon()}
         size={size}

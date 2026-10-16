@@ -1080,131 +1080,70 @@ const AttendancePageContent = () => {
           {getAttendanceWindow().end.format('MM/YYYY')}. Kỳ 16→15 chỉ lấy phần
           nằm trong khoảng này.
         </p>
-        {isMobile ? (
-          <div className="space-y-2">
-            {/* Row 1: Month picker + forgotten switch */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                <DatePicker
-                  id="att-month-picker"
-                  disabledDate={isOutsideAttendanceWindow}
-                  placeholder="Chọn tháng"
-                  value={month}
-                  picker="month"
-                  format="DD/MM/YYYY"
-                  inputReadOnly={false}
-                  onChange={handleMonthChange}
-                  allowClear={false}
-                  style={{ width: 110 }}
-                  size="small"
-                />
-                <Segmented
-                  size="small"
-                  value={cycleMode}
-                  onChange={(v) =>
-                    handleCycleModeChange(v as 'month' | 'payroll')
-                  }
-                  options={[
-                    { value: 'month', label: 'Tháng' },
-                    { value: 'payroll', label: 'Từ 16→15 sau' }
-                  ]}
-                />
-              </div>
-              {activeTab === 'calculate' && (
-                <label
-                  htmlFor="att-forgotten-switch"
-                  className="flex cursor-pointer items-center gap-1.5 text-xs text-gray-500 select-none"
-                >
-                  <Switch
-                    id="att-forgotten-switch"
+        <div data-tour="attendance-filters">
+          {isMobile ? (
+            <div className="space-y-2">
+              {/* Row 1: Month picker + forgotten switch */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <DatePicker
+                    id="att-month-picker"
+                    disabledDate={isOutsideAttendanceWindow}
+                    placeholder="Chọn tháng"
+                    value={month}
+                    picker="month"
+                    format="MM/YYYY"
+                    inputReadOnly={false}
+                    onChange={handleMonthChange}
+                    allowClear={false}
+                    style={{ width: 110 }}
                     size="small"
-                    checked={forgottenDays}
-                    onChange={setForgottenDays}
                   />
-                  <FiAlertTriangle
-                    size={13}
-                    className={
-                      forgottenDays ? 'text-rose-500' : 'text-gray-400'
+                  <Segmented
+                    size="small"
+                    value={cycleMode}
+                    onChange={(v) =>
+                      handleCycleModeChange(v as 'month' | 'payroll')
                     }
+                    options={[
+                      { value: 'month', label: 'Tháng' },
+                      { value: 'payroll', label: 'Từ 16→15 sau' }
+                    ]}
                   />
-                </label>
-              )}
-            </div>
-            {/* Row 2: Tabs full width */}
-            <Segmented
-              block
-              value={activeTab}
-              onChange={(v) => setActiveTab(v as ActiveTab)}
-              options={[
-                {
-                  value: 'calculate',
-                  label: (
-                    <div className="flex items-center justify-center gap-1.5">
-                      <FiActivity size={14} />
-                      <span>Bảng tính công</span>
-                    </div>
-                  )
-                },
-                {
-                  value: 'history',
-                  label: (
-                    <div className="flex items-center justify-center gap-1.5">
-                      <FiClock size={14} />
-                      <span>Lịch sử quẹt</span>
-                    </div>
-                  )
-                }
-              ]}
-            />
-          </div>
-        ) : (
-          <div className="rounded-xl border border-gray-200 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/30">
-            <div className="flex flex-wrap items-center gap-4">
-              <div className="flex items-center gap-2">
-                <label
-                  htmlFor="att-month-picker"
-                  className="text-sm font-medium text-gray-600 dark:text-gray-300"
-                >
-                  Tháng:
-                </label>
-                <DatePicker
-                  id="att-month-picker"
-                  disabledDate={isOutsideAttendanceWindow}
-                  placeholder="Chọn tháng"
-                  value={month}
-                  picker="month"
-                  format="DD/MM/YYYY"
-                  inputReadOnly={false}
-                  onChange={handleMonthChange}
-                  allowClear={false}
-                  style={{ width: 140 }}
-                />
-                <Segmented
-                  size="small"
-                  value={cycleMode}
-                  onChange={(v) =>
-                    handleCycleModeChange(v as 'month' | 'payroll')
-                  }
-                  options={[
-                    { value: 'month', label: 'Tháng' },
-                    { value: 'payroll', label: '16→15' }
-                  ]}
-                />
-                {cycleMode === 'payroll' && (
-                  <span className="text-xs text-gray-400">
-                    Kỳ: {rangeLabel}
-                  </span>
+                </div>
+                {activeTab === 'calculate' && (
+                  <label
+                    data-tour="attendance-forgotten"
+                    htmlFor="att-forgotten-switch"
+                    className="flex cursor-pointer items-center gap-1.5 text-xs text-gray-500 select-none"
+                  >
+                    <Switch
+                      id="att-forgotten-switch"
+                      aria-label="Lọc ngày quên chấm công"
+                      size="small"
+                      checked={forgottenDays}
+                      onChange={setForgottenDays}
+                    />
+                    <FiAlertTriangle
+                      size={13}
+                      className={
+                        forgottenDays ? 'text-rose-500' : 'text-gray-400'
+                      }
+                    />
+                  </label>
                 )}
               </div>
+              {/* Row 2: Tabs full width */}
               <Segmented
+                block
                 value={activeTab}
                 onChange={(v) => setActiveTab(v as ActiveTab)}
                 options={[
                   {
                     value: 'calculate',
                     label: (
-                      <div className="flex items-center gap-1.5 px-1">
-                        <FiActivity />
+                      <div className="flex items-center justify-center gap-1.5">
+                        <FiActivity size={14} />
                         <span>Bảng tính công</span>
                       </div>
                     )
@@ -1212,42 +1151,112 @@ const AttendancePageContent = () => {
                   {
                     value: 'history',
                     label: (
-                      <div className="flex items-center gap-1.5 px-1">
-                        <FiClock />
+                      <div className="flex items-center justify-center gap-1.5">
+                        <FiClock size={14} />
                         <span>Lịch sử quẹt</span>
                       </div>
                     )
                   }
                 ]}
               />
-              {activeTab === 'calculate' && (
-                <div className="ml-auto flex items-center gap-2">
-                  <Switch
-                    id="att-forgotten-switch-desktop"
-                    size="small"
-                    checked={forgottenDays}
-                    onChange={setForgottenDays}
-                  />
-                  <label
-                    htmlFor="att-forgotten-switch-desktop"
-                    className="flex cursor-pointer items-center gap-1 text-sm text-gray-500 select-none"
-                  >
-                    <FiAlertTriangle
-                      className={
-                        forgottenDays ? 'text-rose-500' : 'text-gray-400'
-                      }
-                    />
-                    Quên chấm công
-                  </label>
-                </div>
-              )}
             </div>
-          </div>
-        )}
-
+          ) : (
+            <div className="rounded-xl border border-gray-200 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/30">
+              <div className="flex flex-wrap items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <label
+                    htmlFor="att-month-picker"
+                    className="text-sm font-medium text-gray-600 dark:text-gray-300"
+                  >
+                    Tháng:
+                  </label>
+                  <DatePicker
+                    id="att-month-picker"
+                    disabledDate={isOutsideAttendanceWindow}
+                    placeholder="Chọn tháng"
+                    value={month}
+                    picker="month"
+                    format="MM/YYYY"
+                    inputReadOnly={false}
+                    onChange={handleMonthChange}
+                    allowClear={false}
+                    style={{ width: 140 }}
+                  />
+                  <Segmented
+                    size="small"
+                    value={cycleMode}
+                    onChange={(v) =>
+                      handleCycleModeChange(v as 'month' | 'payroll')
+                    }
+                    options={[
+                      { value: 'month', label: 'Tháng' },
+                      { value: 'payroll', label: '16→15' }
+                    ]}
+                  />
+                  {cycleMode === 'payroll' && (
+                    <span className="text-xs text-gray-400">
+                      Kỳ: {rangeLabel}
+                    </span>
+                  )}
+                </div>
+                <Segmented
+                  value={activeTab}
+                  onChange={(v) => setActiveTab(v as ActiveTab)}
+                  options={[
+                    {
+                      value: 'calculate',
+                      label: (
+                        <div className="flex items-center gap-1.5 px-1">
+                          <FiActivity />
+                          <span>Bảng tính công</span>
+                        </div>
+                      )
+                    },
+                    {
+                      value: 'history',
+                      label: (
+                        <div className="flex items-center gap-1.5 px-1">
+                          <FiClock />
+                          <span>Lịch sử quẹt</span>
+                        </div>
+                      )
+                    }
+                  ]}
+                />
+                {activeTab === 'calculate' && (
+                  <div
+                    data-tour="attendance-forgotten"
+                    className="ml-auto flex items-center gap-2"
+                  >
+                    <Switch
+                      id="att-forgotten-switch-desktop"
+                      aria-label="Lọc ngày quên chấm công"
+                      size="small"
+                      checked={forgottenDays}
+                      onChange={setForgottenDays}
+                    />
+                    <label
+                      htmlFor="att-forgotten-switch-desktop"
+                      className="flex cursor-pointer items-center gap-1 text-sm text-gray-500 select-none"
+                    >
+                      <FiAlertTriangle
+                        className={
+                          forgottenDays ? 'text-rose-500' : 'text-gray-400'
+                        }
+                      />
+                      Quên chấm công
+                    </label>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
         {/* ── Summary Stats (calculate tab only) ──────────────────────── */}
         {activeTab === 'calculate' && !calcLoading && calcData.length > 0 && (
-          <SummaryStats data={calcData} isMobile={isMobile} />
+          <div data-tour="attendance-summary">
+            <SummaryStats data={calcData} isMobile={isMobile} />
+          </div>
         )}
 
         {/* ── Data Area ───────────────────────────────────────────────── */}

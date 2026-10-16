@@ -41,7 +41,10 @@ const StockTransactionPage: React.FC = () => {
           {
             key: 'scanner',
             label: (
-              <span className="flex items-center gap-1.5">
+              <span
+                data-tour="stock-scan-tab"
+                className="flex items-center gap-1.5"
+              >
                 <ScanOutlined />
                 <span>Quét mã</span>
               </span>
@@ -55,8 +58,10 @@ const StockTransactionPage: React.FC = () => {
       label: (
         <span className="flex items-center gap-1.5">
           <HistoryOutlined />
-          <span className="hidden sm:inline">Lịch sử xuất nhập</span>
-          <span className="inline sm:hidden">Lịch sử</span>
+          <span data-tour="stock-history-tab">
+            <span className="hidden sm:inline">Lịch sử xuất nhập</span>
+            <span className="inline sm:hidden">Lịch sử</span>
+          </span>
         </span>
       ),
       children: (
@@ -97,8 +102,10 @@ const StockTransactionPage: React.FC = () => {
       label: (
         <span className="flex items-center gap-1.5">
           <PieChartOutlined />
-          <span className="hidden sm:inline">Tổng hợp SP</span>
-          <span className="inline sm:hidden">Tổng hợp</span>
+          <span data-tour="stock-summary-tab">
+            <span className="hidden sm:inline">Tổng hợp SP</span>
+            <span className="inline sm:hidden">Tổng hợp</span>
+          </span>
         </span>
       ),
       children: (

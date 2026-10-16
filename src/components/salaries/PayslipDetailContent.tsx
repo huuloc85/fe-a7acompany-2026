@@ -10,7 +10,11 @@ import {
 } from '@components/salaries/PayslipBreakdownTable';
 import { usePayslipTemplate } from '@components/salaries/payslipTemplate';
 import { useQuery } from '@tanstack/react-query';
-import { fetchEmpAttendances } from '@services/AttendanceService';
+import { fetchEmpAttendancesCalculated } from '@services/AttendanceService';
+import {
+  getAttendanceWindow,
+  isOutsideAttendanceWindow
+} from '@utils/attendanceWindow';
 import { useMemo } from 'react';
 
 const formatHours = (value: number) =>
@@ -60,16 +64,19 @@ function AttendanceComparisonWidget({
   startDate: string;
   endDate: string;
 }) {
+  const attendanceUnavailable =
+    isOutsideAttendanceWindow(dayjs(startDate)) ||
+    isOutsideAttendanceWindow(dayjs(endDate));
   const { data: calcResponse, isLoading } = useQuery({
     queryKey: ['emp-attendance-comparison', startDate, endDate],
     queryFn: async () => {
-      return await fetchEmpAttendances({
+      return await fetchEmpAttendancesCalculated({
         include_calculation: 1,
         limit: 0,
         'filter[date_between]': `${startDate},${endDate}`
       });
     },
-    enabled: !!startDate && !!endDate
+    enabled: !!startDate && !!endDate && !attendanceUnavailable
   });
 
   const stats = useMemo(() => {
@@ -102,6 +109,16 @@ function AttendanceComparisonWidget({
   }, [calcResponse]);
 
   if (!startDate || !endDate) return null;
+
+  if (attendanceUnavailable) {
+    const { start, end } = getAttendanceWindow();
+    return (
+      <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-900/20 dark:text-amber-100">
+        Chỉ xem được chấm công từ {start.format('DD/MM/YYYY')} đến{' '}
+        {end.format('DD/MM/YYYY')}. Kỳ lương này đã quá thời hạn xem chấm công.
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-xl border border-gray-200 bg-white/80 p-4 backdrop-blur-sm dark:border-gray-700 dark:bg-gray-800/50">

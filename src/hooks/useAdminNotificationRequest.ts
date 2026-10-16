@@ -63,12 +63,8 @@ export function useNotificationRequest(
 
     // Nếu chưa từng yêu cầu hoặc permission là 'default', hiển thị modal
     if (!hasRequested || permission === 'default') {
-      // Delay một chút để UI ổn định
-      const timer = setTimeout(() => {
-        setShouldShowModal(true);
-      }, 2000);
-
-      return () => clearTimeout(timer);
+      // AppLayout handles ordering; no additional delay before enqueueing.
+      setShouldShowModal(true);
     }
   }, [isAuthenticated, user, permission, isSupported]);
 

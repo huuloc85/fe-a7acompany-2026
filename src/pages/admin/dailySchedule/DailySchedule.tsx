@@ -220,6 +220,7 @@ export default function DailySchedule() {
             <DatePicker
               format="DD/MM/YYYY"
               id="admin-date-picker"
+              data-tour="team-activity-date"
               placeholder="Chọn ngày"
               value={dayjs(params['filter[date]'])}
               className="!rounded-lg"

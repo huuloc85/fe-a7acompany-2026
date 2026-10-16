@@ -1,6 +1,6 @@
 import { isAdmin } from '@utils/authUtil';
 import { Link, useNavigate } from '@tanstack/react-router';
-import { Avatar, message } from 'antd';
+import { App as AntApp, Avatar } from 'antd';
 import { useRef, useState, useEffect } from 'react';
 
 import { authLogout } from '@services/AuthService';
@@ -14,6 +14,7 @@ import { FaUser, FaUserCircle, FaFileAlt } from 'react-icons/fa';
 export default function UserDropdown() {
   const navigate = useNavigate();
   const { user } = useStore(authStore);
+  const { message } = AntApp.useApp();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -67,6 +68,7 @@ export default function UserDropdown() {
   return (
     <div className="relative" ref={dropdownRef}>
       <button
+        data-tour="profile-menu"
         className="profile-trigger-btn cursor-pointer rounded-full ring-2 ring-transparent transition-all duration-300 hover:shadow-md hover:ring-blue-200 active:scale-95 dark:hover:ring-blue-700"
         onClick={() => setOpen((v) => !v)}
       >

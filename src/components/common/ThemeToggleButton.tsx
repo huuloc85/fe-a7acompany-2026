@@ -1,5 +1,6 @@
 import { Tooltip } from 'antd';
 import React from 'react';
+import { useActionTooltip } from '@/hooks/useActionTooltip';
 
 import { toggleTheme, uiStore } from '@stores/uiStore';
 import { useStore } from '@tanstack/react-store';
@@ -7,11 +8,13 @@ import { useStore } from '@tanstack/react-store';
 import { FaRegMoon, FaSun } from 'react-icons/fa';
 
 export const ThemeToggleButton: React.FC = () => {
+  const { tooltipProps, triggerProps } = useActionTooltip();
   const isDark = useStore(uiStore, (state) => state.theme === 'dark');
   const label = isDark ? 'Chuyển sang chế độ sáng' : 'Chuyển sang chế độ tối';
   return (
-    <Tooltip title={label}>
+    <Tooltip title={label} {...tooltipProps}>
       <button
+        {...triggerProps}
         type="button"
         aria-label={label}
         aria-pressed={isDark}

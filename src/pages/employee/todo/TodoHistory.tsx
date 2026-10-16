@@ -66,7 +66,10 @@ export const TodoHistory = () => {
             <UserInfo />
 
             {/* ── Filter Bar ────────────────────────────────────── */}
-            <div className="rounded-xl border border-gray-100 bg-white/80 p-4 backdrop-blur-sm dark:border-gray-700 dark:bg-gray-800/50">
+            <div
+              data-tour="production-history-filters"
+              className="rounded-xl border border-gray-100 bg-white/80 p-4 backdrop-blur-sm dark:border-gray-700 dark:bg-gray-800/50"
+            >
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="flex flex-col gap-1">
                   <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
@@ -77,7 +80,7 @@ export const TodoHistory = () => {
                     value={month}
                     onChange={(date) => setMonth(date)}
                     placeholder="Chọn tháng"
-                    format="DD/MM/YYYY"
+                    format="MM/YYYY"
                     picker="month"
                     className="!rounded-lg"
                   />
@@ -106,7 +109,10 @@ export const TodoHistory = () => {
             </div>
 
             {/* ── Data Table ────────────────────────────────────── */}
-            <div className="rounded-xl border border-gray-100 bg-white/80 backdrop-blur-sm dark:border-gray-700 dark:bg-gray-800/50">
+            <div
+              data-tour="production-history-records"
+              className="rounded-xl border border-gray-100 bg-white/80 backdrop-blur-sm dark:border-gray-700 dark:bg-gray-800/50"
+            >
               {/* Header Row - Desktop only */}
               <div className="hidden border-b border-gray-200 bg-gray-50 px-4 py-3 sm:grid sm:grid-cols-4 dark:border-gray-700 dark:bg-gray-800">
                 <span className="text-xs font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400">

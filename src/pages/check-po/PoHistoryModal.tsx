@@ -1250,7 +1250,7 @@ export const PoHistoryModal: React.FC<PoHistoryModalProps> = ({
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 bg-white p-4 sm:px-6 sm:py-3 dark:border-gray-700 dark:bg-gray-900">
           <div className="flex w-full flex-wrap items-center gap-3 lg:w-auto">
             <DatePicker
-              format="DD/MM/YYYY"
+              format="MM/YYYY"
               picker="month"
               value={month}
               size={isMobile ? 'small' : 'middle'}

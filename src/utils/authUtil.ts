@@ -258,6 +258,20 @@ export function canAccessRoute(user: User | null, url: string): boolean {
   return false;
 }
 
+/** Tổ trưởng/supervisor được duyệt đơn trong trang Đơn yêu cầu của nhân viên. */
+export function isRequestFormSupervisor(user: User | null): boolean {
+  return (
+    !!user &&
+    ((SUPERVISOR_IDS as readonly string[]).includes(user.id.toString()) ||
+      hasRole(user, [...SUPERVISOR_ROLE_NAMES, ...SUPERVISOR_ROLE_IDS]))
+  );
+}
+
+/** Trang Profile chỉ hiện form sửa thông tin cá nhân cho tài khoản không phải admin. */
+export function canEditOwnProfileInfo(user: User | null): boolean {
+  return !!user && !(user.role?.name || '').toLowerCase().includes('admin');
+}
+
 /**
  * Utility check: user có permission key cụ thể không?
  */

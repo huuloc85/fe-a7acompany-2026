@@ -137,7 +137,7 @@ export const InventoryQuantityModal: React.FC<InventoryQuantityModalProps> = ({
                 rules={[{ required: true, message: 'Chọn tháng' }]}
               >
                 <DatePicker
-                  format="DD/MM/YYYY"
+                  format="MM/YYYY"
                   placeholder="Chọn tháng"
                   picker="month"
                   className="!rounded-lg"

@@ -143,6 +143,7 @@ export const UpdateQuantity = () => {
               <Form<FormValues> {...formProps}>
                 <Form.Item<FormValues>
                   label="Chọn sản phẩm"
+                  data-tour="quantity-product"
                   name="productKey"
                   rules={[
                     { required: true, message: 'Vui lòng chọn sản phẩm' }
@@ -157,6 +158,7 @@ export const UpdateQuantity = () => {
                 </Form.Item>
                 <Form.Item<FormValues>
                   label="Số lượng sản phẩm"
+                  data-tour="quantity-value"
                   name="quantity"
                   rules={[
                     {
