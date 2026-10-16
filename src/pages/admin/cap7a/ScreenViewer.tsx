@@ -105,7 +105,11 @@ export default function ScreenViewer() {
         setStatus('Chưa kết nối được. Bấm Xem màn hình để thử lại.');
         return;
       }
-      const delay = Math.min(3000 * 2 ** retries.current++, 30000);
+      // The gateway may still be coming up just after Jetson boots. Retry
+      // quickly here; the old 3/6/12/24/30s backoff made recovery look stuck.
+      const delay = [1000, 2000, 3000, 5000, 8000][
+        Math.min(retries.current++, 4)
+      ];
       setStatus(
         `Mất kết nối · Thử lại sau ${delay / 1000}s (${retries.current}/10)`
       );
