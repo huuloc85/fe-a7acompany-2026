@@ -13,7 +13,7 @@ import { useStore } from '@tanstack/react-store';
 import { authStore } from '@/stores/authStore';
 import { toggleSidebar, uiStore } from '@/stores/uiStore';
 import { isRequestFormSupervisor } from '@/utils/authUtil';
-import { canUseGuide, canUseOnboarding } from './onboardingAccess';
+import { canUseGuide, canUseOnboarding, isStampPage } from './onboardingAccess';
 import { businessGuides } from './businessGuides';
 import {
   fetchOnboardingProgress,
@@ -65,7 +65,7 @@ const guides: { id: string; title: string; route: string; steps: Step[] }[] = [
         target: 'attendance-filters',
         title: 'Chọn kỳ chấm công',
         description:
-          'Chọn tháng hoặc kỳ lương từ ngày 16 đến ngày 15 tháng sau để xem chấm công.'
+          'Chọn tháng hoặc kỳ công từ ngày 16 tháng trước đến ngày 15 tháng chọn để xem chấm công.'
       },
       {
         id: 'check',
@@ -196,8 +196,9 @@ const welcomeSteps: Step[] = [
 export function OnboardingHelpButton() {
   const { open } = useOnboarding();
   const { user } = useStore(authStore);
+  const { pathname } = useLocation();
   const { tooltipProps, triggerProps } = useActionTooltip();
-  if (!canUseOnboarding(user)) return null;
+  if (!canUseOnboarding(user) || isStampPage(pathname)) return null;
   return (
     <Tooltip title="Hướng dẫn sử dụng" {...tooltipProps}>
       <button
@@ -222,8 +223,13 @@ export function OnboardingProvider({
   blocked: boolean;
 }) {
   const { user } = useStore(authStore);
+  const { pathname } = useLocation();
   return user && canUseOnboarding(user) ? (
-    <Session key={user.id} userId={user.id} blocked={blocked}>
+    <Session
+      key={user.id}
+      userId={user.id}
+      blocked={blocked || isStampPage(pathname)}
+    >
       {children}
     </Session>
   ) : (

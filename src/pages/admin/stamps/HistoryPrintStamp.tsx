@@ -1,4 +1,3 @@
-import AppSearchInput from '@/components/common/AppSearchInput';
 import { QueryParams } from '@/types/queryParams';
 import {
   ActionGroup,
@@ -29,6 +28,7 @@ import {
   TableColumnsType,
   TableProps,
   Tag,
+  Input,
   message
 } from 'antd';
 import type { Dayjs } from 'dayjs';
@@ -564,18 +564,18 @@ export default function HistoryPrintStamp() {
           </div>
 
           {/* ── Filter Bar ── */}
-          <div
-            data-tour="stamp-history-filters"
-            className="rounded-xl border border-gray-100 bg-white/80 p-4 backdrop-blur-sm dark:border-gray-700 dark:bg-gray-800/50"
-          >
+          <div className="rounded-xl border border-gray-100 bg-white/80 p-4 backdrop-blur-sm dark:border-gray-700 dark:bg-gray-800/50">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
                   <FaSearch className="mr-1 inline-block text-indigo-500" />
                   Sản phẩm
                 </label>
-                <AppSearchInput
+                <Input
+                  prefix={<FaSearch className="text-gray-400" />}
                   placeholder="Tìm tên sản phẩm..."
+                  allowClear
+                  className="!rounded-lg"
                   onChange={(e) => {
                     const value = e.target.value;
                     if (searchTimeoutRef.current) {
@@ -955,7 +955,7 @@ export default function HistoryPrintStamp() {
       {/* Print Preview Section */}
       {selectedRecord && (
         <div ref={printPreviewRef} tabIndex={-1} className="mt-8 outline-none">
-          <ComponentCard title="Xem trước khi in" uppercaseTitle={false}>
+          <ComponentCard title="Xem trước khi in">
             <div className="space-y-5">
               {/* Print Info Header */}
               <div className="flex flex-wrap items-start justify-between gap-4 rounded-xl border border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50 p-5 dark:border-gray-700 dark:from-blue-900/20 dark:to-indigo-900/20">

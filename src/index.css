@@ -279,11 +279,6 @@ body,
   min-height: 100dvh;
 }
 
-/* Keep the viewport canvas consistent when mobile browsers reach a scroll edge. */
-html {
-  background: var(--glass-page-bg);
-}
-
 @media (hover: none) and (pointer: coarse) {
   html,
   body {

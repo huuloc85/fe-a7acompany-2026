@@ -1,6 +1,20 @@
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
 
+export function isCurrentAttendanceDate(date: string, now = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Ho_Chi_Minh',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(now);
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((value) => value.type === type)!.value;
+  return (
+    date.slice(0, 10) === `${part('year')}-${part('month')}-${part('day')}`
+  );
+}
+
 export function getAttendanceWindow(now = new Date()) {
   const parts = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Asia/Ho_Chi_Minh',

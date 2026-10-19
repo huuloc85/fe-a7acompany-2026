@@ -30,6 +30,7 @@ import { OvertimeApprovalStatus } from '@/components/attendances/OvertimeApprova
 import type { OvertimeApproval } from '@/utils/overtimeApproval';
 import {
   clampAttendanceRange,
+  isCurrentAttendanceDate,
   getAttendanceWindow,
   isOutsideAttendanceWindow
 } from '@/utils/attendanceWindow';
@@ -164,6 +165,7 @@ function SummaryStats({
     );
     const missingDays = data.filter(
       (d) =>
+        !isCurrentAttendanceDate(d.date) &&
         d.shift > 0 &&
         (!d.time_in || !d.time_out || d.time_in === '' || d.time_out === '')
     ).length;
@@ -445,6 +447,7 @@ function MobileCalculateRow({ item }: { item: CalculatedRow }) {
   const dayType = getDisplayDayType(item);
   const displayOvertimeHours = getDisplayOvertimeHours(item);
   const isMissing =
+    !isCurrentAttendanceDate(item.date) &&
     item.shift > 0 &&
     (!item.time_in ||
       !item.time_out ||
@@ -552,7 +555,11 @@ function MobileCalculateRow({ item }: { item: CalculatedRow }) {
               style={{
                 fontSize: '14px',
                 fontWeight: 600,
-                color: item.time_in ? '#0d9488' : '#f87171'
+                color: item.time_in
+                  ? '#0d9488'
+                  : isMissing
+                    ? '#f87171'
+                    : '#9ca3af'
               }}
             >
               {item.time_in ? fmtTime(item.time_in) : '--:--:--'}
@@ -579,7 +586,11 @@ function MobileCalculateRow({ item }: { item: CalculatedRow }) {
               style={{
                 fontSize: '14px',
                 fontWeight: 600,
-                color: item.time_out ? '#475569' : '#f87171'
+                color: item.time_out
+                  ? '#475569'
+                  : isMissing
+                    ? '#f87171'
+                    : '#9ca3af'
               }}
             >
               {item.time_out ? fmtTime(item.time_out) : '--:--:--'}
@@ -668,9 +679,9 @@ const AttendancePageContent = () => {
   const [forgottenDays, setForgottenDays] = useState<boolean>(false);
   const [cycleMode, setCycleMode] = useState<'month' | 'payroll'>('month');
 
-  // Payroll cycle helper: 16th this month → 15th next month
+  // Payroll cycle helper: 16th previous month → 15th selected month
   const getPayrollRange = (d: Dayjs) => {
-    return clampAttendanceRange(d.date(16), d.add(1, 'month').date(15));
+    return clampAttendanceRange(d.subtract(1, 'month').date(16), d.date(15));
   };
 
   const getMonthRange = (d: Dayjs) => {
@@ -726,6 +737,7 @@ const AttendancePageContent = () => {
     if (!forgottenDays) return calcData;
     return calcData.filter(
       (a) =>
+        !isCurrentAttendanceDate(a.date) &&
         a.shift > 0 &&
         (!a.time_in || !a.time_out || a.time_in === '' || a.time_out === '')
     );
@@ -855,6 +867,8 @@ const AttendancePageContent = () => {
         if (!record.shift) return <span className="text-gray-300">-</span>;
         return v ? (
           <span className="font-semibold">{v}h</span>
+        ) : isCurrentAttendanceDate(record.date) ? (
+          <span className="text-gray-400">—</span>
         ) : (
           <Tooltip title="Chấm công chưa đủ">
             <Tag color="error" className="!m-0 cursor-help">
@@ -875,7 +889,8 @@ const AttendancePageContent = () => {
         const displayHours = getDisplayAdministrativeHours(record);
         return displayHours ? (
           <span className="font-medium text-violet-600">{displayHours}h</span>
-        ) : isAdditionalShift(record.hnhc) ? (
+        ) : isAdditionalShift(record.hnhc) ||
+          isCurrentAttendanceDate(record.date) ? (
           <span className="text-gray-300">-</span>
         ) : (
           <Tooltip title="Chấm công chưa đủ">
@@ -1009,6 +1024,7 @@ const AttendancePageContent = () => {
     pagination: false,
     rowClassName: (record) => {
       if (
+        !isCurrentAttendanceDate(record.date) &&
         record.shift > 0 &&
         (!record.time_in ||
           !record.time_out ||
@@ -1052,8 +1068,8 @@ const AttendancePageContent = () => {
   const rangeLabel = useMemo(() => {
     if (cycleMode === 'payroll') {
       return clampAttendanceRange(
-        month.date(16),
-        month.add(1, 'month').date(15)
+        month.subtract(1, 'month').date(16),
+        month.date(15)
       )
         .split(',')
         .map((date) => dayjs(date).format('DD/MM'))
@@ -1084,8 +1100,8 @@ const AttendancePageContent = () => {
           {isMobile ? (
             <div className="space-y-2">
               {/* Row 1: Month picker + forgotten switch */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex min-w-0 flex-wrap items-center gap-2">
                   <DatePicker
                     id="att-month-picker"
                     disabledDate={isOutsideAttendanceWindow}
@@ -1106,11 +1122,16 @@ const AttendancePageContent = () => {
                       handleCycleModeChange(v as 'month' | 'payroll')
                     }
                     options={[
-                      { value: 'month', label: 'Tháng' },
-                      { value: 'payroll', label: 'Từ 16→15 sau' }
+                      { value: 'month', label: 'Theo tháng' },
+                      { value: 'payroll', label: 'Theo kỳ công' }
                     ]}
                   />
                 </div>
+                {cycleMode === 'payroll' && (
+                  <div className="order-last w-full text-xs text-gray-500">
+                    Kỳ công: {rangeLabel}
+                  </div>
+                )}
                 {activeTab === 'calculate' && (
                   <label
                     data-tour="attendance-forgotten"
@@ -1163,7 +1184,7 @@ const AttendancePageContent = () => {
           ) : (
             <div className="rounded-xl border border-gray-200 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/30">
               <div className="flex flex-wrap items-center gap-4">
-                <div className="flex items-center gap-2">
+                <div className="flex min-w-0 flex-wrap items-center gap-2">
                   <label
                     htmlFor="att-month-picker"
                     className="text-sm font-medium text-gray-600 dark:text-gray-300"
@@ -1189,13 +1210,13 @@ const AttendancePageContent = () => {
                       handleCycleModeChange(v as 'month' | 'payroll')
                     }
                     options={[
-                      { value: 'month', label: 'Tháng' },
-                      { value: 'payroll', label: '16→15' }
+                      { value: 'month', label: 'Theo tháng' },
+                      { value: 'payroll', label: 'Theo kỳ công' }
                     ]}
                   />
                   {cycleMode === 'payroll' && (
                     <span className="text-xs text-gray-400">
-                      Kỳ: {rangeLabel}
+                      Kỳ công: {rangeLabel}
                     </span>
                   )}
                 </div>

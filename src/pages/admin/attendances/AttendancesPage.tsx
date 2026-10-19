@@ -55,6 +55,7 @@ import { OvertimeApprovalActions } from '@/components/attendances/OvertimeApprov
 import type { OvertimeApproval } from '@/utils/overtimeApproval';
 import {
   getAttendanceWindow,
+  isCurrentAttendanceDate,
   isOutsideAttendanceWindow
 } from '@/utils/attendanceWindow';
 
@@ -829,6 +830,8 @@ function RecordsTab() {
         if (!record.shift) return <span className="text-gray-300">—</span>;
         return value ? (
           <span className="font-semibold text-blue-600">{value}</span>
+        ) : isCurrentAttendanceDate(record.date) ? (
+          <span className="text-gray-400">—</span>
         ) : (
           <Tag color="red">Chấm công chưa đủ</Tag>
         );
@@ -848,7 +851,8 @@ function RecordsTab() {
         const displayHours = getDisplayAdministrativeHours(record);
         return displayHours ? (
           <span className="font-semibold text-emerald-600">{displayHours}</span>
-        ) : isAdditionalShift(record.hnhc) ? (
+        ) : isAdditionalShift(record.hnhc) ||
+          isCurrentAttendanceDate(record.date) ? (
           <span className="text-gray-300">—</span>
         ) : (
           <Tag color="red">Chấm công chưa đủ</Tag>
@@ -886,6 +890,7 @@ function RecordsTab() {
   ];
 
   const forgetAttendance = attendances.filter((item) => {
+    if (isCurrentAttendanceDate(item.date)) return false;
     if (
       item.shift > 0 &&
       (!item.time_in ||
@@ -1156,7 +1161,8 @@ function RecordsTab() {
                               {record.total_hours}h
                             </strong>
                           </span>
-                        ) : record.shift ? (
+                        ) : record.shift &&
+                          !isCurrentAttendanceDate(record.date) ? (
                           <Tag color="red" className="!text-xs">
                             Chấm công chưa đủ
                           </Tag>

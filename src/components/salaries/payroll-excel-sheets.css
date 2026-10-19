@@ -6,6 +6,22 @@
   flex-direction: column;
   gap: 12px;
 }
+/* Allow the column header to stick to the page, not a clipped card. */
+html body #root .payroll-sticky-card {
+  overflow: visible !important;
+}
+/* The global glass-table skin clips wrappers, trapping sticky headers. */
+html body #root .vvp-web-table.ant-table-wrapper,
+html body #root .vvp-web-table .ant-table,
+html body #root .vvp-web-table .ant-table-container {
+  overflow: visible !important;
+  contain: none !important;
+}
+html body #root .vvp-web-table .ant-table-sticky-holder {
+  position: sticky !important;
+  z-index: 30;
+  background: var(--vvp-grid-header);
+}
 .vvp-excel-workbook > [role='tabpanel'],
 .vvp-excel-workbook .vvp-web-table,
 .vvp-excel-workbook .vvp-web-tabs {
@@ -191,6 +207,15 @@ html
   min-height: 40px;
   font-size: 13px;
 }
+.vvp-period-range {
+  gap: 2px;
+  color: #475569;
+  white-space: nowrap;
+}
+.vvp-period-range strong {
+  color: #1e293b;
+  font-weight: 600;
+}
 html body #root .vvp-period-card .ant-picker,
 html body #root .vvp-period-card .ant-select,
 html body #root .vvp-period-card .vvp-period-buttons > .ant-btn {
@@ -201,15 +226,44 @@ html body #root .vvp-period-card .vvp-period-buttons > .ant-btn {
   align-items: center;
 }
 .vvp-period-fields > .vvp-period-buttons {
-  margin-left: auto;
+  margin-left: 12px;
+}
+.vvp-period-employees {
+  padding-top: 12px;
+  border-top: 1px solid #cbd5e144;
+}
+.vvp-period-employees .vvp-period-select {
+  flex: 0 1 280px;
+}
+.vvp-period-catalogue {
+  color: #64748b;
+}
+.vvp-payroll-settings {
+  border: 1px solid #cbd5e166;
+  border-radius: 12px;
+  padding: 10px 14px;
+}
+.vvp-payroll-settings > summary {
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+.vvp-payroll-settings[open] > summary {
+  margin-bottom: 12px;
 }
 @media (max-width: 640px) {
   .vvp-period-fields > .vvp-period-buttons {
     margin-left: 0;
   }
-  .vvp-period-select {
+  .vvp-period-select,
+  .vvp-period-employees .vvp-period-select {
     max-width: none;
     flex-basis: 100%;
+  }
+  .vvp-period-range {
+    flex-basis: 100%;
+    min-height: 28px;
+    white-space: normal;
   }
 }
 .vvp-web-table .ant-table-cell {
@@ -250,11 +304,16 @@ html body #root .vvp-period-card .vvp-period-buttons > .ant-btn {
 }
 .vvp-web-table .ant-table-content,
 .vvp-web-table .ant-table-body {
-  scrollbar-width: none;
+  scrollbar-width: thin;
 }
 .vvp-web-table .ant-table-content::-webkit-scrollbar,
 .vvp-web-table .ant-table-body::-webkit-scrollbar {
-  display: none;
+  width: 8px;
+  height: 8px;
+}
+.vvp-web-table .ant-table-body::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 4px;
 }
 .vvp-web-table .ant-table-sticky-scroll {
   display: none;

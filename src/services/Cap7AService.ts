@@ -10,6 +10,9 @@ export type Cap7AAction =
   | 'set_roi'
   | 'clear_roi';
 export interface Cap7AState {
+  runtime_date?: string;
+  run_seconds?: number;
+  stop_seconds?: number;
   session_id: string;
   mode: string;
   remote_allowed: boolean;
@@ -37,8 +40,9 @@ export interface Cap7AStatus {
   commands_enabled: boolean;
 }
 
-export const getCap7AStatus = () =>
+export const getCap7AStatus = (signal?: AbortSignal) =>
   axiosPrivate.get<unknown, Cap7AStatus>('/api/cap7a/status', {
+    signal,
     timeout: 12000
   });
 

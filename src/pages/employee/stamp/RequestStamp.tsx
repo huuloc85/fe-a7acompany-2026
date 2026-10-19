@@ -389,11 +389,6 @@ export const RequestStamp = () => {
                       <div className="grid grid-cols-2 gap-x-3 gap-y-2 md:grid-cols-2 lg:grid-cols-3">
                         <Form.Item
                           label="Sản phẩm"
-                          data-tour={
-                            field.name === 0
-                              ? 'stamp-request-details'
-                              : undefined
-                          }
                           name={[field.name, 'productId']}
                           className="col-span-2 !mb-0"
                           rules={[
@@ -423,10 +418,7 @@ export const RequestStamp = () => {
                           rules={[{ required: true, message: 'Vui chọn ngày' }]}
                           initialValue={dayjs()}
                         >
-                          <DatePicker
-                            format="DD/MM/YYYY"
-                            style={{ width: '100%' }}
-                          />
+                          <DatePicker style={{ width: '100%' }} />
                         </Form.Item>
                         <Form.Item
                           label="Ca"
@@ -508,11 +500,6 @@ export const RequestStamp = () => {
                         </Form.Item>
                         <Form.Item
                           label="Bắt đầu từ tem số"
-                          data-tour={
-                            field.name === 0
-                              ? 'stamp-request-numbers'
-                              : undefined
-                          }
                           name={[field.name, 'binStart']}
                           className="col-span-2 !mb-0 md:col-span-1 lg:col-span-1"
                           rules={[
@@ -546,10 +533,7 @@ export const RequestStamp = () => {
                 </div>
               )}
             </Form.List>
-            <Form.Item
-              data-tour="stamp-request-submit"
-              style={{ marginTop: '16px', marginBottom: '0' }}
-            >
+            <Form.Item style={{ marginTop: '16px', marginBottom: '0' }}>
               <AppButton
                 tone="success"
                 htmlType="submit"

@@ -1,4 +1,5 @@
 import axios, { AxiosError } from 'axios';
+import { queryClient } from '@/lib/queryClient';
 
 import { ApiErrorResponse, ValidationErrors } from '@/types/apiType';
 import { clearAuth } from '@stores/authStore';
@@ -76,6 +77,7 @@ axiosPrivate.interceptors.response.use(
 
           // Chỉ clear auth và redirect nếu KHÔNG phải login request
           clearAuth();
+          queryClient.clear();
 
           // Redirect trực tiếp và ngay lập tức
           const currentPath = window.location.pathname + window.location.search;
@@ -84,8 +86,11 @@ axiosPrivate.interceptors.response.use(
             ? `/login?redirect=${encodeURIComponent(loginSearch.redirect)}`
             : '/login';
 
-          // Force redirect to login page
-          window.location.replace(loginUrl);
+          // Do not reload the login page when the session check itself fails
+          // while the user is already on the login page.
+          if (window.location.pathname !== '/login') {
+            window.location.replace(loginUrl);
+          }
         }
         // Nếu là login request, để component xử lý error
         break;

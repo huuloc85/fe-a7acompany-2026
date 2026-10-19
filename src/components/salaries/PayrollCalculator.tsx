@@ -1,4 +1,5 @@
 import AppSearchInput from '@/components/common/AppSearchInput';
+import { Link } from '@tanstack/react-router';
 import { QUERY_KEYS } from '@/constants/queryKeys';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -57,6 +58,8 @@ const payrollCompanyKey = (company?: string) => {
   const value = String(company ?? 'VVP')
     .trim()
     .toUpperCase();
+  if (value.includes('A7A')) return 'A7A';
+  if (value.includes('VVP') || value.includes('VINH VINH PHAT')) return 'VVP';
   return value === 'A7A' ? 'A7A' : 'VVP';
 };
 import { applyPayrollHolidays } from '@/utils/payrollHolidays';
@@ -302,7 +305,11 @@ export default function PayrollCalculator() {
         }),
         [key]: value
       });
-      message.success('Đã lưu và tính lại lương.');
+      message.success(
+        salaryCalculated
+          ? 'Đã lưu và tính lại lương.'
+          : 'Đã lưu khoản nhập tay.'
+      );
       return true;
     } catch (cause) {
       message.error(
@@ -421,11 +428,14 @@ export default function PayrollCalculator() {
   const activeProfiles = useMemo(
     () =>
       profiles.filter(
-        (p) =>
-          payrollCompanyKey(p.company) === companyFilter &&
-          (selectedIds === null || selectedIds.includes(p.employeeId))
+        (p) => selectedIds === null || selectedIds.includes(p.employeeId)
       ),
-    [profiles, selectedIds, companyFilter]
+    [profiles, selectedIds]
+  );
+  const visibleProfiles = useMemo(
+    () =>
+      profiles.filter((p) => payrollCompanyKey(p.company) === companyFilter),
+    [profiles, companyFilter]
   );
   const calculatedDraft = useMemo(() => {
     if (attendance === null) return null;
@@ -451,10 +461,6 @@ export default function PayrollCalculator() {
       result.warnings!.push(
         'Chưa tải được khoản phát sinh đã lưu; số tiền hiện tại chưa bao gồm đầy đủ các khoản này.'
       );
-    if (!holidaysReady || holidays?.defaultDays === null)
-      result.warnings!.push(
-        'Chưa có mức công lễ: tạm tính 0, cần kiểm tra trước khi thanh toán.'
-      );
     if (throughDate < endDate)
       result.warnings!.push(
         `Công mới đến ${throughDate}. Chuyên cần tháng vẫn áp dụng quy tắc nghỉ phép; lễ, bảo hiểm và giảm trừ theo mức đang thiết lập.`
@@ -479,12 +485,7 @@ export default function PayrollCalculator() {
     );
     const missing = new Set(
       attendance
-        .filter(
-          (a) =>
-            ['vvp', 'vinh vinh phát'].includes(
-              a.company.trim().toLowerCase()
-            ) && !known.has(String(a.employee_id).trim())
-        )
+        .filter((a) => !known.has(String(a.employee_id).trim()))
         .map((a) => a.employee_id)
     );
     if (missing.size)
@@ -508,14 +509,15 @@ export default function PayrollCalculator() {
   ]);
   const draft = salaryCalculated ? calculatedDraft : null;
   const publicationPeriod = month.format('YYYY-MM');
-  const publicationKey = `${companyFilter}:${publicationPeriod}`;
+  const publicationKey = `all:${publicationPeriod}`;
+  const companyDraft = calculatedDraft;
   const currentPublicationKey = useRef(publicationKey);
   currentPublicationKey.current = publicationKey;
   useEffect(() => {
     let cancelled = false;
     setPublicationError('');
     setSavedSnapshot('');
-    fetchPayrollPublication(companyFilter, publicationPeriod)
+    fetchPayrollPublication('all', publicationPeriod)
       .then((response) => {
         if (!cancelled)
           setPublication({ key: publicationKey, data: response.data });
@@ -532,30 +534,32 @@ export default function PayrollCalculator() {
     return () => {
       cancelled = true;
     };
-  }, [companyFilter, publicationPeriod, publicationKey]);
+  }, [publicationPeriod, publicationKey]);
 
   async function calculateAndSave() {
-    if (!calculatedDraft || publication?.key !== publicationKey || syncing)
+    if (
+      !calculatedDraft ||
+      !companyDraft ||
+      publication?.key !== publicationKey ||
+      syncing
+    )
       return;
     setSalaryCalculated(true);
     setSyncing(true);
-    const snapshot = JSON.stringify(calculatedDraft);
     try {
       const response = await savePayrollDraft(
-        companyFilter,
+        'all',
         publicationPeriod,
         calculatedDraft,
         publication.data?.revision ?? 0
       );
       if (currentPublicationKey.current === publicationKey) {
         setPublication({ key: publicationKey, data: response.data });
-        setSavedSnapshot(snapshot);
+        setSavedSnapshot(JSON.stringify(calculatedDraft));
       }
       void queryClient.invalidateQueries({ queryKey: ['salaries'] });
       void queryClient.invalidateQueries({ queryKey: ['adminSalaryPreview'] });
-      message.success(
-        'Đã lưu bản nháp. Admin duyệt và công bố để nhân viên xem.'
-      );
+      message.success('Đã lưu một kỳ lương tổng cho VVP và A7A.');
     } catch (error) {
       message.error(
         getApiErrorMessage(
@@ -564,6 +568,8 @@ export default function PayrollCalculator() {
         )
       );
     } finally {
+      void queryClient.invalidateQueries({ queryKey: ['salaries'] });
+      void queryClient.invalidateQueries({ queryKey: ['adminSalaryPreview'] });
       setSyncing(false);
     }
   }
@@ -773,7 +779,7 @@ export default function PayrollCalculator() {
     if (
       (numericFields.includes(field) &&
         (!Number.isFinite(value) || Number(value) < 0)) ||
-      (!numericFields.includes(field) && !value)
+      (!numericFields.includes(field) && !value && field !== 'bankAccount')
     ) {
       message.error('Giá trị không hợp lệ.');
       return;
@@ -901,12 +907,23 @@ export default function PayrollCalculator() {
         <div className="vvp-payroll-content">
           <ComponentCard
             className="vvp-period-card"
-            title="Kỳ lương & dữ liệu công"
-            desc="Tạm tính theo công thực tế, kể cả khi chưa đủ tháng."
+            title={
+              <span className="flex flex-wrap items-center justify-between gap-3">
+                <span>Tính lương · Kỳ lương & dữ liệu công</span>
+                <Link
+                  to="/admin/salaries"
+                  search={{ status: 'draft' }}
+                  className="header-action-btn header-action-btn--neutral normal-case"
+                >
+                  Xem bảng lương nháp →
+                </Link>
+              </span>
+            }
+            desc="Lấy công → Tính và lưu nháp cho cả VVP và A7A → Kiểm tra bản nháp."
           >
             <div className="vvp-period-fields">
               <div>
-                <div>Tháng lương (kỳ 16–15)</div>
+                <div>Tháng lương</div>
                 <DatePicker
                   format="MM/YYYY"
                   aria-label="Tháng lương"
@@ -928,7 +945,7 @@ export default function PayrollCalculator() {
               <div>
                 <div>Lấy công đến ngày</div>
                 <DatePicker
-                  format="MM/YYYY"
+                  format="DD/MM/YYYY"
                   aria-label="Lấy công đến ngày"
                   value={dayjs(throughDate)}
                   allowClear={false}
@@ -947,8 +964,11 @@ export default function PayrollCalculator() {
                 />
               </div>
               <span className="vvp-period-range">
-                Kỳ {dayjs(startDate).format('DD/MM')} —{' '}
-                {dayjs(endDate).format('DD/MM/YYYY')}
+                <span>Kỳ công:&nbsp;</span>
+                <strong>
+                  {dayjs(startDate).format('DD/MM')} –{' '}
+                  {dayjs(endDate).format('DD/MM/YYYY')}
+                </strong>
               </span>
               <div className="vvp-period-buttons">
                 <Button
@@ -996,7 +1016,7 @@ export default function PayrollCalculator() {
                       disabled={
                         syncing ||
                         !savedSnapshot ||
-                        savedSnapshot !== JSON.stringify(draft)
+                        savedSnapshot !== JSON.stringify(companyDraft)
                       }
                       onClick={() => void publishCurrentDraft()}
                     >
@@ -1007,15 +1027,15 @@ export default function PayrollCalculator() {
             </div>
             <div className="vvp-period-employees">
               <div className="vvp-period-select">
-                <label htmlFor="vvp-payroll-company">Công ty tính lương</label>
+                <label htmlFor="vvp-payroll-company">
+                  Lọc công ty hiển thị
+                </label>
                 <Select
                   id="vvp-payroll-company"
                   value={companyFilter}
                   style={{ width: '100%' }}
                   onChange={(value) => {
                     setCompanyFilter(value);
-                    setSalaryCalculated(false);
-                    setSelectedIds(null);
                     setEmployeeId(undefined);
                   }}
                   options={[
@@ -1036,7 +1056,13 @@ export default function PayrollCalculator() {
                   style={{ width: '100%' }}
                   maxTagCount={0}
                   maxTagPlaceholder={() =>
-                    `Đã chọn ${activeProfiles.length}/${profiles.length} nhân viên`
+                    `Đã chọn ${
+                      selectedIds === null
+                        ? visibleProfiles.length
+                        : selectedIds.filter((id) =>
+                            visibleProfiles.some((p) => p.employeeId === id)
+                          ).length
+                    }/${visibleProfiles.length} nhân viên`
                   }
                   placeholder="Chọn nhân viên"
                   value={
@@ -1157,10 +1183,12 @@ export default function PayrollCalculator() {
             {draft && publication?.data?.status !== 'published' && (
               <Alert
                 type={
-                  savedSnapshot === JSON.stringify(draft) ? 'success' : 'info'
+                  savedSnapshot === JSON.stringify(companyDraft)
+                    ? 'success'
+                    : 'info'
                 }
                 message={
-                  savedSnapshot === JSON.stringify(draft)
+                  savedSnapshot === JSON.stringify(companyDraft)
                     ? 'Đã lưu bản nháp — chờ admin duyệt/công bố.'
                     : 'Dữ liệu đã thay đổi — bấm Cập nhật bản nháp để đồng bộ.'
                 }
@@ -1251,37 +1279,40 @@ export default function PayrollCalculator() {
               }
             />
           )}
-          <div className="vvp-payroll-actions">
-            <Button
-              disabled={savingProfile}
-              onClick={() => setAdjustmentReload((value) => value + 1)}
-            >
-              Tải lại khoản phát sinh
-            </Button>
-            <Button onClick={() => setConfigurationOpen(true)}>
-              Cấu hình & công thức
-            </Button>
-            <Space wrap>
+          <details className="vvp-payroll-settings">
+            <summary>Thiết lập & tải lại dữ liệu</summary>
+            <div className="vvp-payroll-actions">
               <Button
-                disabled={!canEditProfiles || !holidaysReady || holidaySaving}
-                onClick={() => editHoliday(null)}
+                disabled={savingProfile}
+                onClick={() => setAdjustmentReload((value) => value + 1)}
               >
-                Thiết lập công lễ/tết
+                Tải lại khoản phát sinh
               </Button>
-              {holidaysReady && (
-                <span className="vvp-holiday-summary">
-                  Mức chung: {holidays?.defaultDays ?? 'Chưa thiết lập'} ·{' '}
-                  {Object.keys(holidays?.overrides ?? {}).length} ngoại lệ
-                </span>
-              )}
-              <Button
-                disabled={holidaySaving}
-                onClick={() => setHolidayReload((v) => v + 1)}
-              >
-                Tải lại công lễ
+              <Button onClick={() => setConfigurationOpen(true)}>
+                Cấu hình & công thức
               </Button>
-            </Space>
-          </div>
+              <Space wrap>
+                <Button
+                  disabled={!canEditProfiles || !holidaysReady || holidaySaving}
+                  onClick={() => editHoliday(null)}
+                >
+                  Thiết lập công lễ/tết
+                </Button>
+                {holidaysReady && (
+                  <span className="vvp-holiday-summary">
+                    Mức chung: {holidays?.defaultDays ?? 'Chưa thiết lập'} ·{' '}
+                    {Object.keys(holidays?.overrides ?? {}).length} ngoại lệ
+                  </span>
+                )}
+                <Button
+                  disabled={holidaySaving}
+                  onClick={() => setHolidayReload((v) => v + 1)}
+                >
+                  Tải lại công lễ
+                </Button>
+              </Space>
+            </div>
+          </details>
           {holidayError ? (
             <Alert
               type="error"
@@ -1294,13 +1325,66 @@ export default function PayrollCalculator() {
             />
           ) : !holidaysReady ? (
             <Alert type="info" message="Đang tải thiết lập công lễ…" />
-          ) : holidays?.defaultDays === null && !draft ? (
-            <Alert
-              type="warning"
-              message="Chưa thiết lập công lễ: tạm tính 0. Bạn có thể bổ sung sau, không chặn tính lương."
-            />
           ) : null}
           <PayrollExcelSheets
+            attendanceAdjustments={adjustments}
+            saveAttendanceOverride={async (profile, value, remove) => {
+              if (savingProfile || !canEditProfiles || !adjustmentsReady)
+                return false;
+              if (
+                value.day + value.night + value.overtime > 24 ||
+                value.date > throughDate
+              ) {
+                message.error(
+                  'Tổng giờ không được vượt 24 và ngày sửa phải trong khoảng đã lấy công.'
+                );
+                return false;
+              }
+              const entries = attendance?.filter(
+                (entry) =>
+                  String(entry.employee_id).trim() ===
+                    String(
+                      profile.attendanceEmployeeId || profile.employeeId
+                    ).trim() && entry.date === value.date
+              );
+              if (
+                entries?.some(
+                  (entry) => entry.hnhc === 'LN' || entry.hnhc === 'TC'
+                )
+              ) {
+                message.error('Ngày tăng cường không sửa qua ô công thường.');
+                return false;
+              }
+              setSavingProfile(true);
+              try {
+                const previous = adjustments[profile.employeeId] ?? {
+                  ...emptyPayrollAdjustments(),
+                  diligence: profile.diligence
+                };
+                const remaining = (previous.attendanceOverrides ?? []).filter(
+                  (item) => item.date !== value.date
+                );
+                await persistAdjustment(profile, {
+                  ...previous,
+                  attendanceOverrides: remove
+                    ? remaining
+                    : [...remaining, value]
+                });
+                message.success(
+                  remove
+                    ? 'Đã khôi phục công gốc.'
+                    : 'Đã lưu công bổ sung theo kỳ.'
+                );
+                return true;
+              } catch (cause) {
+                message.error(
+                  getApiErrorMessage(cause, 'Không lưu được công bổ sung.')
+                );
+                return false;
+              } finally {
+                setSavingProfile(false);
+              }
+            }}
             saveManualAdjustment={saveManualAdjustment}
             canEditAdjustments={
               canEditProfiles && adjustmentsReady && !savingProfile
@@ -1312,7 +1396,7 @@ export default function PayrollCalculator() {
             holidaySettings={holidaysReady ? holidays : null}
             editHoliday={editHoliday}
             canEditHolidays={canEditProfiles && holidaysReady && !holidaySaving}
-            profiles={activeProfiles}
+            profiles={visibleProfiles}
             attendance={attendance}
             draft={draft}
             startDate={startDate}
@@ -1378,7 +1462,10 @@ export default function PayrollCalculator() {
               cellEditing?.key ?? ''
             ) && (
               <p className="mt-3 text-sm">
-                Có phép hoặc Không phép lớn hơn 0 sẽ đưa chuyên cần tháng về 0.
+                Chuyên cần: có phép 1 ngày hưởng 100%; có phép 2 ngày hoặc không
+                phép 1 ngày hưởng 50%. Có phép từ 3 ngày, không phép từ 2 ngày,
+                hoặc có phép từ 2 ngày kèm không phép từ 1 ngày hưởng 0%. Tỷ lệ
+                áp dụng trên mức chuyên cần được duyệt.
               </p>
             )}
           </Modal>
@@ -1625,7 +1712,7 @@ export default function PayrollCalculator() {
           <Alert
             className="mb-4"
             type="info"
-            message="Danh mục và khoản phát sinh được lưu trên máy chủ. Khoản phát sinh chỉ áp dụng nhân viên này trong kỳ đang xem; Có phép hoặc Không phép lớn hơn 0 thì chuyên cần tháng bằng 0."
+            message="Danh mục và khoản phát sinh được lưu trên máy chủ. Khoản phát sinh chỉ áp dụng nhân viên này trong kỳ đang xem; chuyên cần tự tính theo số ngày Có phép và Không phép trên mức được duyệt."
           />
           <div className="grid grid-cols-1 gap-x-4 md:grid-cols-3">
             {creatingProfile && (

@@ -24,16 +24,25 @@ export default function PayrollManualCell({
   const [draft, setDraft] = useState<string | number | null>(value);
   const [saving, setSaving] = useState(false);
   const pending = useRef(false);
+  const numericInput = useRef<string | null>(null);
   async function submit() {
-    if (pending.current || disabled || draft === null) return;
-    if (draft === inputValue) {
+    if (pending.current || disabled) return;
+    const nextValue: string | number =
+      !text && numericInput.current?.trim() === ''
+        ? 0
+        : draft === null
+          ? text
+            ? ''
+            : 0
+          : draft;
+    if (nextValue === inputValue || (nextValue === '' && inputValue === null)) {
       setEditing(false);
       return;
     }
     pending.current = true;
     setSaving(true);
     try {
-      if (await save(draft)) setEditing(false);
+      if (await save(nextValue)) setEditing(false);
     } finally {
       pending.current = false;
       setSaving(false);
@@ -49,9 +58,7 @@ export default function PayrollManualCell({
     onKeyDown: (event: React.KeyboardEvent) => {
       if (event.key === 'Escape' && !pending.current) setEditing(false);
     },
-    onBlur: () => {
-      if (!pending.current) setEditing(false);
-    }
+    onBlur: () => void submit()
   };
   if (editing)
     return text ? (
@@ -70,16 +77,24 @@ export default function PayrollManualCell({
         precision={fractional ? 2 : 0}
         step={fractional ? 0.5 : 1000}
         decimalSeparator=","
+        onInput={(input) => {
+          numericInput.current = input;
+        }}
         onChange={setDraft}
-        formatter={(number, info) =>
-          info.userTyping
-            ? info.input
-            : number == null
-              ? ''
-              : Number(number).toLocaleString('vi-VN')
-        }
+        formatter={(number, info) => {
+          if (info.userTyping) {
+            const [integer, decimal] = info.input.replace(/\./g, '').split(',');
+            const grouped = integer.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            return decimal === undefined ? grouped : `${grouped},${decimal}`;
+          }
+          return number == null || String(number) === ''
+            ? ''
+            : Number(number).toLocaleString('vi-VN');
+        }}
         parser={(input) =>
-          Number((input ?? '').replace(/\./g, '').replace(',', '.'))
+          input?.trim()
+            ? Number(input.replace(/\./g, '').replace(',', '.'))
+            : NaN
         }
       />
     );
@@ -91,7 +106,14 @@ export default function PayrollManualCell({
       aria-label={label}
       title="Bấm để sửa · Enter lưu · Esc huỷ"
       onClick={() => {
-        setDraft(inputValue);
+        numericInput.current = null;
+        setDraft(
+          text
+            ? inputValue
+            : Number(inputValue) === 0
+              ? null
+              : Number(inputValue)
+        );
         setEditing(true);
       }}
     >

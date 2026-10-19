@@ -10,8 +10,12 @@ export interface UseNotificationPermissionReturn {
 }
 
 export function useNotificationPermission(): UseNotificationPermissionReturn {
-  const [permission, setPermission] =
-    useState<NotificationPermissionStatus>('default');
+  const [permission, setPermission] = useState<NotificationPermissionStatus>(
+    () =>
+      typeof window !== 'undefined' && 'Notification' in window
+        ? Notification.permission
+        : 'denied'
+  );
   const [isLoading, setIsLoading] = useState(false);
 
   // Kiểm tra xem trình duyệt có hỗ trợ Notification API không

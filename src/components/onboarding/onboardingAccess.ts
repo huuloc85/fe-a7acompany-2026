@@ -1,6 +1,9 @@
 import type { User } from '@/types/authType';
 import { canAccessRoute, hasPermissionUrl, isAdmin } from '@/utils/authUtil';
 
+export const isStampPage = (pathname: string): boolean =>
+  /^\/(?:employee\/)?stamps(?:\/|$)/.test(pathname);
+
 export const canUseOnboarding = (user: User | null): boolean =>
   !!user?.role?.name && !isAdmin(user.role.name);
 

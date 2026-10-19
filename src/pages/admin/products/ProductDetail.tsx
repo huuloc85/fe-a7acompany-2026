@@ -46,14 +46,16 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ id }) => {
     productId?: string;
     hideShift?: boolean;
   }> = ({ record, index, productId, hideShift }) => {
-    const shiftValue = record.shift
-      ? record.shift
-      : dateTimeToShift(
-            dayjs(record.date).format('DD-MM-YYYY'),
-            record.created_at
-          ) === 2
-        ? 'Ca 2'
-        : 'Ca 1';
+    const shiftValue = hideShift
+      ? null
+      : record.shift
+        ? record.shift
+        : dateTimeToShift(
+              dayjs(record.date).format('DD-MM-YYYY'),
+              record.created_at
+            ) === 2
+          ? 'Ca 2'
+          : 'Ca 1';
 
     return (
       <motion.div
@@ -306,6 +308,8 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ id }) => {
     data: ProductHistoryStatusType[],
     statusKey: string
   ) => {
+    const hideShift = statusKey === 'status8' || statusKey === 'status6';
+
     if (isMobile) {
       if (!data || data.length === 0)
         return <Empty description="Không có dữ liệu" />;
@@ -319,7 +323,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ id }) => {
                 record={record}
                 index={index}
                 productId={productHistoryDetail?.product.id}
-                hideShift={statusKey === 'status8'}
+                hideShift={hideShift}
               />
             </List.Item>
           )}
@@ -327,10 +331,9 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ id }) => {
       );
     }
 
-    const cols =
-      statusKey === 'status8'
-        ? tableColumns.filter((col) => col.key !== 'shift')
-        : tableColumns;
+    const cols = hideShift
+      ? tableColumns.filter((col) => col.key !== 'shift')
+      : tableColumns;
 
     return <Table {...tableProps} columns={cols} dataSource={data} />;
   };

@@ -298,8 +298,6 @@ export const PrintStampList = () => {
                 Ngày:
               </label>
               <DatePicker
-                data-tour="stamp-requests-date"
-                format="DD/MM/YYYY"
                 value={date}
                 className="!w-full !rounded-lg sm:!w-auto"
                 onChange={(value) => {

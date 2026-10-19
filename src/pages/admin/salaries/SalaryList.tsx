@@ -14,10 +14,14 @@ import {
   Tag,
   message
 } from 'antd';
-import { publishPayroll } from '@/services/PayrollPublicationService';
+import {
+  publishPayroll,
+  savePayrollDraft
+} from '@/services/PayrollPublicationService';
 import { getApiErrorMessage } from '@/utils/apiError';
 import { QUERY_KEYS } from '@/constants/queryKeys';
 import PayrollSnapshot from '@/components/salaries/PayrollSnapshot';
+import PayrollDraftPreview from '@/components/salaries/PayrollDraftPreview';
 import dayjs from 'dayjs';
 import { useEffect, useMemo, useState } from 'react';
 import {
@@ -35,7 +39,7 @@ import { useIsMobile } from '@hooks/useIsMobile';
 import { useCrudList } from '@/hooks/useCrudList';
 import ComponentCard from '@components/common/ComponentCard';
 import RefreshButton from '@components/common/RefreshButton';
-import { Link } from '@tanstack/react-router';
+import { Link, getRouteApi } from '@tanstack/react-router';
 import AppButton from '@components/common/AppButton';
 import { AttendanceTable } from '@components/salaries/AttendanceTable';
 import CategoryTable from '@components/salaries/CategoryTable';
@@ -53,6 +57,7 @@ const formatVND = (value: number | null | undefined) => {
 };
 
 export default function SalaryList() {
+  const search = getRouteApi('/_authenticated/admin/salaries/').useSearch();
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   const { mutateAsync: publish, isPending: isPublishing } = useMutation({
@@ -62,10 +67,15 @@ export default function SalaryList() {
   const { user } = useStore(authStore);
   const canViewDrafts = isAllowRole(user, ['super admin', 'admin', 'co admin']);
   const [requestedStatus, setRequestedStatus] = useState<'published' | 'draft'>(
-    'published'
+    search.status ?? 'published'
   );
+  useEffect(() => {
+    setRequestedStatus(search.status ?? 'published');
+  }, [search.status]);
   const salaryStatus = canViewDrafts ? requestedStatus : 'published';
   const [company, setCompany] = useState<CompanyType>('vvp');
+  const [editingDraft, setEditingDraft] = useState(false);
+  const [mergingPeriod, setMergingPeriod] = useState(false);
   const [requestedSalaryId, setSelectedSalaryId] = useState<string | null>(
     null
   );
@@ -85,10 +95,32 @@ export default function SalaryList() {
   const { isLoading, isFetching, refetch } = queryResult;
 
   const salaries = useMemo(
-    () => (data || []).filter((item) => item.status === salaryStatus),
+    () =>
+      (data || []).filter(
+        (item) =>
+          item.status === salaryStatus &&
+          !(
+            item.calculator_key &&
+            !item.calculator_key.startsWith('all:') &&
+            data?.some(
+              (total) =>
+                total.calculator_key === `all:${item.end_date.slice(0, 7)}`
+            )
+          )
+      ),
     [data, salaryStatus]
   );
-  const total = salaries.length;
+  const salaryPeriods = useMemo(() => {
+    const grouped = new Map<string, typeof salaries>();
+    salaries.forEach((item) => {
+      const key = `${item.start_date}|${item.end_date}`;
+      const period = grouped.get(key) ?? [];
+      period.push(item);
+      grouped.set(key, period);
+    });
+    return Array.from(grouped.values());
+  }, [salaries]);
+  const total = salaryPeriods.length;
   const selectedSalaryId = salaries.some(
     (item) => String(item.id) === requestedSalaryId
   )
@@ -155,7 +187,8 @@ export default function SalaryList() {
     !isDetailLoading &&
     !isDetailFetching &&
     !isDetailError &&
-    !isPublishing;
+    !isPublishing &&
+    !editingDraft;
 
   const confirmPublication = () => {
     if (!canPublish || !previewManager || !selectedSalary) return;
@@ -190,6 +223,56 @@ export default function SalaryList() {
     });
   };
 
+  async function mergeDraftPeriod() {
+    if (!selectedSalary || mergingPeriod) return;
+    setMergingPeriod(true);
+    try {
+      const members = salaries.filter(
+        (item) =>
+          item.calculator_key &&
+          item.start_date === selectedSalary.start_date &&
+          item.end_date === selectedSalary.end_date
+      );
+      const snapshots = await Promise.all(
+        members.map((item) =>
+          fetchSalary({ id: String(item.id), company: 'all' })
+        )
+      );
+      const first = snapshots[0]?.snapshot;
+      if (
+        !first ||
+        snapshots.some(
+          (item) =>
+            !item.snapshot ||
+            item.manager?.status !== 'draft' ||
+            JSON.stringify(item.snapshot.rules) !== JSON.stringify(first.rules)
+        )
+      ) {
+        throw new Error(
+          'Các bản nháp không cùng cấu hình hoặc đã thay đổi trạng thái. Cần kiểm tra trước khi gộp.'
+        );
+      }
+      const response = await savePayrollDraft(
+        'all',
+        selectedSalary.end_date.slice(0, 7),
+        {
+          ...first,
+          rows: snapshots.flatMap((item) => item.snapshot!.rows)
+        },
+        0
+      );
+      await queryClient.invalidateQueries({ queryKey: ['salaries'] });
+      setSelectedSalaryId(String(response.data.id));
+      message.success(
+        'Đã gộp thành một kỳ lương tổng, giữ nguyên số tiền đã lưu.'
+      );
+    } catch (error) {
+      message.error(getApiErrorMessage(error, 'Không gộp được kỳ lương.'));
+    } finally {
+      setMergingPeriod(false);
+    }
+  }
+
   useEffect(() => {
     const salaryCompany = selectedSalary?.calculator_key?.split(':')[0];
     if (salaryCompany === 'vvp' || salaryCompany === 'a7a') {
@@ -199,13 +282,19 @@ export default function SalaryList() {
 
   const salaryOptions = useMemo(
     () =>
-      salaries.map((item) => ({
-        value: String(item.id),
-        label: item.title,
-        startDate: item.start_date,
-        endDate: item.end_date
-      })),
-    [salaries]
+      salaryPeriods.map((period) => {
+        const item =
+          period.find(
+            (salary) => salary.calculator_key?.split(':')[0] === company
+          ) ?? period[0];
+        return {
+          value: String(item.id),
+          label: item.title,
+          startDate: item.start_date,
+          endDate: item.end_date
+        };
+      }),
+    [company, salaryPeriods]
   );
 
   const salaryDetailOptions = useMemo(
@@ -372,7 +461,7 @@ export default function SalaryList() {
   ];
 
   return (
-    <ComponentCard title="Quản lý bảng lương">
+    <ComponentCard title="Quản lý bảng lương" className="payroll-sticky-card">
       <div className="space-y-5">
         {canViewDrafts && (
           <Tabs
@@ -383,7 +472,11 @@ export default function SalaryList() {
               setSelectedSalaryDetailId(null);
             }}
             items={[
-              { key: 'published', label: 'Bảng lương chính thức' },
+              {
+                key: 'published',
+                label: 'Bảng lương chính thức',
+                disabled: editingDraft
+              },
               { key: 'draft', label: 'Bảng lương nháp' }
             ]}
           />
@@ -408,12 +501,26 @@ export default function SalaryList() {
                 Duyệt và công bố
               </AppButton>
             )}
+          {canViewDrafts &&
+            salaryStatus === 'draft' &&
+            selectedSalary?.calculator_key &&
+            !selectedSalary.calculator_key.startsWith('all:') && (
+              <AppButton
+                tone="primary"
+                loading={mergingPeriod}
+                disabled={editingDraft}
+                onClick={() => void mergeDraftPeriod()}
+              >
+                Gộp thành kỳ lương tổng
+              </AppButton>
+            )}
           {selectedSalary && (
             <Tag color={salaryStatus === 'draft' ? 'orange' : 'green'}>
               {salaryStatus === 'draft' ? 'Bản nháp' : 'Đã công bố'}
             </Tag>
           )}
           {selectedSalary &&
+            !editingDraft &&
             !(
               selectedSalary.calculator_key &&
               selectedSalary.status === 'published'
@@ -436,7 +543,8 @@ export default function SalaryList() {
           <div className="ml-auto flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 dark:border-gray-600 dark:bg-gray-800">
             <FaMoneyBillWave className="text-xs text-emerald-500" />
             <span className="text-xs text-gray-500">
-              Tổng: <strong className="text-blue-600">{total}</strong> bản lương
+              Tổng: <strong className="text-blue-600">{total}</strong> bảng
+              lương
             </span>
           </div>
         </div>
@@ -496,6 +604,7 @@ export default function SalaryList() {
                   Kỳ lương
                 </label>
                 <Select
+                  disabled={editingDraft}
                   value={selectedSalaryId ?? undefined}
                   options={salaryOptions}
                   onChange={setSelectedSalaryId}
@@ -532,9 +641,26 @@ export default function SalaryList() {
                   Công ty
                 </label>
                 <Radio.Group
+                  disabled={editingDraft}
                   className="w-full"
                   value={company}
-                  onChange={(event) => setCompany(event.target.value)}
+                  onChange={(event) => {
+                    const nextCompany = event.target.value as CompanyType;
+                    setCompany(nextCompany);
+                    if (
+                      selectedSalary?.calculator_key &&
+                      !selectedSalary.calculator_key.startsWith('all:')
+                    ) {
+                      const matchingSalary = salaries.find(
+                        (item) =>
+                          item.calculator_key?.split(':')[0] === nextCompany &&
+                          item.start_date === selectedSalary.start_date &&
+                          item.end_date === selectedSalary.end_date
+                      );
+                      if (matchingSalary)
+                        setSelectedSalaryId(String(matchingSalary.id));
+                    }
+                  }}
                   optionType="button"
                   buttonStyle="solid"
                   size="large"
@@ -560,10 +686,69 @@ export default function SalaryList() {
 
           <Spin spinning={isDetailLoading}>
             {selectedSalaryData?.snapshot ? (
-              <PayrollSnapshot
-                key={selectedSalaryId}
-                draft={selectedSalaryData.snapshot}
-              />
+              salaryStatus === 'draft' ? (
+                <PayrollDraftPreview
+                  key={`${selectedSalaryId}-${company}`}
+                  draft={selectedSalaryData.snapshot}
+                  onEditingChange={setEditingDraft}
+                  revision={previewManager?.revision}
+                  onSave={
+                    canViewDrafts &&
+                    selectedSalary?.calculator_key &&
+                    previewManager?.status === 'draft'
+                      ? async (updated, revision) => {
+                          const unified =
+                            selectedSalary.calculator_key?.startsWith('all:');
+                          let draftToSave = updated;
+                          if (unified) {
+                            const full = await fetchSalary({
+                              id: String(selectedSalary.id),
+                              company: 'all'
+                            });
+                            if (
+                              !full.snapshot ||
+                              full.manager?.revision !== revision
+                            )
+                              throw new Error(
+                                'Bản nháp đã thay đổi. Tải lại trước khi lưu.'
+                              );
+                            const ids = new Set(
+                              updated.rows.map((row) => row.profile.employeeId)
+                            );
+                            draftToSave = {
+                              ...full.snapshot,
+                              rows: [
+                                ...full.snapshot.rows.filter(
+                                  (row) => !ids.has(row.profile.employeeId)
+                                ),
+                                ...updated.rows
+                              ]
+                            };
+                          }
+                          await savePayrollDraft(
+                            unified ? 'all' : company,
+                            selectedSalary.end_date.slice(0, 7),
+                            draftToSave,
+                            revision
+                          );
+                          await Promise.all([
+                            queryClient.invalidateQueries({
+                              queryKey: ['salaries']
+                            }),
+                            queryClient.invalidateQueries({
+                              queryKey: ['adminSalaryPreview']
+                            })
+                          ]);
+                        }
+                      : undefined
+                  }
+                />
+              ) : (
+                <PayrollSnapshot
+                  key={selectedSalaryId}
+                  draft={selectedSalaryData.snapshot}
+                />
+              )
             ) : selectedSalaryId ? (
               <Tabs
                 items={salaryTabs}

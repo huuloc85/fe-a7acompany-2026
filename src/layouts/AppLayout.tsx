@@ -1,5 +1,7 @@
 import { Outlet } from '@tanstack/react-router';
 import { OnboardingProvider } from '@/components/onboarding/Onboarding';
+import { IncompleteAttendanceAlert } from '@/components/attendances/IncompleteAttendanceAlert';
+import { isAdmin } from '@/utils/authUtil';
 import {
   ConfigProvider,
   Layout,
@@ -328,6 +330,12 @@ function AppLayout() {
                   <div className="mb-4">
                     <MarqueeAlert messages={messages} />
                   </div>
+                )}
+                {user && !isAdmin(user.role.name) && (
+                  <IncompleteAttendanceAlert
+                    key={user.id}
+                    employeeId={user.id}
+                  />
                 )}
                 <motion.div
                   initial={{ opacity: 0, scale: 0.98, y: 10 }}

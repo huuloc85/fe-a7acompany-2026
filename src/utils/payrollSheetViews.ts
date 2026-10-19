@@ -54,9 +54,11 @@ export function buildPayrollSheetView(
     (e) =>
       e.date >= start &&
       e.date <= end &&
-      String(e.company ?? '')
-        .trim()
-        .toUpperCase() === 'VVP'
+      profiles.some(
+        (profile) =>
+          String(profile.attendanceEmployeeId || profile.employeeId).trim() ===
+          String(e.employee_id).trim()
+      )
   );
   let detailDates = dates;
   let note =
@@ -155,10 +157,10 @@ export function buildPayrollSheetView(
     ];
     schema.columnCount = 13 + detailDates.length;
     note =
-      'Giờ tăng cường lấy từ LN/TC trên web. Giữ nhóm ngày như mẫu, thêm ngày nếu phát sinh ngoài nhóm. Phụ cấp riêng chưa được tách nên để —, chưa tính Thành tiền theo mẫu; tiền giờ hiện có đã nằm trong Tổng thu nhập, không cộng thêm lần nữa.';
+      'Giờ tăng cường lấy từ LN/TC trên web, tách khỏi tổng lương chính. Phụ cấp riêng chưa có dữ liệu nên để —; chưa dùng bảng này làm tổng thanh toán tăng cường.';
   } else if (name === 'Tính lương') {
     note =
-      'Giữ cột A–AR như mẫu. Có phép/Không phép nhập riêng theo nhân viên và kỳ; chỉ cần một trong hai lớn hơn 0 thì chuyên cần tháng bằng 0. Hiếu/hỷ tính theo ngày nghỉ hưởng lương đã nhập. Tổng thu nhập/thực lãnh vẫn theo bộ tính hiện tại, bao gồm tăng cường, thu nhập bổ sung, tạm ứng và khấu trừ khác. Các tỷ lệ trong tiêu đề là tỷ lệ mẫu; xem Cấu hình để biết tỷ lệ đang áp dụng.';
+      'Giữ cột A–AR như mẫu. Chuyên cần dùng số tiền đã duyệt, không tự giảm theo ngày nghỉ. Tăng cường tách khỏi lương chính. Thu nhập bổ sung, tạm ứng và khấu trừ khác chỉ áp dụng khi có nhập. Xem Cấu hình để biết tỷ lệ đang áp dụng.';
   } else if (schema.hidden) {
     note =
       'Sheet ẩn trong file gốc. Chỉ hiển thị dữ liệu có nguồn từ hệ thống; các khoản/chức năng cũ chưa được nối để —, không sao chép dữ liệu lịch sử từ Excel.';
@@ -166,7 +168,8 @@ export function buildPayrollSheetView(
   const records: SheetRecord[] = [];
   profiles.forEach((p, index) => {
     const r = draft?.rows.find(
-      (row) => row.profile.employeeId === p.employeeId
+      (row) =>
+        String(row.profile.employeeId).trim() === String(p.employeeId).trim()
     );
     const a = r?.adjustments;
     const own = entries.filter(
@@ -247,8 +250,8 @@ export function buildPayrollSheetView(
         r.tax,
         r.net,
         r.social + r.health + r.unemployment,
-        Math.round(p.insuranceBase * 0.215),
-        Math.round(p.unionBase * 0.02),
+        (p.basicSalary + p.responsibility) * 0.215,
+        (p.basicSalary + p.responsibility) * 0.02,
         a.otherIncome,
         a.advance,
         a.otherDeduction

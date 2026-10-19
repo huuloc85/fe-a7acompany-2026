@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert, Card, Input, Spin, Table, message } from 'antd';
+import { Alert, Card, Input, Spin, Tooltip, message } from 'antd';
 import Button from '@/components/common/AppButton';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getCap7ADaily, resetCap7ADaily } from '@/services/Cap7AService';
@@ -96,9 +96,9 @@ export default function DailyPerformance({
             Lịch sử theo ngày / giờ
           </summary>
           <div className="flex flex-wrap items-center gap-3">
-            <label htmlFor="cap7a-report-date">Ngày (giờ Việt Nam)</label>
             <Input
               id="cap7a-report-date"
+              aria-label="Ngày báo cáo"
               type="date"
               disabled={resetting}
               value={date}
@@ -158,70 +158,69 @@ export default function DailyPerformance({
                   message="Nhật ký có cảnh báo thiếu/lỗi bản ghi."
                 />
               )}
-              <details>
-                <summary className="cursor-pointer py-2 font-medium">
-                  Chi tiết sản lượng theo giờ
-                </summary>
-                <Card
-                  title="Sản lượng theo giờ"
-                  size="small"
-                  className="liquid-glass-card !rounded-2xl"
+              <Card
+                title="Sản lượng theo giờ"
+                size="small"
+                className="liquid-glass-card mt-3 !rounded-2xl"
+              >
+                <div className="mb-2 flex flex-wrap gap-3 text-xs">
+                  <span style={{ color: '#16a34a' }}>■ OK</span>
+                  <span style={{ color: '#ef4444' }}>■ NG</span>
+                </div>
+                <div
+                  className="flex h-40 items-end gap-1"
+                  role="group"
+                  aria-label="Biểu đồ sản lượng 24 giờ; di chuột hoặc chọn từng giờ để xem số liệu"
                 >
-                  <div className="mb-2 flex flex-wrap gap-3 text-xs">
-                    <span style={{ color: '#16a34a' }}>■ OK</span>
-                    <span style={{ color: '#ef4444' }}>■ NG</span>
-                  </div>
-                  <div
-                    className="flex h-40 items-end gap-1"
-                    role="img"
-                    aria-label="Biểu đồ sản lượng 24 giờ; số liệu chi tiết trong bảng bên dưới"
-                  >
-                    {report.hours.map((h) => (
-                      <div
-                        key={h.hour}
-                        className="flex h-full min-w-0 flex-1 flex-col justify-end"
-                        title={`${h.hour}h: OK ${h.ok}, NG ${h.ng}`}
+                  {report.hours.map((h) => (
+                    <Tooltip
+                      key={h.hour}
+                      trigger={['hover', 'focus', 'click']}
+                      title={
+                        <div>
+                          <div>
+                            {String(h.hour).padStart(2, '0')}:00 –{' '}
+                            {String(h.hour + 1).padStart(2, '0')}:00
+                          </div>
+                          <div>OK: {h.ok.toLocaleString('vi-VN')}</div>
+                          <div>NG: {h.ng.toLocaleString('vi-VN')}</div>
+                          <div>
+                            Tổng: {(h.ok + h.ng).toLocaleString('vi-VN')}
+                          </div>
+                        </div>
+                      }
+                    >
+                      <button
+                        type="button"
+                        className="flex h-full min-w-0 flex-1 flex-col justify-end border-0 bg-transparent p-0 hover:bg-black/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
+                        aria-label={`${h.hour} giờ: OK ${h.ok}, NG ${h.ng}, Tổng ${h.ok + h.ng}`}
                       >
                         <div
+                          className="w-full"
                           style={{
                             height: `${(100 * h.ng) / max}%`,
                             background: '#ef4444'
                           }}
                         />
                         <div
+                          className="w-full"
                           style={{
                             height: `${(100 * h.ok) / max}%`,
                             background: '#16a34a'
                           }}
                         />
-                      </div>
-                    ))}
-                  </div>
-                  <div className="mt-1 flex gap-1 text-[10px]">
-                    {report.hours.map((h) => (
-                      <span key={h.hour} className="min-w-0 flex-1 text-center">
-                        {h.hour % 3 === 0 ? `${h.hour}h` : ''}
-                      </span>
-                    ))}
-                  </div>
-                </Card>
-                <Table
-                  size="small"
-                  pagination={false}
-                  scroll={{ y: 260 }}
-                  rowKey="hour"
-                  dataSource={report.hours}
-                  columns={[
-                    {
-                      title: 'Giờ',
-                      dataIndex: 'hour',
-                      render: (h: number) => `${String(h).padStart(2, '0')}:00`
-                    },
-                    { title: 'OK', dataIndex: 'ok' },
-                    { title: 'NG', dataIndex: 'ng' }
-                  ]}
-                />
-              </details>
+                      </button>
+                    </Tooltip>
+                  ))}
+                </div>
+                <div className="mt-1 flex gap-1 text-[10px]">
+                  {report.hours.map((h) => (
+                    <span key={h.hour} className="min-w-0 flex-1 text-center">
+                      {h.hour % 3 === 0 ? `${h.hour}h` : ''}
+                    </span>
+                  ))}
+                </div>
+              </Card>
               <p className="m-0 text-sm text-gray-500">
                 Đồng bộ:{' '}
                 {query.data?.received_at_ms

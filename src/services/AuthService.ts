@@ -1,5 +1,6 @@
 import axiosPrivate from '@/api/axiosInstance';
 import { STORAGE_URL } from '@/configs/environment.config';
+import { queryClient } from '@/lib/queryClient';
 import { User } from '@/types/authType';
 import { Gender } from '@schemas/genderEnum.schema';
 import {
@@ -107,6 +108,7 @@ export const authLogout = async () => {
     return { message: 'Logged out locally' };
   } finally {
     clearAuth();
+    queryClient.clear();
   }
 };
 
@@ -117,6 +119,7 @@ export const authCancelLogin = async () => {
     console.warn('Logout API call failed:', error);
   } finally {
     clearAuth();
+    queryClient.clear();
   }
 };
 

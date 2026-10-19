@@ -1,4 +1,5 @@
 import AppSearchInput from '@/components/common/AppSearchInput';
+import { isCurrentAttendanceDate } from '@/utils/attendanceWindow';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import {
@@ -255,7 +256,13 @@ export default function Records() {
       align: 'center',
       render: (value, record) => {
         if (!record.shift) return '-';
-        return value ? value : <Tag color="red">Chấm công chưa đủ</Tag>;
+        return value ? (
+          value
+        ) : isCurrentAttendanceDate(record.date) ? (
+          '—'
+        ) : (
+          <Tag color="red">Chấm công chưa đủ</Tag>
+        );
       }
     },
     {
@@ -265,7 +272,13 @@ export default function Records() {
       align: 'center',
       render: (value, record) => {
         if (!record.shift) return '-';
-        return value ? value : <Tag color="red">Chấm công chưa đủ</Tag>;
+        return value ? (
+          value
+        ) : isCurrentAttendanceDate(record.date) ? (
+          '—'
+        ) : (
+          <Tag color="red">Chấm công chưa đủ</Tag>
+        );
       }
     },
     {
@@ -280,6 +293,7 @@ export default function Records() {
   ];
 
   const forgetAttendance = attendances.filter((item) => {
+    if (isCurrentAttendanceDate(item.date)) return false;
     // Only show days that should have attendance but missing time_in or time_out
     // Case 1: Normal work day (shift > 0) with incomplete attendance
     if (

@@ -22,6 +22,7 @@ export default function LivePerformance({
   const ng = state?.ng;
   const session = state?.session_id;
   useEffect(() => {
+    if (!online) return;
     if (
       !running ||
       !session ||
@@ -42,24 +43,37 @@ export default function LivePerformance({
         session
       })
     );
-  }, [running, session, receivedAt, ok, ng]);
-  const rate = running ? productionRate(samples) : null;
+  }, [online, running, session, receivedAt, ok, ng]);
+  const rate = running || !online ? productionRate(samples) : null;
   const seconds = rate !== null && rate > 0 ? Math.ceil(100 / rate) : null;
-  const counts = online && state ? state : null;
+  const counts = state ?? null;
   const classified = counts ? counts.ok + counts.ng : 0;
+  const duration = (value?: number) => {
+    if (value === undefined || !Number.isFinite(value) || value < 0) return '—';
+    const seconds = Math.floor(value);
+    return [
+      Math.floor(seconds / 3600),
+      Math.floor(seconds / 60) % 60,
+      seconds % 60
+    ]
+      .map((part) => String(part).padStart(2, '0'))
+      .join(':');
+  };
   const percent = (value: number) =>
     classified > 0
       ? `${((100 * value) / classified).toLocaleString('vi-VN', { maximumFractionDigits: 2 })}%`
       : '—';
   return (
     <>
-      <div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-6">
+      <div className="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-4">
         {[
           ['Tổng sản phẩm', counts?.total.toLocaleString('vi-VN') ?? '—'],
           ['OK', counts?.ok.toLocaleString('vi-VN') ?? '—'],
           ['NG', counts?.ng.toLocaleString('vi-VN') ?? '—'],
           ['Tỷ lệ OK', counts ? percent(counts.ok) : '—'],
-          ['Tỷ lệ NG', counts ? percent(counts.ng) : '—']
+          ['Tỷ lệ NG', counts ? percent(counts.ng) : '—'],
+          ['Thời gian chạy hôm nay', duration(counts?.run_seconds)],
+          ['Thời gian dừng hôm nay', duration(counts?.stop_seconds)]
         ].map(([label, value]) => (
           <Card
             key={label}
@@ -93,11 +107,13 @@ export default function LivePerformance({
               : `${Math.floor(seconds / 60)} phút ${seconds % 60} giây`}
           </div>
           <div className="mt-1 text-xs text-gray-500">
-            {!running
-              ? 'Chờ RUN và kết nối.'
-              : rate === null
-                ? 'Lấy mẫu tối thiểu 10 giây.'
-                : 'Ước tính theo tốc độ gần nhất.'}
+            {!online
+              ? 'Dữ liệu cuối trước khi mất kết nối.'
+              : !running
+                ? 'Chờ RUN và kết nối.'
+                : rate === null
+                  ? 'Lấy mẫu tối thiểu 10 giây.'
+                  : 'Ước tính theo tốc độ gần nhất.'}
           </div>
         </Card>
       </div>

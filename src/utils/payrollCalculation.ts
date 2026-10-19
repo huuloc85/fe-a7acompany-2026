@@ -20,7 +20,16 @@ export interface PayrollProfile {
   legacySalary26Days?: number;
 }
 
+export interface PayrollAttendanceOverride {
+  date: string;
+  day: number;
+  night: number;
+  overtime: number;
+  overtimeShift: 1 | 2;
+}
+
 export interface PayrollAdjustments {
+  attendanceOverrides?: PayrollAttendanceOverride[];
   holidayDays: number;
   paidLeaveDays: number;
   authorizedLeaveDays?: number;
@@ -86,6 +95,22 @@ export const emptyPayrollAdjustments = (): PayrollAdjustments => ({
   noAttendanceConfirmed: false,
   note: ''
 });
+
+export function calculatePayrollDiligence(
+  approvedAmount: number,
+  authorizedLeaveDays = 0,
+  unauthorizedLeaveDays = 0
+): number {
+  if (
+    authorizedLeaveDays >= 3 ||
+    unauthorizedLeaveDays >= 2 ||
+    (authorizedLeaveDays >= 2 && unauthorizedLeaveDays >= 1)
+  )
+    return 0;
+  if (authorizedLeaveDays >= 2 || unauthorizedLeaveDays >= 1)
+    return approvedAmount * 0.5;
+  return approvedAmount;
+}
 
 export interface PayrollHours {
   day: number;
@@ -180,7 +205,8 @@ export function calculatePayroll(
   adjustments: Record<string, PayrollAdjustments>,
   rules: PayrollRules,
   startDate: string,
-  endDate: string
+  endDate: string,
+  savedHours?: Record<string, PayrollHours>
 ): PayrollDraft {
   const issues: string[] = [];
   const result: PayrollDraft = {
@@ -231,6 +257,17 @@ export function calculatePayroll(
   const seen = new Set<string>();
   for (const entry of attendance) {
     const id = normalizeEmployeeId(entry.employee_id);
+    const overrideProfile = profileMap.get(id);
+    if (
+      overrideProfile &&
+      adjustments[overrideProfile.employeeId]?.attendanceOverrides?.some(
+        (item) =>
+          item.date === entry.date &&
+          item.date >= startDate &&
+          item.date <= endDate
+      )
+    )
+      continue;
     const company = entry.company.trim().toLocaleLowerCase('vi');
     if (!['vvp', 'vinh vinh phát', 'a7a'].includes(company)) {
       issues.push(`Không nhận diện công ty của mã ${id}: ${entry.company}`);
@@ -322,6 +359,44 @@ export function calculatePayroll(
     hours.set(id, total);
   }
   for (const profile of profiles) {
+    const id = normalizeEmployeeId(
+      profile.attendanceEmployeeId || profile.employeeId
+    );
+    const seenDates = new Set<string>();
+    for (const item of adjustments[profile.employeeId]?.attendanceOverrides ??
+      []) {
+      if (
+        !validDate(item.date) ||
+        item.date < startDate ||
+        item.date > endDate ||
+        seenDates.has(item.date) ||
+        ![item.day, item.night, item.overtime].every(validNumber) ||
+        item.day + item.night + item.overtime > 24 ||
+        ![1, 2].includes(item.overtimeShift)
+      ) {
+        issues.push(
+          `Công nhập tay không hợp lệ: ${profile.employeeId}, ${item.date}`
+        );
+        continue;
+      }
+      seenDates.add(item.date);
+      const total = hours.get(id) ?? {
+        day: 0,
+        night: 0,
+        dayOvertime: 0,
+        nightOvertime: 0,
+        reinforcement: 0,
+        records: 0
+      };
+      total.day += item.day;
+      total.night += item.night;
+      total[item.overtimeShift === 1 ? 'dayOvertime' : 'nightOvertime'] +=
+        item.overtime;
+      total.records++;
+      hours.set(id, total);
+    }
+  }
+  for (const profile of profiles) {
     const id = normalizeEmployeeId(profile.employeeId);
     const adjustment = adjustments[id] ?? {
       ...emptyPayrollAdjustments(),
@@ -339,7 +414,8 @@ export function calculatePayroll(
       profile.dependents
     ];
     const numericAdjustments = Object.values(adjustment).filter(
-      (v) => typeof v !== 'string' && typeof v !== 'boolean'
+      (v) =>
+        typeof v !== 'string' && typeof v !== 'boolean' && !Array.isArray(v)
     );
     if (
       !numericProfile.every(validNumber) ||
@@ -349,16 +425,19 @@ export function calculatePayroll(
       issues.push(`Hồ sơ hoặc khoản phát sinh không hợp lệ: ${id}`);
       continue;
     }
-    const total = hours.get(
-      normalizeEmployeeId(profile.attendanceEmployeeId || id)
-    ) ?? {
-      day: 0,
-      night: 0,
-      dayOvertime: 0,
-      nightOvertime: 0,
-      reinforcement: 0,
-      records: 0
-    };
+    const total = savedHours?.[id] ??
+      hours.get(normalizeEmployeeId(profile.attendanceEmployeeId || id)) ?? {
+        day: 0,
+        night: 0,
+        dayOvertime: 0,
+        nightOvertime: 0,
+        reinforcement: 0,
+        records: 0
+      };
+    if (!Object.values(total).every(validNumber)) {
+      issues.push(`Giờ công không hợp lệ: ${id}`);
+      continue;
+    }
     if (
       total.day +
         total.night +
@@ -375,9 +454,9 @@ export function calculatePayroll(
     const dailyRate =
       (profile.basicSalary + profile.responsibility) / rules.standardDays;
     const hourlyRate = dailyRate / rules.hoursPerDay;
-    // Match the template: round work days to 2 decimals before computing salary.
-    const dayDays = Math.round((total.day / rules.hoursPerDay) * 100) / 100;
-    const nightDays = Math.round((total.night / rules.hoursPerDay) * 100) / 100;
+    // Excel keeps full precision in E/G; only the resulting money is rounded.
+    const dayDays = total.day / rules.hoursPerDay;
+    const nightDays = total.night / rules.hoursPerDay;
     const paidDays = dayDays + nightDays;
     const daySalary = Math.round(dailyRate * dayDays);
     const nightSalary = Math.round(
@@ -399,17 +478,17 @@ export function calculatePayroll(
     const paidLeaveSalary = Math.round(dailyRate * adjustment.paidLeaveDays);
     const downtimeSalary = Math.round(dailyRate * adjustment.downtimeDays);
     const menstrualSalary = Math.round(hourlyRate * adjustment.menstrualHours);
-    const diligence =
-      (adjustment.authorizedLeaveDays ?? 0) > 0 ||
-      (adjustment.unauthorizedLeaveDays ?? 0) > 0
-        ? 0
-        : adjustment.diligence;
+    // Keep the approved base unchanged so recalculation never discounts it twice.
+    const diligence = calculatePayrollDiligence(
+      adjustment.diligence,
+      adjustment.authorizedLeaveDays,
+      adjustment.unauthorizedLeaveDays
+    );
     const gross =
       daySalary +
       nightSalary +
       dayOvertimeSalary +
       nightOvertimeSalary +
-      reinforcementSalary +
       housing +
       travel +
       meal +
@@ -421,12 +500,12 @@ export function calculatePayroll(
       adjustment.bonus +
       adjustment.referral +
       adjustment.otherIncome;
-    const union = Math.round(profile.unionBase * rules.unionRate);
-    const social = Math.round(profile.insuranceBase * rules.socialRate);
-    const health = Math.round(profile.insuranceBase * rules.healthRate);
-    const unemployment = Math.round(
-      profile.insuranceBase * rules.unemploymentRate
-    );
+    // AF:AI use catalogue F + G, without ROUND in the workbook.
+    const contributionBase = profile.basicSalary + profile.responsibility;
+    const union = contributionBase * rules.unionRate;
+    const social = contributionBase * rules.socialRate;
+    const health = contributionBase * rules.healthRate;
+    const unemployment = contributionBase * rules.unemploymentRate;
     const dependentDeduction = profile.dependents * rules.dependentDeduction;
     if (adjustment.taxExemptIncome > gross)
       issues.push(`Thu nhập miễn thuế vượt tổng thu nhập: ${id}`);
@@ -441,8 +520,8 @@ export function calculatePayroll(
         social -
         health -
         unemployment -
-        rules.personalDeduction -
-        dependentDeduction
+        // The supplied workbook displays AK but does not subtract it in AL/AM.
+        rules.personalDeduction
     );
     const tax = calculateResidentTax2026(taxable);
     const net =

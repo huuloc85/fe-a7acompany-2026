@@ -1,16 +1,29 @@
 import { useMemo, useState } from 'react';
 import dayjs from 'dayjs';
 import { DeleteOutlined } from '@ant-design/icons';
-import { Button, Empty, Input, Select, Space, Table, Tabs } from 'antd';
+import {
+  Button,
+  Empty,
+  Input,
+  InputNumber,
+  Modal,
+  Radio,
+  Select,
+  Space,
+  Table,
+  Tabs
+} from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { AttendanceResult } from '@/utils/attendanceUtil';
+import { calculatePayrollDiligence } from '@/utils/payrollCalculation';
 import type {
   PayrollDraft,
+  PayrollAttendanceOverride,
   PayrollProfile,
   PayrollRow
 } from '@/utils/payrollCalculation';
 import { payrollSheetSchema } from '@/utils/payrollSheetSchema';
-import { buildPayrollSheetView } from '@/utils/payrollSheetViews';
+import { buildPayrollSheetView, periodDates } from '@/utils/payrollSheetViews';
 import type { SheetValue, SheetRecord } from '@/utils/payrollSheetViews';
 import './payroll-excel-sheets.css';
 import PayrollTransferQr, { PayslipTransferQr } from './PayrollTransferQr';
@@ -32,12 +45,24 @@ const sheetLabels: Record<string, string> = {
 };
 
 const display = (value: SheetValue) =>
-  value === null
+  value == null
     ? '—'
     : typeof value === 'number'
       ? value.toLocaleString('vi-VN', { maximumFractionDigits: 2 })
       : value;
+
+const finiteNumber = (value: unknown) => {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : 0;
+};
 interface Props {
+  attendanceAdjustments?: Record<string, PayrollAdjustments>;
+  saveAttendanceOverride?: (
+    profile: PayrollProfile,
+    value: PayrollAttendanceOverride,
+    remove?: boolean
+  ) => Promise<boolean>;
+  draftPreview?: boolean;
   saveManualAdjustment: (
     profile: PayrollProfile,
     key: keyof PayrollAdjustments,
@@ -91,6 +116,18 @@ function Payslip({
 }) {
   const r = row,
     a = r.adjustments;
+  // The workbook bases employer contributions on basic salary plus responsibility.
+  // Prefer the contribution already calculated into the snapshot so legacy
+  // snapshots that omit profile salary fields still show the correct amount.
+  const profileContributionBase =
+    finiteNumber(r.profile.basicSalary) +
+    finiteNumber(r.profile.responsibility);
+  const contributionBase =
+    finiteNumber(r.social) > 0
+      ? finiteNumber(r.social) / 0.08
+      : profileContributionBase;
+  const insuranceContribution = Math.round(contributionBase * 0.215);
+  const unionContribution = Math.round(contributionBase * 0.02);
   const paymentDate = dayjs(endDate).add(1, 'month').startOf('month');
   const lines: [string, string, SheetValue, SheetValue, string?][] = [
     ['I', 'Các khoản lương thu nhập :', '', r.gross],
@@ -155,21 +192,19 @@ function Payslip({
       'III',
       `Tổng chi trả tháng ${endDate.slice(5, 7)}/${endDate.slice(0, 4)}`,
       '',
-      r.net +
-        Math.round(r.profile.insuranceBase * 0.215) +
-        Math.round(r.profile.unionBase * 0.02)
+      r.net + insuranceContribution + unionContribution
     ],
     [
       '1',
       'Công ty phải đóng BHXH 21.5% cho người lao động :',
       '',
-      Math.round(r.profile.insuranceBase * 0.215)
+      insuranceContribution
     ],
     [
       '2',
       'Công ty phải đóng Kinh phí công đoàn 2% cho người lao động :',
       '',
-      Math.round(r.profile.unionBase * 0.02)
+      unionContribution
     ],
     ['IV', 'Thực nhận tiền lương :', '', r.net]
   ];
@@ -217,31 +252,18 @@ function Payslip({
           ))}
         </tbody>
       </table>
-      <p className="mt-3">
-        Đối chiếu khoản ngoài bố cục mẫu: tiền giờ tăng cường{' '}
-        {display(r.reinforcementSalary)}; thu nhập bổ sung{' '}
-        {display(a.otherIncome)}; tạm ứng {display(a.advance)}; khấu trừ khác{' '}
-        {display(a.otherDeduction)} đồng. Các khoản này đã nằm trong tổng thu
-        nhập/thực nhận trên web.
-      </p>
-      <p>
-        Bản nháp — chưa chốt chi trả. Tỷ lệ ghi trên nhãn theo mẫu; số tiền theo
-        cấu hình đang áp dụng.
-      </p>
-      <div className="vvp-signatures">
-        <span>Người lập</span>
-        <span>
-          Người nhận lương
-          <br />
-          (Ký, ghi rõ họ tên)
-        </span>
-      </div>
     </article>
   );
 }
 
 export default function PayrollExcelSheets(props: Props) {
-  const [active, setActive] = useState('Danh muc');
+  const [attendanceEditing, setAttendanceEditing] = useState<{
+    profile: PayrollProfile;
+    value: PayrollAttendanceOverride;
+  } | null>(null);
+  const [active, setActive] = useState(
+    props.draftPreview ? 'Tính lương' : 'Danh muc'
+  );
   const [editingCell, setEditingCell] = useState<{
     id: string;
     field: keyof PayrollProfile;
@@ -273,6 +295,10 @@ export default function PayrollExcelSheets(props: Props) {
     `${payrollEmployeeCode(r.profile)} ${r.profile.name}`
       .toLocaleLowerCase('vi')
       .includes(props.search.toLocaleLowerCase('vi'))
+  );
+  const attendanceDates = useMemo(
+    () => periodDates(props.startDate, props.endDate),
+    [props.startDate, props.endDate]
   );
   const columns: ColumnsType<SheetRecord> = Array.from(
     { length: view.schema.columnCount },
@@ -363,6 +389,57 @@ export default function PayrollExcelSheets(props: Props) {
         }),
         render: (_, record) => {
           const value = record.values[i];
+          const date =
+            active === ' Bảng nhập công' && i >= 10
+              ? attendanceDates[Math.floor((i - 10) / 3)]
+              : undefined;
+          if (date) {
+            const field = (['day', 'night', 'overtime'] as const)[(i - 10) % 3];
+            const override = (
+              props.attendanceAdjustments?.[record.profile.employeeId] ??
+              props.draft?.rows.find(
+                (row) => row.profile.employeeId === record.profile.employeeId
+              )?.adjustments
+            )?.attendanceOverrides?.find((item) => item.date === date);
+            const shown = override ? override[field] : value;
+            if (!props.draftPreview && props.saveAttendanceOverride)
+              return (
+                <button
+                  type="button"
+                  className="vvp-inline-edit-cell"
+                  disabled={
+                    props.busy ||
+                    !props.canEditAdjustments ||
+                    props.attendance === null
+                  }
+                  title={
+                    override
+                      ? 'Công đã bổ sung theo kỳ — bấm để sửa'
+                      : 'Bổ sung công theo kỳ'
+                  }
+                  onClick={() => {
+                    const base = 10 + Math.floor((i - 10) / 3) * 3;
+                    const day = Number(record.values[base] ?? 0);
+                    const night = Number(record.values[base + 1] ?? 0);
+                    setAttendanceEditing({
+                      profile: record.profile,
+                      value: override ?? {
+                        date,
+                        day,
+                        night,
+                        overtime: Number(record.values[base + 2] ?? 0),
+                        overtimeShift: night > 0 && day === 0 ? 2 : 1
+                      }
+                    });
+                  }}
+                >
+                  {display(shown)} {override ? '✎' : ''}
+                </button>
+              );
+            return display(shown);
+          }
+          if (props.draftPreview && !(manualField && props.canEditAdjustments))
+            return isBankAccount ? formatPayrollAccount(value) : display(value);
           const catalogueFields: Record<number, keyof PayrollProfile> = {
             4: 'bankAccount',
             5: 'basicSalary',
@@ -402,7 +479,19 @@ export default function PayrollExcelSheets(props: Props) {
                   onKeyDown={(event) => {
                     if (event.key === 'Escape') setEditingCell(null);
                   }}
-                  onBlur={() => setEditingCell(null)}
+                  onBlur={async () => {
+                    if (
+                      editingCell &&
+                      editingCell.value !== String(value ?? '')
+                    ) {
+                      await props.saveProfileField(
+                        record.profile,
+                        catalogueField,
+                        editingCell.value
+                      );
+                    }
+                    setEditingCell(null);
+                  }}
                   size="small"
                 />
               );
@@ -445,17 +534,39 @@ export default function PayrollExcelSheets(props: Props) {
               </button>
             );
           }
-          if (manualField)
+          if (manualField) {
+            const adjustment = props.draftPreview
+              ? props.draft?.rows.find(
+                  (row) => row.profile.employeeId === record.profile.employeeId
+                )?.adjustments
+              : props.attendanceAdjustments?.[record.profile.employeeId];
+            const adjustmentValue = adjustment?.[manualField[0]];
+            const manualValue =
+              adjustmentValue ??
+              (manualField[0] === 'diligence'
+                ? record.profile.diligence
+                : (value ?? (manualField[0] === 'note' ? '' : 0)));
+            const displayedValue =
+              manualField[0] === 'diligence'
+                ? props.draftPreview
+                  ? (value ?? manualValue)
+                  : calculatePayrollDiligence(
+                      Number(manualValue),
+                      adjustment?.authorizedLeaveDays,
+                      adjustment?.unauthorizedLeaveDays
+                    )
+                : manualValue;
             return (
               <PayrollManualCell
-                value={value ?? (manualField[0] === 'note' ? '' : 0)}
+                value={
+                  manualField[0] === 'note'
+                    ? String(displayedValue)
+                    : Number(displayedValue)
+                }
                 inputValue={
-                  manualField[0] === 'diligence'
-                    ? props.draft?.rows.find(
-                        (row) =>
-                          row.profile.employeeId === record.profile.employeeId
-                      )?.adjustments.diligence
-                    : undefined
+                  manualField[0] === 'note'
+                    ? String(manualValue)
+                    : Number(manualValue)
                 }
                 label={`${manualField[1]} ${payrollEmployeeCode(record.profile)}`}
                 disabled={props.busy || !props.canEditAdjustments}
@@ -474,6 +585,7 @@ export default function PayrollExcelSheets(props: Props) {
                 }
               />
             );
+          }
           if (isBankAccount) {
             const raw = String(value ?? '').trim();
             return (
@@ -529,32 +641,38 @@ export default function PayrollExcelSheets(props: Props) {
       title: 'Ngân hàng',
       width: 180,
       align: 'center',
-      render: (_, record) => (
-        <Select
-          className="vvp-bank-select"
-          size="small"
-          aria-label={`Ngân hàng ${payrollEmployeeCode(record.profile)}`}
-          showSearch
-          optionFilterProp="label"
-          placeholder="Chọn ngân hàng"
-          style={{ width: '100%' }}
-          disabled={props.busy || !props.canEditProfiles}
-          value={payrollBankBin(record.profile) || undefined}
-          options={payrollBanks.map((bank) => ({
-            value: bank.bin,
-            label: bank.name
-          }))}
-          optionRender={(option) => (
-            <PayrollBankLabel bin={String(option.value)} />
-          )}
-          labelRender={(option) => (
-            <PayrollBankLabel bin={String(option.value)} />
-          )}
-          onChange={(bin) =>
-            void props.saveProfileField(record.profile, 'bankBin', bin)
-          }
-        />
-      )
+      render: (_, record) => {
+        if (record.profile.bankAccount == null) return '—';
+        if (!record.profile.bankAccount?.trim()) {
+          return <span className="text-sm font-medium">Trả tiền mặt</span>;
+        }
+        return (
+          <Select
+            className="vvp-bank-select"
+            size="small"
+            aria-label={`Ngân hàng ${payrollEmployeeCode(record.profile)}`}
+            showSearch
+            optionFilterProp="label"
+            placeholder="Chọn ngân hàng"
+            style={{ width: '100%' }}
+            disabled={props.busy || !props.canEditProfiles}
+            value={payrollBankBin(record.profile) || undefined}
+            options={payrollBanks.map((bank) => ({
+              value: bank.bin,
+              label: bank.name
+            }))}
+            optionRender={(option) => (
+              <PayrollBankLabel bin={String(option.value)} />
+            )}
+            labelRender={(option) => (
+              <PayrollBankLabel bin={String(option.value)} />
+            )}
+            onChange={(bin) =>
+              void props.saveProfileField(record.profile, 'bankBin', bin)
+            }
+          />
+        );
+      }
     });
   }
   if (active === 'Danh muc' && props.canEditProfiles) {
@@ -583,13 +701,14 @@ export default function PayrollExcelSheets(props: Props) {
       <>
         <Select
           className="vvp-employee-select"
+          size="small"
           aria-label="Nhân viên in phiếu lương"
           placeholder="Chọn nhân viên theo mã"
           value={props.employeeId}
           onChange={props.selectEmployee}
           showSearch
           optionFilterProp="label"
-          style={{ width: '100%', maxWidth: 500 }}
+          style={{ width: '100%', maxWidth: 300 }}
           options={props.draft?.rows.map((r) => ({
             value: r.profile.employeeId,
             label: `${payrollEmployeeCode(r.profile)} — ${r.profile.name}`
@@ -599,27 +718,43 @@ export default function PayrollExcelSheets(props: Props) {
           <>
             <div className="vvp-payslip-layout">
               <Payslip
-                row={selected}
+                row={{
+                  ...selected,
+                  profile: {
+                    ...selected.profile,
+                    department:
+                      selected.profile.department ??
+                      props.profiles.find(
+                        (profile) =>
+                          profile.employeeId === selected.profile.employeeId
+                      )?.department ??
+                      '—'
+                  }
+                }}
                 startDate={props.startDate}
                 endDate={props.endDate}
               />
-              <PayslipTransferQr
-                row={selected}
-                endDate={props.endDate}
-                blocked={props.busy}
-              />
+              {!props.draftPreview && (
+                <PayslipTransferQr
+                  row={selected}
+                  endDate={props.endDate}
+                  blocked={props.busy}
+                />
+              )}
             </div>
           </>
         ) : (
           <Empty description="Lấy công và chọn nhân viên để xem phiếu lương." />
         )}
-        <Button
-          className="mt-3"
-          disabled={!props.canExport || !selected}
-          onClick={props.exportPayslip}
-        >
-          Xuất phiếu lương Excel
-        </Button>
+        {!props.draftPreview && (
+          <Button
+            className="mt-3"
+            disabled={!props.canExport || !selected}
+            onClick={props.exportPayslip}
+          >
+            Xuất phiếu lương Excel
+          </Button>
+        )}
       </>
     ) : view.schema.columnCount === 0 ? (
       <Empty description="Sheet kỹ thuật của macro trong file gốc, không có bảng dữ liệu. Hệ thống web không chạy macro Excel." />
@@ -627,6 +762,7 @@ export default function PayrollExcelSheets(props: Props) {
       <>
         <Table<SheetRecord>
           className="vvp-web-table"
+          sticky={{ offsetHeader: 0 }}
           bordered
           rowKey="id"
           size="middle"
@@ -655,6 +791,91 @@ export default function PayrollExcelSheets(props: Props) {
     );
   return (
     <section className="vvp-excel-workbook">
+      <Modal
+        title={`Bổ sung công ${attendanceEditing?.value.date ?? ''} — ${attendanceEditing?.profile.name ?? ''}`}
+        open={!!attendanceEditing}
+        confirmLoading={props.busy}
+        onCancel={() => {
+          if (!props.busy) setAttendanceEditing(null);
+        }}
+        okText="Lưu công theo kỳ"
+        cancelText="Đóng"
+        onOk={async () => {
+          if (
+            attendanceEditing &&
+            (await props.saveAttendanceOverride?.(
+              attendanceEditing.profile,
+              attendanceEditing.value
+            ))
+          )
+            setAttendanceEditing(null);
+        }}
+      >
+        <p>
+          Nhập tổng số giờ đúng của ngày này. Chỉ thay thế công dùng tính lương,
+          không sửa chấm công gốc.
+        </p>
+        {attendanceEditing && (
+          <Space direction="vertical" className="w-full">
+            {(
+              [
+                ['day', 'Giờ ngày'],
+                ['night', 'Giờ đêm'],
+                ['overtime', 'Giờ tăng ca']
+              ] as const
+            ).map(([field, label]) => (
+              <label key={field}>
+                {label}{' '}
+                <InputNumber
+                  min={0}
+                  max={24}
+                  precision={2}
+                  disabled={props.busy}
+                  value={attendanceEditing.value[field]}
+                  onChange={(value) =>
+                    setAttendanceEditing({
+                      ...attendanceEditing,
+                      value: { ...attendanceEditing.value, [field]: value ?? 0 }
+                    })
+                  }
+                />
+              </label>
+            ))}
+            <Radio.Group
+              disabled={props.busy}
+              value={attendanceEditing.value.overtimeShift}
+              options={[
+                { label: 'Tăng ca ngày (150%)', value: 1 },
+                { label: 'Tăng ca đêm (170%)', value: 2 }
+              ]}
+              onChange={(event) =>
+                setAttendanceEditing({
+                  ...attendanceEditing,
+                  value: {
+                    ...attendanceEditing.value,
+                    overtimeShift: event.target.value
+                  }
+                })
+              }
+            />
+            <Button
+              disabled={props.busy}
+              onClick={async () => {
+                if (
+                  await props.saveAttendanceOverride?.(
+                    attendanceEditing.profile,
+                    attendanceEditing.value,
+                    true
+                  )
+                )
+                  setAttendanceEditing(null);
+              }}
+            >
+              Khôi phục công gốc
+            </Button>
+          </Space>
+        )}
+      </Modal>
       <div role="tabpanel" aria-label={sheetLabels[active] ?? active.trim()}>
         {sheetContent}
       </div>
@@ -673,7 +894,7 @@ export default function PayrollExcelSheets(props: Props) {
                 Thêm nhân viên
               </Button>
             )}
-            {active !== 'In phiếu lương' && (
+            {!props.draftPreview && active !== 'In phiếu lương' && (
               <PayrollTransferQr
                 draft={props.draft}
                 ready={!!props.draft?.rows.length && !props.busy}
@@ -682,7 +903,10 @@ export default function PayrollExcelSheets(props: Props) {
           </Space>
         }
         items={payrollSheetSchema
-          .filter((s) => !s.hidden)
+          .filter(
+            (s) =>
+              !s.hidden && (props.draftPreview || s.name !== 'In phiếu lương')
+          )
           .map((s) => ({
             key: s.name,
             label: sheetLabels[s.name] ?? s.name.trim()

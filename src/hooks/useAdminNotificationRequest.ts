@@ -33,16 +33,19 @@ export function useNotificationRequest(
       !user ||
       !isAllowRole(user, ['super admin', 'qa-qc', 'qc', 'tổ trưởng qc', 23])
     ) {
+      setShouldShowModal(false);
       return;
     }
 
     // Kiểm tra nếu trình duyệt không hỗ trợ
     if (!isSupported) {
+      setShouldShowModal(false);
       return;
     }
 
     // Kiểm tra nếu đã có quyền
     if (permission === 'granted') {
+      setShouldShowModal(false);
       return;
     }
 

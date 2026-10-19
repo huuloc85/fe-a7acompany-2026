@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import './cap7a.css';
 import ScreenViewer from './ScreenViewer';
 import DailyPerformance from './DailyPerformance';
@@ -9,7 +9,8 @@ import ComponentCard from '@/components/common/ComponentCard';
 import {
   getCap7AStatus,
   sendCap7ACommand,
-  type Cap7AAction
+  type Cap7AAction,
+  type Cap7AStatus
 } from '@/services/Cap7AService';
 import { getApiErrorMessage } from '@/utils/apiError';
 
@@ -45,15 +46,21 @@ function Cap7AScreenOne() {
   const [roi, setRoi] = useState<(number | null)[]>([null, null, null, null]);
   const query = useQuery({
     queryKey: ['cap7a-status'],
-    queryFn: getCap7AStatus,
+    queryFn: ({ signal }) => getCap7AStatus(signal),
     refetchInterval: 1000,
     refetchIntervalInBackground: false,
     retry: false
   });
   const data = query.data;
-  const state = data?.state;
+  const [lastSnapshot, setLastSnapshot] = useState<Cap7AStatus | null>(null);
+  useEffect(() => {
+    if (data?.state) setLastSnapshot(data);
+  }, [data]);
+  const displayed = data?.state ? data : lastSnapshot;
+  const state = displayed?.state;
   const online =
     !!data?.online &&
+    !!data?.state &&
     !query.isError &&
     Date.now() - query.dataUpdatedAt < 20000;
   const allowed =
@@ -82,7 +89,7 @@ function Cap7AScreenOne() {
       );
     } finally {
       setBusy(false);
-      void query.refetch();
+      void query.refetch({ cancelRefetch: false });
     }
   };
 
@@ -127,7 +134,7 @@ function Cap7AScreenOne() {
         <DailyPerformance
           state={state}
           online={online}
-          receivedAt={data?.received_at_ms}
+          receivedAt={displayed?.received_at_ms}
         />
         <div className="cap7a-workspace">
           <Card
@@ -181,8 +188,10 @@ function Cap7AScreenOne() {
                   ['ROI', state ? (state.roi?.join(', ') ?? 'Mặc định') : null],
                   [
                     'Nhận dữ liệu',
-                    data?.received_at_ms
-                      ? new Date(data.received_at_ms).toLocaleString('vi-VN')
+                    displayed?.received_at_ms
+                      ? new Date(displayed.received_at_ms).toLocaleString(
+                          'vi-VN'
+                        )
                       : null
                   ]
                 ].map(([label, value]) => (
