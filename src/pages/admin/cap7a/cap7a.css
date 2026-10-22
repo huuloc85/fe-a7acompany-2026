@@ -36,6 +36,7 @@
   display: flex;
   flex: 1;
   min-height: 0;
+  min-width: 0;
 }
 
 .cap7a-viewer {
@@ -52,12 +53,23 @@
 }
 
 .cap7a-screen-target {
+  position: relative;
   width: 100%;
+  max-width: 100%;
   height: auto;
   aspect-ratio: 16 / 9;
   flex: none;
   min-width: 0;
   overflow: hidden;
+}
+
+/* Keep noVNC's intrinsic canvas size out of the responsive frame's layout.
+   noVNC scales into this box; the remote desktop resolution stays unchanged. */
+.cap7a-screen-target > div {
+  position: absolute;
+  inset: 0;
+  min-width: 0;
+  min-height: 0;
 }
 
 @media (min-width: 1100px) {

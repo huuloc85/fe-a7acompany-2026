@@ -4,6 +4,8 @@ import ScreenViewer from './ScreenViewer';
 import DailyPerformance from './DailyPerformance';
 import LivePerformance from './LivePerformance';
 import SpikeControls from './SpikeControls';
+import ApplicationLogs from './ApplicationLogs';
+import SpikeApplicationLogs from './SpikeApplicationLogs';
 import { useQuery } from '@tanstack/react-query';
 import { Alert, Card, InputNumber, Tabs, Tag, message } from 'antd';
 import Button from '@/components/common/AppButton';
@@ -185,6 +187,14 @@ function Cap7ASystemPanel({ system }: { system: Cap7ASystem }) {
               receivedAt={displayed?.received_at_ms}
             />
           </Card>
+        )}
+        {system === 'tail' && <ApplicationLogs online={online} />}
+        {system === 'spike' && (
+          <SpikeApplicationLogs
+            logs={data?.app_logs ?? displayed?.app_logs}
+            online={online}
+            failed={query.isError}
+          />
         )}
         <div className="cap7a-workspace">
           <Card

@@ -1,6 +1,22 @@
 import axiosPrivate from '@/api/axiosInstance';
 
 export type Cap7ASystem = 'tail' | 'spike';
+
+export interface TailAppLog {
+  id: string;
+  at_ms: number;
+  session_id: string;
+  code: string;
+  level: 'info' | 'warning' | 'error';
+  message: string;
+  details: { sdk_code?: number; streak?: number; count?: number };
+}
+
+export const getTailAppLogs = (date: string, signal?: AbortSignal) =>
+  axiosPrivate.get<
+    unknown,
+    { system: 'tail'; date: string; logs: TailAppLog[]; truncated: boolean }
+  >('/api/cap7a/tail/logs', { params: { date }, signal, timeout: 12000 });
 export type SpikeAction =
   | 'calibrate'
   | 'back'
@@ -66,6 +82,21 @@ export interface Cap7AState {
   model: string;
 }
 export interface Cap7AStatus {
+  app_logs?: {
+    received_at_ms: number;
+    source_available: boolean;
+    storage_ok: boolean;
+    partial: boolean;
+    events: {
+      id: number;
+      at_ms: number;
+      last_at_ms: number;
+      count: number;
+      observed: boolean;
+      level: 'info' | 'warning' | 'error';
+      message: string;
+    }[];
+  } | null;
   system: Cap7ASystem;
   capabilities: Cap7ACapabilities;
   configured: boolean;

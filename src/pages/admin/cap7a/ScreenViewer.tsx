@@ -30,6 +30,7 @@ export default function ScreenViewer({ system }: { system: Cap7ASystem }) {
     return () => observer.disconnect();
   }, []);
   const connection = useRef<RFB | null>(null);
+  const connected = useRef(false);
   useEffect(() => {
     const element = target.current;
     if (!element) return;
@@ -39,17 +40,24 @@ export default function ScreenViewer({ system }: { system: Cap7ASystem }) {
       frame = requestAnimationFrame(() => {
         if (document.hidden || !element.clientWidth || !element.clientHeight)
           return;
-        // Hidden tabs have zero size. Reapply noVNC's public scaling setter
-        // when visible again without replacing the framebuffer or WebSocket.
-        if (connection.current) connection.current.scaleViewport = true;
+        const rfb = connection.current;
+        if (!rfb || !connected.current) return;
+        rfb.scaleViewport = true;
+        const canvas = element.querySelector('canvas');
+        if (!canvas?.width || !canvas.height) return;
+        // Repaint the full backing frame, not just subsequent incremental
+        // updates, after the browser resumes rendering this viewer.
+        canvas.getContext('2d')?.putImageData(rfb.getImageData(), 0, 0);
       });
     };
     const observer = new ResizeObserver(restoreViewport);
     observer.observe(element);
     document.addEventListener('visibilitychange', restoreViewport);
+    window.addEventListener('focus', restoreViewport);
     return () => {
       observer.disconnect();
       document.removeEventListener('visibilitychange', restoreViewport);
+      window.removeEventListener('focus', restoreViewport);
       cancelAnimationFrame(frame);
     };
   }, []);
@@ -83,6 +91,7 @@ export default function ScreenViewer({ system }: { system: Cap7ASystem }) {
     }
   };
   const release = useCallback(() => {
+    connected.current = false;
     generation.current += 1;
     if (retryTimer.current) clearTimeout(retryTimer.current);
     if (connectTimer.current) clearTimeout(connectTimer.current);
@@ -180,6 +189,7 @@ export default function ScreenViewer({ system }: { system: Cap7ASystem }) {
       armTimeout();
       rfb.addEventListener('connect', () => {
         if (generation.current !== current) return;
+        connected.current = true;
         if (connectTimer.current) clearTimeout(connectTimer.current);
         connectTimer.current = null;
         retries.current = 0;

@@ -8,6 +8,7 @@ declare module '@novnc/novnc/lib/rfb' {
     viewOnly: boolean;
     scaleViewport: boolean;
     resizeSession: boolean;
+    getImageData(): ImageData;
     disconnect(): void;
     sendCredentials(credentials: { password: string }): void;
   }
