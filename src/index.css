@@ -10344,60 +10344,6 @@ html.liquid-ui-mode:not(.legacy-ui-mode).dark
     rgba(15, 23, 42, 0.9) !important;
 }
 
-html.liquid-ui-mode:not(.legacy-ui-mode)
-  body
-  :where(.ant-modal-root, .ant-drawer-root, .ant-drawer)
-  :where(
-    .ant-fade-enter,
-    .ant-fade-appear,
-    .ant-fade-enter-active,
-    .ant-fade-appear-active,
-    .ant-zoom-enter,
-    .ant-zoom-appear,
-    .ant-zoom-enter-active,
-    .ant-zoom-appear-active,
-    .ant-slide-left-enter,
-    .ant-slide-left-appear,
-    .ant-slide-left-enter-active,
-    .ant-slide-left-appear-active,
-    .ant-slide-right-enter,
-    .ant-slide-right-appear,
-    .ant-slide-right-enter-active,
-    .ant-slide-right-appear-active
-  ) {
-  opacity: 1 !important;
-  animation: none !important;
-  transition: none !important;
-}
-
-html.liquid-ui-mode:not(.legacy-ui-mode)
-  body
-  .ant-modal-root
-  .ant-modal:is(
-    .ant-zoom-enter,
-    .ant-zoom-appear,
-    .ant-zoom-enter-active,
-    .ant-zoom-appear-active
-  ) {
-  transform: none !important;
-}
-
-html.liquid-ui-mode:not(.legacy-ui-mode)
-  body
-  :where(.ant-drawer-root, .ant-drawer):not(.app-sidebar-drawer)
-  .ant-drawer-content-wrapper:is(
-    .ant-slide-left-enter,
-    .ant-slide-left-appear,
-    .ant-slide-left-enter-active,
-    .ant-slide-left-appear-active,
-    .ant-slide-right-enter,
-    .ant-slide-right-appear,
-    .ant-slide-right-enter-active,
-    .ant-slide-right-appear-active
-  ) {
-  transform: none !important;
-}
-
 /* Modal overlay must always cover the fixed/sticky sidebar.
    AntD locks body scroll when a modal opens; if the page was scrolled to the
    bottom, leaving the sidebar above the mask exposes its internal scroll state. */
@@ -10416,6 +10362,12 @@ html body .ant-modal-root .ant-modal-wrap {
   inset-inline-end: 0 !important;
   width: auto !important;
   z-index: 3001 !important;
+}
+
+/* Toasts must stay above modal overlays and their picker popups (up to 4300). */
+html body .ant-message,
+html body .ant-notification {
+  z-index: 4400 !important;
 }
 
 .login-modal-sequence-backdrop {

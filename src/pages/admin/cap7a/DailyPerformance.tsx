@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Alert, Card, Input, Spin, Tooltip, message } from 'antd';
+import { Alert, Card, DatePicker, Spin, Tooltip, message } from 'antd';
+import dayjs from 'dayjs';
 import Button from '@/components/common/AppButton';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getCap7ADaily, resetCap7ADaily } from '@/services/Cap7AService';
 import { getApiErrorMessage } from '@/utils/apiError';
-import type { Cap7AState } from '@/services/Cap7AService';
+import type { Cap7AState, Cap7ASystem } from '@/services/Cap7AService';
 import LivePerformance from './LivePerformance';
 
 const todayVN = () =>
@@ -16,22 +17,24 @@ const todayVN = () =>
   }).format(new Date());
 
 export default function DailyPerformance({
+  system,
   state,
   online,
   receivedAt
 }: {
+  system: Cap7ASystem;
   state?: Cap7AState | null;
   online: boolean;
   receivedAt?: number | null;
 }) {
   const [date, setDate] = useState(todayVN);
-  const [historyOpen, setHistoryOpen] = useState(false);
   const [resetting, setResetting] = useState(false);
+  const historical = date !== todayVN();
   const queryClient = useQueryClient();
   const query = useQuery({
-    queryKey: ['cap7a-daily', date],
-    queryFn: () => getCap7ADaily(date),
-    enabled: historyOpen && !!date,
+    queryKey: ['cap7a', system, 'daily', date],
+    queryFn: () => getCap7ADaily(system, date),
+    enabled: !!date,
     refetchOnWindowFocus: false,
     retry: false
   });
@@ -39,9 +42,11 @@ export default function DailyPerformance({
     if (resetting || date !== todayVN()) return;
     setResetting(true);
     try {
-      await queryClient.cancelQueries({ queryKey: ['cap7a-daily', date] });
-      const response = await resetCap7ADaily(date);
-      queryClient.setQueryData(['cap7a-daily', date], response);
+      await queryClient.cancelQueries({
+        queryKey: ['cap7a', system, 'daily', date]
+      });
+      const response = await resetCap7ADaily(system, date);
+      queryClient.setQueryData(['cap7a', system, 'daily', date], response);
       message.success('Đã lưu mốc reset hiệu suất.');
     } catch (error) {
       message.error(
@@ -76,34 +81,40 @@ export default function DailyPerformance({
 
   return (
     <Card
-      title="Hiệu suất trực tiếp"
+      title={
+        historical
+          ? 'Hiệu suất theo ngày'
+          : `Hiệu suất trực tiếp · ${dayjs(todayVN()).format('DD/MM')}`
+      }
       size="small"
       className="cap7a-daily-card liquid-glass-card !rounded-2xl"
     >
       <div className="flex flex-col gap-3">
         <LivePerformance
+          system={system}
           state={state}
           online={online}
           receivedAt={receivedAt}
+          historical={historical}
+          report={query.isError ? null : report}
         />
-        <details
-          onToggle={(event) => {
-            if (event.target === event.currentTarget)
-              setHistoryOpen(event.currentTarget.open);
-          }}
-        >
+        <details>
           <summary className="cursor-pointer py-2 font-medium">
             Lịch sử theo ngày / giờ
           </summary>
           <div className="flex flex-wrap items-center gap-3">
-            <Input
+            <DatePicker
               id="cap7a-report-date"
               aria-label="Ngày báo cáo"
-              type="date"
+              format="DD/MM/YYYY"
+              placeholder="Chọn ngày"
+              className="!rounded-lg"
               disabled={resetting}
-              value={date}
-              max={todayVN()}
-              onChange={(e) => setDate(e.target.value)}
+              value={date ? dayjs(date) : null}
+              disabledDate={(value) => value.format('YYYY-MM-DD') > todayVN()}
+              onChange={(value) =>
+                setDate(value ? value.format('YYYY-MM-DD') : '')
+              }
               style={{ width: 170 }}
             />
             <Button
@@ -149,7 +160,9 @@ export default function DailyPerformance({
             />
           ) : query.isPending && date ? (
             <Spin />
-          ) : !report ? null : (
+          ) : !report ? (
+            <p>Chưa có nhật ký sản lượng cho ngày đã chọn.</p>
+          ) : (
             <>
               {report.warning && (
                 <Alert

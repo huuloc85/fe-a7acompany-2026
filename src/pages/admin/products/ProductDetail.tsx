@@ -308,7 +308,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({ id }) => {
     data: ProductHistoryStatusType[],
     statusKey: string
   ) => {
-    const hideShift = statusKey === 'status8' || statusKey === 'status6';
+    const hideShift = statusKey !== 'status1';
 
     if (isMobile) {
       if (!data || data.length === 0)

@@ -84,6 +84,8 @@ export const setAuthChannelName = (authChannelName: string | null) => {
 export const clearAuth = () => {
   try {
     sessionStorage.removeItem('cap7a.vnc-password');
+    sessionStorage.removeItem('cap7a.tail.vnc-password');
+    sessionStorage.removeItem('cap7a.spike.vnc-password');
     localStorage.removeItem('cap7a.vnc-password');
   } catch {
     /* Logout still works when browser storage is restricted. */

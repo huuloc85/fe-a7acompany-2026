@@ -4,10 +4,10 @@ import Button from '@/components/common/AppButton';
 import RFB from '@novnc/novnc/lib/rfb';
 import axiosPrivate from '@/api/axiosInstance';
 import { getApiErrorMessage } from '@/utils/apiError';
+import type { Cap7ASystem } from '@/services/Cap7AService';
 
-const VNC_PASSWORD_KEY = 'cap7a.vnc-password';
-
-export default function ScreenViewer() {
+export default function ScreenViewer({ system }: { system: Cap7ASystem }) {
+  const passwordKey = `cap7a.${system}.vnc-password`;
   const target = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const element = target.current;
@@ -30,6 +30,29 @@ export default function ScreenViewer() {
     return () => observer.disconnect();
   }, []);
   const connection = useRef<RFB | null>(null);
+  useEffect(() => {
+    const element = target.current;
+    if (!element) return;
+    let frame = 0;
+    const restoreViewport = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        if (document.hidden || !element.clientWidth || !element.clientHeight)
+          return;
+        // Hidden tabs have zero size. Reapply noVNC's public scaling setter
+        // when visible again without replacing the framebuffer or WebSocket.
+        if (connection.current) connection.current.scaleViewport = true;
+      });
+    };
+    const observer = new ResizeObserver(restoreViewport);
+    observer.observe(element);
+    document.addEventListener('visibilitychange', restoreViewport);
+    return () => {
+      observer.disconnect();
+      document.removeEventListener('visibilitychange', restoreViewport);
+      cancelAnimationFrame(frame);
+    };
+  }, []);
   const generation = useRef(0);
   const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const connectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -44,7 +67,8 @@ export default function ScreenViewer() {
   useEffect(() => {
     // Remove the previous persistent cache; passwords now live only in this tab.
     try {
-      localStorage.removeItem(VNC_PASSWORD_KEY);
+      localStorage.removeItem('cap7a.vnc-password');
+      sessionStorage.removeItem('cap7a.vnc-password');
     } catch {
       /* Storage unavailable. */
     }
@@ -52,7 +76,7 @@ export default function ScreenViewer() {
   const forgetPassword = () => {
     submittedPassword.current = '';
     try {
-      sessionStorage.removeItem(VNC_PASSWORD_KEY);
+      sessionStorage.removeItem(passwordKey);
       setPassword('');
     } catch {
       message.warning('Trình duyệt không cho phép xóa mật khẩu đã lưu.');
@@ -134,7 +158,7 @@ export default function ScreenViewer() {
         unknown,
         { ticket: string; websocket_url: string; view_only: boolean }
       >(
-        '/api/cap7a/screen-sessions',
+        `/api/cap7a/${system}/screen-sessions`,
         { confirmed: true },
         { timeout: 12000, signal: controller.signal }
       );
@@ -167,7 +191,7 @@ export default function ScreenViewer() {
         ) {
           try {
             sessionStorage.setItem(
-              VNC_PASSWORD_KEY,
+              passwordKey,
               JSON.stringify({
                 sessionId: authSession,
                 password: submittedPassword.current
@@ -184,7 +208,7 @@ export default function ScreenViewer() {
         if (generation.current !== current) return;
         try {
           const saved = JSON.parse(
-            sessionStorage.getItem(VNC_PASSWORD_KEY) ?? 'null'
+            sessionStorage.getItem(passwordKey) ?? 'null'
           );
           if (
             !triedSavedPassword &&
@@ -199,7 +223,7 @@ export default function ScreenViewer() {
             rfb.sendCredentials({ password: saved.password });
             return;
           }
-          sessionStorage.removeItem(VNC_PASSWORD_KEY);
+          sessionStorage.removeItem(passwordKey);
         } catch {
           /* Ask manually if session storage is unavailable or invalid. */
         }

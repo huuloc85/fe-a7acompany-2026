@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import './cap7a.css';
 import ScreenViewer from './ScreenViewer';
 import DailyPerformance from './DailyPerformance';
+import LivePerformance from './LivePerformance';
+import SpikeControls from './SpikeControls';
 import { useQuery } from '@tanstack/react-query';
 import { Alert, Card, InputNumber, Tabs, Tag, message } from 'antd';
 import Button from '@/components/common/AppButton';
@@ -10,29 +12,47 @@ import {
   getCap7AStatus,
   sendCap7ACommand,
   type Cap7AAction,
+  type Cap7ASystem,
   type Cap7AStatus
 } from '@/services/Cap7AService';
 import { getApiErrorMessage } from '@/utils/apiError';
+
+const modeLabels: Record<string, string> = {
+  RUN: 'Đang chạy',
+  STOP: 'Dừng',
+  TEST: 'Kiểm tra',
+  FILE_TEST: 'Kiểm tra ảnh'
+};
+const modeLabel = (mode?: string | null) =>
+  modeLabels[mode ?? ''] ?? mode ?? '—';
+const resultLabels: Record<string, string> = {
+  WAIT: 'Chờ',
+  READY: 'Sẵn sàng',
+  REVIEW: 'Cần kiểm tra',
+  ERROR: 'Lỗi thiết bị',
+  None: 'Chưa có',
+  'GPIO FAIL': 'Lỗi UART'
+};
+const resultLabel = (result: string) => resultLabels[result] ?? result;
+const temperatureLabel = (value?: number | null) =>
+  value == null || !Number.isFinite(value) ? '—' : `${value.toFixed(1)} °C`;
 
 export default function Cap7APage() {
   return (
     <ComponentCard title="CAP7A">
       <Tabs
-        defaultActiveKey="screen1"
-        destroyOnHidden
+        defaultActiveKey="tail"
+        destroyOnHidden={false}
         items={[
-          { key: 'screen1', label: 'Screen 1', children: <Cap7AScreenOne /> },
           {
-            key: 'screen2',
+            key: 'tail',
+            label: 'Screen 1',
+            children: <Cap7ASystemPanel key="tail" system="tail" />
+          },
+          {
+            key: 'spike',
             label: 'Screen 2',
-            children: (
-              <Alert
-                type="info"
-                showIcon
-                message="Screen 2 — Chưa cấu hình"
-                description="Màn hình này chưa được thiết lập kết nối."
-              />
-            )
+            children: <Cap7ASystemPanel key="spike" system="spike" />
           }
         ]}
       />
@@ -40,18 +60,19 @@ export default function Cap7APage() {
   );
 }
 
-function Cap7AScreenOne() {
+function Cap7ASystemPanel({ system }: { system: Cap7ASystem }) {
   const [busy, setBusy] = useState(false);
   const [threshold, setThreshold] = useState<number | null>(null);
   const [roi, setRoi] = useState<(number | null)[]>([null, null, null, null]);
   const query = useQuery({
-    queryKey: ['cap7a-status'],
-    queryFn: ({ signal }) => getCap7AStatus(signal),
+    queryKey: ['cap7a', system, 'status'],
+    queryFn: ({ signal }) => getCap7AStatus(system, signal),
     refetchInterval: 1000,
     refetchIntervalInBackground: false,
     retry: false
   });
-  const data = query.data;
+  const data = query.data?.system === system ? query.data : undefined;
+  const capabilities = data?.capabilities;
   const [lastSnapshot, setLastSnapshot] = useState<Cap7AStatus | null>(null);
   useEffect(() => {
     if (data?.state) setLastSnapshot(data);
@@ -64,7 +85,11 @@ function Cap7AScreenOne() {
     !query.isError &&
     Date.now() - query.dataUpdatedAt < 20000;
   const allowed =
-    online && !!state?.remote_allowed && !!data?.commands_enabled && !busy;
+    online &&
+    !!capabilities?.commands &&
+    !!state?.remote_allowed &&
+    !!data?.commands_enabled &&
+    !busy;
   const stopped = allowed && state?.mode === 'STOP';
   const operable =
     allowed &&
@@ -74,10 +99,15 @@ function Cap7AScreenOne() {
   const ready = operable && state?.camera_ready && state?.model_ready;
 
   const command = async (action: Cap7AAction, values = {}) => {
-    if (!state || busy) return;
+    if (!state || busy || !allowed) return;
     setBusy(true);
     try {
-      const response = await sendCap7ACommand(state.session_id, action, values);
+      const response = await sendCap7ACommand(
+        system,
+        state.session_id,
+        action,
+        values
+      );
       if (response.ok) message.info(`Jetson đã nhận lệnh: ${response.message}`);
       else message.warning(response.message);
     } catch (error) {
@@ -95,7 +125,10 @@ function Cap7AScreenOne() {
 
   return (
     <>
-      <section aria-label="Giám sát CAP7A Screen 1" className="cap7a-page">
+      <section
+        aria-label={`Giám sát CAP7A ${system.toUpperCase()}`}
+        className="cap7a-page"
+      >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Tag color={online ? 'green' : 'default'}>
             {online ? 'MQTT · Online' : 'Chưa kết nối / dữ liệu cũ'}
@@ -128,21 +161,45 @@ function Cap7AScreenOne() {
           <Alert
             type="info"
             showIcon
-            message="Chỉ giám sát — cần bật điều khiển ở backend và Cài đặt trên Jetson"
+            message={
+              capabilities?.commands
+                ? 'Chỉ giám sát — cần bật điều khiển ở backend và Cài đặt trên Jetson'
+                : 'Hệ thống này chỉ hỗ trợ giám sát từ xa'
+            }
           />
         ) : null}
-        <DailyPerformance
-          state={state}
-          online={online}
-          receivedAt={displayed?.received_at_ms}
-        />
+        {capabilities?.daily ? (
+          <DailyPerformance
+            system={system}
+            state={state}
+            online={online}
+            receivedAt={displayed?.received_at_ms}
+          />
+        ) : (
+          <Card title="Bộ đếm trực tiếp" size="small">
+            <LivePerformance
+              key={system}
+              system={system}
+              state={state}
+              online={online}
+              receivedAt={displayed?.received_at_ms}
+            />
+          </Card>
+        )}
         <div className="cap7a-workspace">
           <Card
             title="Màn hình Jetson"
             size="small"
             className="cap7a-screen-card liquid-glass-card !rounded-2xl"
           >
-            <ScreenViewer />
+            {capabilities?.screen ? (
+              <ScreenViewer key={system} system={system} />
+            ) : (
+              <Alert
+                type="info"
+                message={`Chưa cấu hình màn hình ${system.toUpperCase()}`}
+              />
+            )}
           </Card>
           <aside
             className="cap7a-controls"
@@ -155,12 +212,12 @@ function Cap7AScreenOne() {
             >
               <dl className="space-y-1 text-sm">
                 {[
-                  ['Chế độ', state?.mode],
+                  ['Chế độ', modeLabel(state?.mode)],
                   [
                     'Camera',
                     state
                       ? state.camera_ready
-                        ? 'READY'
+                        ? 'Sẵn sàng'
                         : 'Chưa sẵn sàng'
                       : null
                   ],
@@ -168,24 +225,35 @@ function Cap7AScreenOne() {
                     'Model',
                     state
                       ? state.model_ready
-                        ? 'READY'
+                        ? 'Sẵn sàng'
                         : 'Chưa sẵn sàng'
                       : null
                   ],
                   [
                     'Kết quả gần nhất',
                     state
-                      ? `${state.result} · ${state.result_mode ?? '—'}`
+                      ? `${resultLabel(state.result)} · ${modeLabel(state.result_mode)}`
                       : null
                   ],
                   [
                     'CPU / GPU',
                     state
-                      ? `${state.cpu_temp_c == null ? '—' : Math.round(state.cpu_temp_c)} °C / ${state.gpu_temp_c == null ? '—' : Math.round(state.gpu_temp_c)} °C`
+                      ? `${temperatureLabel(state.cpu_temp_c)} / ${temperatureLabel(state.gpu_temp_c)}`
                       : null
                   ],
-                  ['Ngưỡng NG', state ? `${state.threshold}%` : null],
-                  ['ROI', state ? (state.roi?.join(', ') ?? 'Mặc định') : null],
+                  [
+                    system === 'tail' ? 'Ngưỡng NG' : 'Ngưỡng ảnh xám',
+                    state
+                      ? `${state.threshold}${system === 'tail' ? '%' : ''}`
+                      : null
+                  ],
+                  [
+                    'ROI',
+                    state
+                      ? (state.roi?.join(', ') ??
+                        (system === 'tail' ? 'Mặc định' : 'Chỉnh tại máy'))
+                      : null
+                  ],
                   [
                     'Nhận dữ liệu',
                     displayed?.received_at_ms
@@ -205,94 +273,105 @@ function Cap7AScreenOne() {
                 ))}
               </dl>
             </Card>
-            <Card
-              title="Điều khiển"
-              size="small"
-              className="liquid-glass-card !rounded-2xl"
-            >
-              <div className="flex flex-wrap gap-3">
-                <Button
-                  tone="success"
-                  type="primary"
-                  disabled={!ready}
-                  onClick={() => command('run')}
-                >
-                  RUN
-                </Button>
-                <Button
-                  tone="danger"
-                  danger
-                  disabled={!allowed}
-                  onClick={() => command('stop')}
-                >
-                  STOP
-                </Button>
-                <Button
-                  disabled={!ready || state?.mode === 'TEST'}
-                  onClick={() => command('test')}
-                >
-                  TEST
-                </Button>
-                <Button
-                  disabled={!operable}
-                  onClick={() => command('reset_counters')}
-                >
-                  Reset bộ đếm
-                </Button>
-              </div>
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                <label htmlFor="cap7a-threshold">Ngưỡng NG (%)</label>
-                <InputNumber
-                  id="cap7a-threshold"
-                  min={1}
-                  max={100}
-                  value={threshold}
-                  onChange={setThreshold}
-                  disabled={!stopped}
-                />
-                <Button
-                  disabled={!stopped || threshold === null}
-                  onClick={() => command('set_threshold', { threshold })}
-                >
-                  Áp dụng
-                </Button>
-              </div>
-              <div className="mt-3 grid grid-cols-4 gap-2">
-                {['X', 'Y', 'Rộng', 'Cao'].map((label, i) => (
-                  <label key={label} className="flex flex-col gap-1">
-                    {label}
-                    <InputNumber
-                      style={{ width: '100%' }}
-                      aria-label={`ROI ${label}`}
-                      min={0}
-                      max={i % 2 === 0 ? 600 : 400}
-                      precision={0}
-                      value={roi[i]}
-                      disabled={!stopped}
-                      onChange={(value) =>
-                        setRoi((current) =>
-                          current.map((v, j) => (i === j ? value : v))
-                        )
-                      }
-                    />
-                  </label>
-                ))}
-              </div>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <Button
-                  disabled={!stopped || roi.some((v) => v === null)}
-                  onClick={() => command('set_roi', { roi })}
-                >
-                  Lưu ROI
-                </Button>
-                <Button
-                  disabled={!stopped}
-                  onClick={() => command('clear_roi')}
-                >
-                  ROI mặc định
-                </Button>
-              </div>
-            </Card>
+            {system === 'spike' && capabilities?.commands && (
+              <SpikeControls
+                state={state}
+                allowed={allowed}
+                refresh={() => {
+                  void query.refetch({ cancelRefetch: false });
+                }}
+              />
+            )}
+            {system === 'tail' && capabilities?.commands && (
+              <Card
+                title="Điều khiển TAIL"
+                size="small"
+                className="liquid-glass-card !rounded-2xl"
+              >
+                <div className="flex flex-wrap gap-3">
+                  <Button
+                    tone="success"
+                    type="primary"
+                    disabled={!ready}
+                    onClick={() => command('run')}
+                  >
+                    RUN
+                  </Button>
+                  <Button
+                    tone="danger"
+                    danger
+                    disabled={!allowed}
+                    onClick={() => command('stop')}
+                  >
+                    STOP
+                  </Button>
+                  <Button
+                    disabled={!ready || state?.mode === 'TEST'}
+                    onClick={() => command('test')}
+                  >
+                    TEST
+                  </Button>
+                  <Button
+                    disabled={!operable}
+                    onClick={() => command('reset_counters')}
+                  >
+                    Reset bộ đếm
+                  </Button>
+                </div>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <label htmlFor="cap7a-threshold">Ngưỡng NG (%)</label>
+                  <InputNumber
+                    id="cap7a-threshold"
+                    min={1}
+                    max={100}
+                    value={threshold}
+                    onChange={setThreshold}
+                    disabled={!stopped}
+                  />
+                  <Button
+                    disabled={!stopped || threshold === null}
+                    onClick={() => command('set_threshold', { threshold })}
+                  >
+                    Áp dụng
+                  </Button>
+                </div>
+                <div className="mt-3 grid grid-cols-4 gap-2">
+                  {['X', 'Y', 'Rộng', 'Cao'].map((label, i) => (
+                    <label key={label} className="flex flex-col gap-1">
+                      {label}
+                      <InputNumber
+                        style={{ width: '100%' }}
+                        aria-label={`ROI ${label}`}
+                        min={0}
+                        max={i % 2 === 0 ? 600 : 400}
+                        precision={0}
+                        value={roi[i]}
+                        disabled={!stopped}
+                        onChange={(value) =>
+                          setRoi((current) =>
+                            current.map((v, j) => (i === j ? value : v))
+                          )
+                        }
+                      />
+                    </label>
+                  ))}
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button
+                    disabled={!stopped || roi.some((v) => v === null)}
+                    onClick={() => command('set_roi', { roi })}
+                  >
+                    Lưu ROI
+                  </Button>
+                  <Button
+                    disabled={!stopped}
+                    onClick={() => command('clear_roi')}
+                  >
+                    ROI mặc định
+                  </Button>
+                </div>
+              </Card>
+            )}
           </aside>
         </div>
       </section>
