@@ -4,6 +4,7 @@ import { uiStore } from '@stores/uiStore';
 import { useStore } from '@tanstack/react-store';
 import DashboardChartCard from '@/components/dashboard/DashboardChartCard';
 import { memo, useEffect } from 'react';
+import { useReducedMotion } from 'framer-motion';
 
 type ProductDataType = {
   product: string;
@@ -19,6 +20,7 @@ export const ProductChart = memo(function ProductChart({
 }: {
   data: TotalMonthQuantityType[];
 }) {
+  const reduceMotion = useReducedMotion();
   const isDark = useStore(uiStore, (state) => state.theme === 'dark');
   const chartData: ProductDataType[] = (data || [])
     .map((item) => ({
@@ -58,6 +60,7 @@ export const ProductChart = memo(function ProductChart({
   };
 
   const config = {
+    animate: reduceMotion ? false : undefined,
     theme: isDark ? 'dark' : 'light',
     data: chartData,
     isGroup: false,

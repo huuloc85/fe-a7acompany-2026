@@ -1,15 +1,13 @@
+import QueryErrorNotice from '@components/common/QueryErrorNotice';
 import { LinkProps } from '@tanstack/react-router';
 import logo from '@assets/images/logo/logoAsset.svg';
 
 import DashboardWidget from '@components/dashboard/DashboardWidget';
 import { fetchDashboardData } from '@services/DashboardService';
 
-import { SlideCarousel } from '@components/SlideCarousel';
 import { useAuth } from '@hooks/useAuth';
 import { getMonthlyQuantities } from '@services/TotalQuantityService';
-import { productService } from '@services/ProductService';
 import { authLogout } from '@services/AuthService';
-import { fetchImages } from '@services/UploadService';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import {
   canViewTotalWorkSchedules,
@@ -20,7 +18,22 @@ import { ReactNode, useEffect, useMemo, useState } from 'react';
 import { FaCircle } from 'react-icons/fa';
 import * as FaIcons from 'react-icons/fa';
 import type { IconType } from 'react-icons';
-import { MdApproval } from 'react-icons/md';
+import {
+  LuArrowLeftRight,
+  LuBanknote,
+  LuCalendarCheck,
+  LuCalendarDays,
+  LuCalendarRange,
+  LuClipboardCheck,
+  LuClipboardList,
+  LuFileText,
+  LuHistory,
+  LuMessagesSquare,
+  LuNetwork,
+  LuPackage,
+  LuUserCheck,
+  LuUsers
+} from 'react-icons/lu';
 import {
   SUPERVISOR_IDS,
   SUPERVISOR_ROLE_IDS,
@@ -36,6 +49,31 @@ import MidAutumnBanner from '@components/holiday/MidAutumnBanner';
 import { useMidAutumnMode } from '@hooks/useMidAutumnMode';
 
 // ─── FA class → react-icons mapper (shared with Sidebar) ─────────────────────
+
+// Keep configured icon meaning while using one outline family for dashboard widgets.
+const widgetIconVariants: Record<string, IconType> = {
+  FaUsers: LuUsers,
+  FaUserFriends: LuUsers,
+  FaCalculator: LuCalendarCheck,
+  FaSitemap: LuNetwork,
+  FaUserCheck: LuUserCheck,
+  FaCalendar: LuCalendarDays,
+  FaCalendarAlt: LuCalendarDays,
+  FaCalendarDay: LuCalendarDays,
+  FaCalendarWeek: LuCalendarDays,
+  FaCalendarCheck: LuCalendarCheck,
+  FaBox: LuPackage,
+  FaBoxOpen: LuPackage,
+  FaHistory: LuHistory,
+  FaMoneyBill: LuBanknote,
+  FaMoneyBillAlt: LuBanknote,
+  FaMoneyBillWave: LuBanknote,
+  FaClipboardList: LuClipboardList,
+  FaFileAlt: LuFileText,
+  FaFileInvoice: LuFileText,
+  FaExchangeAlt: LuArrowLeftRight,
+  FaComments: LuMessagesSquare
+};
 
 const mapFaClassToIconType = (faClass?: string): IconType | null => {
   if (!faClass) return null;
@@ -79,7 +117,7 @@ const mapFaClassToIconType = (faClass?: string): IconType | null => {
   });
   for (const name of candidates) {
     const IconComp = (FaIcons as Record<string, IconType>)[name];
-    if (IconComp) return IconComp;
+    if (IconComp) return widgetIconVariants[name] ?? IconComp;
   }
   return null;
 };
@@ -113,13 +151,13 @@ const DASHBOARD_STAT_KEYS = [
 const DASHBOARD_CACHE_TIME = 5 * 60 * 1000;
 const DASHBOARD_GC_TIME = 30 * 60 * 1000;
 
-// ─── Capitalize helper ───────────────────────────────────────────────────────
-
-const capitalizeWords = (str: string) =>
-  str
-    .split(' ')
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-    .join(' ');
+// Correct known label casing without lowercasing custom names or acronyms.
+const widgetTitleCasing: Record<string, string> = {
+  'Chấm Công': 'Chấm công',
+  'Danh Sách Tem Cần In': 'Danh sách tem cần in',
+  'xuất nhập tồn': 'Xuất nhập tồn',
+  'Góp Ý': 'Góp ý'
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -168,7 +206,13 @@ export default function Dashboard() {
   }, [homePermissions, showSalaryChart]);
 
   // ── Dashboard statistics (admin only) ──
-  const { data: dashboardResponse, isLoading: isDashboardLoading } = useQuery({
+  const {
+    data: dashboardResponse,
+    isLoading: isDashboardLoading,
+    isError: dashboardError,
+    isFetching: dashboardFetching,
+    refetch: retryDashboard
+  } = useQuery({
     queryKey: [QUERY_KEYS.DASHBOARD],
     queryFn: fetchDashboardData,
     enabled: admin && needsDashboardData,
@@ -185,34 +229,20 @@ export default function Dashboard() {
   const now = new Date();
   const monthParam = `${String(now.getMonth() + 1).padStart(2, '0')}-${now.getFullYear()}`;
 
-  const { data: productData } = useQuery({
-    queryKey: [QUERY_KEYS.PRODUCT_CHART, monthParam, 8, 'client-product-map'],
+  const {
+    data: productData,
+    isError: productError,
+    isFetching: productFetching,
+    refetch: retryProducts
+  } = useQuery({
+    queryKey: [QUERY_KEYS.PRODUCT_CHART, monthParam, 8, 'server-product-map'],
     queryFn: async () => {
-      const [monthlyQuantities, productsResponse] = await Promise.all([
-        getMonthlyQuantities({
-          status: 8,
-          limit: 0
-        }),
-        productService.list({ limit: 0 })
-      ]);
-
-      const productMap = new Map(
-        productsResponse.data.map((product) => [product.id, product])
-      );
-
-      return monthlyQuantities
-        .filter((item) => item.month === monthParam)
-        .map((item) => {
-          const product = productMap.get(item.product_id);
-
-          return {
-            ...item,
-            product: item.product ?? {
-              id: item.product_id,
-              name: product?.name ?? 'N/A'
-            }
-          };
-        });
+      return getMonthlyQuantities({
+        status: 8,
+        month: monthParam,
+        include: ['product'],
+        limit: 0
+      });
     },
     enabled: admin && showProductChart,
     placeholderData: keepPreviousData,
@@ -276,7 +306,7 @@ export default function Dashboard() {
       .filter((perm) => !CHART_KEYS.includes(perm.key))
       .map((perm) => {
         const widget: WidgetType = {
-          title: capitalizeWords(perm.name),
+          title: widgetTitleCasing[perm.name] ?? perm.name,
           icon: renderIcon(perm.icon ?? undefined),
           value: valueMap[perm.key],
           navLink: (perm.url || undefined) as LinkProps['to'] | undefined,
@@ -299,8 +329,8 @@ export default function Dashboard() {
   const supervisorWidget: WidgetType | null = useMemo(() => {
     if (!isSupervisor) return null;
     return {
-      title: 'Đơn Xin Phép',
-      icon: <MdApproval />,
+      title: 'Đơn xin phép',
+      icon: <LuClipboardCheck />,
       navLink: '/admin/request-forms'
     };
   }, [isSupervisor]);
@@ -313,8 +343,8 @@ export default function Dashboard() {
     if (alreadyHasWidget) return null;
 
     return {
-      title: 'Lịch Làm Việc Tổng',
-      icon: <FaIcons.FaUsers />,
+      title: 'Lịch làm việc tổng',
+      icon: <LuCalendarRange />,
       navLink: '/work-schedules'
     };
   }, [listWidget, user]);
@@ -330,8 +360,7 @@ export default function Dashboard() {
   const xlCols = useMemo(() => {
     const count = finalWidgetList.length;
     if (count <= 1) return 1;
-    if (count % 2 === 0) return Math.ceil(count / 2);
-    return Math.ceil(count / 3);
+    return Math.min(4, count);
   }, [finalWidgetList.length]);
 
   const visibleChartCount = [showSalaryChart, showProductChart].filter(
@@ -339,17 +368,6 @@ export default function Dashboard() {
   ).length;
   const chartColSpan =
     showSalaryChart && showProductChart ? 'xl:col-span-6' : 'xl:col-span-12';
-
-  // ── Slide images ──
-  const { data: imageList } = useQuery({
-    queryKey: [QUERY_KEYS.IMAGES],
-    queryFn: () => fetchImages({ limit: 0 }),
-    placeholderData: keepPreviousData,
-    // Images ít thay đổi, cache lâu hơn
-    staleTime: DASHBOARD_CACHE_TIME,
-    gcTime: DASHBOARD_GC_TIME,
-    refetchOnWindowFocus: false
-  });
 
   // ── Dynamic Greeting ──
   const [greeting, setGreeting] = useState<{ text: string; emoji: string }>({
@@ -616,6 +634,16 @@ export default function Dashboard() {
           : 'dashboard-page dashboard-redesign space-y-6'
       }
     >
+      <QueryErrorNotice
+        isError={dashboardError}
+        isFetching={dashboardFetching}
+        onRetry={retryDashboard}
+      />
+      <QueryErrorNotice
+        isError={productError}
+        isFetching={productFetching}
+        onRetry={retryProducts}
+      />
       {isMidAutumn && (
         <>
           <div className="mid-autumn-dashboard-heading">
@@ -629,13 +657,6 @@ export default function Dashboard() {
       {/* ── Holiday Banner (30/4 – 1/5) ────────────────────────── */}
       {isHoliday && (
         <HolidayBanner daysUntil={daysUntilHoliday} phase={holidayPhase} />
-      )}
-
-      {/* ── Slide Carousel ─────────────────────────────────────── */}
-      {imageList?.data && imageList.data.length > 0 && (
-        <div className="liquid-glass-card rounded-[26px] transition-shadow duration-300">
-          <SlideCarousel images={imageList.data} />
-        </div>
       )}
 
       {/* ── Welcome Header ─────────────────────────────────────── */}
@@ -652,17 +673,19 @@ export default function Dashboard() {
         <div className="relative z-10">
           {/* Mobile logo */}
           <div className="mb-3 flex justify-center sm:hidden">
-            <img src={logo} alt="Logo" className="h-20" />
+            <img
+              src={logo}
+              alt="Vinh Vinh Phát"
+              className="h-12 rounded-lg dark:bg-white dark:p-1"
+            />
           </div>
 
           {/* Main header row */}
           <div className="dashboard-welcome-row flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             {/* Left: Greeting */}
             <div className="text-center sm:text-left">
-              <p className="dashboard-eyebrow text-sm font-semibold text-black/60 dark:text-gray-500">
-                Xin chào
-              </p>
               <h1 className="mt-0.5 text-2xl font-bold text-black sm:text-3xl dark:text-white">
+                Xin chào,{' '}
                 {(
                   user?.name?.replace(/[()]/g, '').trim().split(/\s+/).pop() ||
                   'Bạn'

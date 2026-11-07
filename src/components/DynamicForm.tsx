@@ -3,11 +3,11 @@ import { Rule } from 'antd/es/form';
 
 import { FieldConfig } from '@/types/form';
 import AppButton from '@components/common/AppButton';
+import DatePicker from '@components/common/AppDatePicker';
 import { UploadImage } from '@components/ui/upload/UploadImage';
 import { FileType } from '@utils/fileType';
 import {
   Checkbox,
-  DatePicker,
   Flex,
   Form,
   FormInstance,
@@ -41,7 +41,7 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
   onFinish,
   loading,
   layout = 'vertical',
-  submitButtonText = 'Submit',
+  submitButtonText = 'Lưu',
   size,
   resetForm,
   zodRules = {},
@@ -228,17 +228,20 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
         onFinish?.(values);
       }}
       autoComplete="off"
+      scrollToFirstError={{ behavior: 'auto', block: 'center', focus: true }}
+      className="ui-form"
+      aria-busy={loading}
       disabled={loading}
       size={size}
     >
       {isGrid ? (
-        <div className="grid grid-cols-1 gap-x-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-x-6 md:grid-cols-2 xl:grid-cols-3">
           {formItemLayout()}
         </div>
       ) : (
         <div className="flex flex-col gap-4">{formItemLayout()}</div>
       )}
-      <Flex gap={'small'} wrap justify="end">
+      <Flex className="ui-form-actions" gap={'small'} wrap justify="end">
         {resetForm && (
           <AppButton
             tone="neutral"
@@ -246,7 +249,7 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
             size={size}
             loading={loading}
           >
-            Reset
+            Đặt lại
           </AppButton>
         )}
 

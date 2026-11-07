@@ -24,7 +24,8 @@ import {
   useSearch
 } from '@tanstack/react-router';
 import type { FormProps } from 'antd';
-import { Button, Form, Input, message, Modal } from 'antd';
+import { Form, Input, message, Modal } from 'antd';
+import Button from '@components/common/AppButton';
 
 import {
   authCancelLogin,
@@ -330,6 +331,7 @@ function RouteComponent() {
 
           <Form.Item className="!mt-4">
             <Button
+              tone="inherit"
               block
               type="primary"
               htmlType="submit"

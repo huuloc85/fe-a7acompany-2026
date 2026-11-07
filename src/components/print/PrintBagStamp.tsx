@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Button, message, Modal, Radio } from 'antd';
+import { message, Modal, Radio } from 'antd';
+import Button from '@components/common/AppButton';
 import type { Dayjs } from 'dayjs';
 import { useCallback, useRef, useState } from 'react';
 import { useReactToPrint } from 'react-to-print';
@@ -302,6 +303,7 @@ export const PrintBagStamp = ({
         </div>
         <div>
           <Button
+            tone="inherit"
             color="orange"
             variant="solid"
             className="stamp-print-action stamp-print-action--bag"

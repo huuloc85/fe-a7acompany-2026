@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useStore } from '@tanstack/react-store';
+import { useQueryClient } from '@tanstack/react-query';
 import { echo } from '@utils/lib/echo';
 import { sendNotification } from '@utils/notificationUtil';
 import {
@@ -26,6 +27,7 @@ type FeedbackCreatedPayload = {
  * Channel: feedback.admin / Event: feedback.created
  */
 export function useAdminFeedbackNotification(enabled: boolean) {
+  const queryClient = useQueryClient();
   const { items: notifications } = useStore(feedbackNotificationStore);
 
   useEffect(() => {
@@ -36,6 +38,7 @@ export function useAdminFeedbackNotification(enabled: boolean) {
     const channel = echo.channel(channelName);
 
     const handler = (payload: FeedbackCreatedPayload) => {
+      void queryClient.invalidateQueries({ queryKey: ['admin-feedbacks'] });
       addFeedbackNotification({
         id: payload.id,
         subject: payload.subject,
@@ -56,7 +59,7 @@ export function useAdminFeedbackNotification(enabled: boolean) {
       channel.stopListening(eventName);
       echo.leaveChannel(channelName);
     };
-  }, [enabled]);
+  }, [enabled, queryClient]);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 

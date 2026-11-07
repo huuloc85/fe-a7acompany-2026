@@ -31,12 +31,6 @@ export function getOvertimeApprovalMessages(
   }
 
   const messages: { color: 'success' | 'warning'; text: string }[] = [];
-  if ((approval.default_hours ?? 0) > 0) {
-    messages.push({
-      color: 'success',
-      text: 'Tăng ca mặc định'
-    });
-  }
   if (approval.approved) {
     messages.push({
       color: 'success',
@@ -62,8 +56,8 @@ export function getOvertimeApprovalMessages(
       color: 'warning',
       text:
         approval.requests.length === 0
-          ? `${approval.unapproved_hours}h thực tế chưa có đơn tăng ca được duyệt`
-          : `${approval.unapproved_hours}h thực tế chưa được duyệt`
+          ? `${approval.unapproved_hours}h chưa có đơn được duyệt`
+          : `${approval.unapproved_hours}h chưa được duyệt`
     });
   }
   return messages;

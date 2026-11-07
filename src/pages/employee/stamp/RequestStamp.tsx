@@ -14,7 +14,6 @@ import {
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import {
-  Button,
   Card,
   DatePicker,
   Form,
@@ -25,6 +24,7 @@ import {
   Modal,
   Select
 } from 'antd';
+import Button from '@components/common/AppButton';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 import { useState } from 'react';
@@ -335,8 +335,8 @@ export const RequestStamp = () => {
 
   return (
     <>
-      <BackButton to="/" />
       <ComponentCard
+        actions={<BackButton to="/" />}
         title={
           <div className="flex items-center gap-3">
             <FaStamp className="text-indigo-500" />
@@ -346,7 +346,7 @@ export const RequestStamp = () => {
       >
         <div className="space-y-5">
           {/* ── Action Bar ─────────────────────────────────────── */}
-          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/50">
+          <div className="ui-toolbar flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/50">
             <Link to="/employee/stamps/history">
               <AppButton tone="warning">
                 <IconHistory />
@@ -418,7 +418,13 @@ export const RequestStamp = () => {
                           rules={[{ required: true, message: 'Vui chọn ngày' }]}
                           initialValue={dayjs()}
                         >
-                          <DatePicker style={{ width: '100%' }} />
+                          <DatePicker
+                            format="DD/MM"
+                            classNames={{
+                              popup: { root: 'user-date-picker-popup' }
+                            }}
+                            style={{ width: '100%' }}
+                          />
                         </Form.Item>
                         <Form.Item
                           label="Ca"
@@ -523,6 +529,7 @@ export const RequestStamp = () => {
                     </Card>
                   ))}
                   <Button
+                    tone="inherit"
                     type="dashed"
                     onClick={() => add()}
                     block

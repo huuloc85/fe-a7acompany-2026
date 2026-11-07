@@ -42,6 +42,7 @@ const DashboardWidget: React.FC<WidgetProps> = ({
       >
         {/* Icon */}
         <motion.div
+          aria-hidden="true"
           className={
             isMidAutumn
               ? 'mid-autumn-widget-icon relative flex h-12 w-12 items-center justify-center rounded-[16px] transition-colors duration-300'
@@ -51,8 +52,8 @@ const DashboardWidget: React.FC<WidgetProps> = ({
           <span
             className={
               isMidAutumn
-                ? 'text-2xl'
-                : 'text-2xl text-black transition-colors duration-300 lg:group-hover:text-blue-600 dark:text-gray-300 dark:lg:group-hover:text-blue-400'
+                ? 'flex h-6 w-6 items-center justify-center text-2xl [&>svg]:h-6 [&>svg]:w-6'
+                : 'flex h-6 w-6 items-center justify-center text-2xl text-black transition-colors duration-300 lg:group-hover:text-blue-600 dark:text-gray-300 dark:lg:group-hover:text-blue-400 [&>svg]:h-6 [&>svg]:w-6'
             }
           >
             {icon}
@@ -61,23 +62,23 @@ const DashboardWidget: React.FC<WidgetProps> = ({
 
         {/* Title */}
         <p
-          className="dashboard-widget-title relative z-10 flex min-h-10 max-w-[17ch] items-center justify-center text-sm leading-snug font-semibold text-black/75 dark:text-gray-200"
+          className="dashboard-widget-title relative z-10 m-0 flex min-h-12 w-full max-w-[24ch] items-center justify-center text-base leading-6 font-medium text-black/75 normal-case sm:text-lg dark:text-gray-200"
           title={title}
         >
-          <span className="line-clamp-2">{title}</span>
+          <span className="text-balance break-words">{title}</span>
         </p>
 
         {/* Value or Skeleton */}
         {/* Value */}
         {(value !== undefined || isLoading) && (
-          <div className="relative z-10 flex h-8 items-center justify-center">
+          <div className="relative z-10 flex min-h-10 items-center justify-center">
             {isLoading ? (
               <span
                 className="block h-6 w-14 animate-pulse rounded-md bg-gray-200/80 dark:bg-gray-700/70"
                 aria-label="Đang tải"
               />
             ) : (
-              <span className="dashboard-widget-value text-2xl font-bold tracking-tight text-gray-950 tabular-nums dark:text-white">
+              <span className="dashboard-widget-value text-[28px] leading-tight font-bold tracking-tight text-gray-950 tabular-nums sm:text-[32px] dark:text-white">
                 {value}
               </span>
             )}

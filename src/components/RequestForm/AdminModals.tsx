@@ -3,7 +3,6 @@ import {
   Modal,
   Form,
   Upload,
-  Button,
   Typography,
   Card,
   Tag,
@@ -14,6 +13,7 @@ import {
   Alert,
   Space
 } from 'antd';
+import Button from '@components/common/AppButton';
 import {
   CheckOutlined,
   UserOutlined,
@@ -445,7 +445,7 @@ export const AdminActionModal: React.FC<AdminActionModalProps> = ({
         open={visible}
         onCancel={handleCancel}
         footer={[
-          <Button key="close" onClick={handleCancel}>
+          <Button tone="inherit" key="close" onClick={handleCancel}>
             Đóng
           </Button>
         ]}
@@ -470,7 +470,7 @@ export const AdminActionModal: React.FC<AdminActionModalProps> = ({
         open={visible}
         onCancel={handleCancel}
         footer={[
-          <Button key="close" onClick={handleCancel}>
+          <Button tone="inherit" key="close" onClick={handleCancel}>
             Đóng
           </Button>
         ]}

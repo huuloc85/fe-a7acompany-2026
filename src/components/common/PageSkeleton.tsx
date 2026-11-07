@@ -44,7 +44,7 @@ export default function PageSkeleton({
         >
           <Card className="ui-card liquid-glass-card !rounded-2xl">
             <Skeleton
-              active
+              active={!shouldReduceMotion}
               avatar={avatar}
               title={title}
               paragraph={{ rows }}
@@ -74,7 +74,7 @@ export function TableSkeleton({ rows = 8 }: { rows?: number }) {
         {[1, 2, 3, 4, 5].map((col) => (
           <Skeleton.Button
             key={col}
-            active
+            active={!shouldReduceMotion}
             size="small"
             style={{ width: `${15 + col * 3}%`, height: 20 }}
             block
@@ -87,7 +87,7 @@ export function TableSkeleton({ rows = 8 }: { rows?: number }) {
           {[1, 2, 3, 4, 5].map((col) => (
             <Skeleton.Input
               key={col}
-              active
+              active={!shouldReduceMotion}
               size="small"
               style={{ width: `${15 + col * 3}%`, height: 16 }}
               block

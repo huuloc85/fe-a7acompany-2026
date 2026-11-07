@@ -1,5 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Card } from 'antd';
+import useLiveClock from './useLiveClock';
+
+const vietnamDay = (time: number) =>
+  new Intl.DateTimeFormat('sv-SE', {
+    timeZone: 'Asia/Ho_Chi_Minh',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).format(new Date(time));
 import type {
   Cap7ADaily,
   Cap7AState,
@@ -27,6 +36,11 @@ export default function LivePerformance({
   historical?: boolean;
   report?: Cap7ADaily['report'];
 }) {
+  const now = useLiveClock(!historical);
+  const today = vietnamDay(now);
+  const snapshotDay =
+    state?.runtime_date || (receivedAt ? vietnamDay(receivedAt) : null);
+  const previousDay = !historical && !!snapshotDay && snapshotDay < today;
   const rateCacheKey = `cap7a-${system}-production-rate-v1`;
   const [tracker, setTracker] = useState<RateTracker>(() => {
     try {
@@ -38,7 +52,7 @@ export default function LivePerformance({
       return { samples: [], last: null };
     }
   });
-  const running = online && state?.mode === 'RUN';
+  const running = !previousDay && online && state?.mode === 'RUN';
   const ok = state?.ok;
   const ng = state?.ng;
   const session = state?.session_id
@@ -46,6 +60,7 @@ export default function LivePerformance({
     : null;
   useEffect(() => {
     if (
+      previousDay ||
       !session ||
       !receivedAt ||
       !Number.isSafeInteger(ok) ||
@@ -68,7 +83,7 @@ export default function LivePerformance({
         running
       )
     );
-  }, [online, running, session, receivedAt, ok, ng]);
+  }, [online, running, session, receivedAt, ok, ng, previousDay]);
   useEffect(() => {
     try {
       if (tracker.last)
@@ -79,14 +94,20 @@ export default function LivePerformance({
     }
   }, [tracker.last, rateCacheKey]);
   const lastRate = tracker.last;
-  const rate =
-    !historical &&
-    lastRate &&
-    session &&
-    receivedAt &&
-    ok !== undefined &&
-    ng !== undefined &&
-    compatibleRateSample(lastRate.sample, { session, time: receivedAt, ok, ng })
+  const rate = previousDay
+    ? 0
+    : !historical &&
+        lastRate &&
+        session &&
+        receivedAt &&
+        ok !== undefined &&
+        ng !== undefined &&
+        compatibleRateSample(lastRate.sample, {
+          session,
+          time: receivedAt,
+          ok,
+          ng
+        })
       ? lastRate.value
       : null;
   const measuring =
@@ -95,7 +116,11 @@ export default function LivePerformance({
     tracker.samples[tracker.samples.length - 1].time -
       tracker.samples[0].time >=
       10000;
-  const counts = historical ? report : state;
+  const counts = historical
+    ? report
+    : previousDay
+      ? { total: 0, ok: 0, ng: 0 }
+      : state;
   const classified = counts ? counts.ok + counts.ng : 0;
   const duration = (value?: number) => {
     if (value === undefined || !Number.isFinite(value) || value < 0) return '—';
@@ -111,11 +136,14 @@ export default function LivePerformance({
   const percent = (value: number) =>
     classified > 0
       ? `${((100 * value) / classified).toLocaleString('vi-VN', { maximumFractionDigits: 2 })}%`
-      : '—';
+      : previousDay
+        ? '0%'
+        : '—';
   const appTime = (value?: number | null) => {
     if (!value || !Number.isFinite(value) || value <= 0) return null;
     const date = new Date(value);
     if (!Number.isFinite(date.getTime())) return null;
+    if (!historical && vietnamDay(value) !== today) return null;
     return {
       time: date.toLocaleTimeString('vi-VN', {
         timeZone: 'Asia/Ho_Chi_Minh',
@@ -142,11 +170,15 @@ export default function LivePerformance({
           ['Tỷ lệ NG', counts ? percent(counts.ng) : '—'],
           [
             historical ? 'Thời gian chạy' : 'Thời gian chạy hôm nay',
-            duration(historical ? undefined : state?.run_seconds)
+            duration(
+              historical ? undefined : previousDay ? 0 : state?.run_seconds
+            )
           ],
           [
             historical ? 'Thời gian dừng' : 'Thời gian dừng hôm nay',
-            duration(historical ? undefined : state?.stop_seconds)
+            duration(
+              historical ? undefined : previousDay ? 0 : state?.stop_seconds
+            )
           ]
         ].map(([label, value]) => (
           <Card
@@ -176,7 +208,7 @@ export default function LivePerformance({
                 ? '< 1 SP/phút'
                 : `${Math.round(rate * 60).toLocaleString('vi-VN')} SP/phút`}
           </div>
-          {(historical || rate !== null || running) && (
+          {!previousDay && (historical || rate !== null || running) && (
             <div className="mt-1 text-xs text-gray-500">
               {historical
                 ? 'Chưa có dữ liệu tốc độ theo ngày.'

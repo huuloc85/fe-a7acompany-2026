@@ -1,15 +1,7 @@
 import AppSearchInput from '@/components/common/AppSearchInput';
 import { useState, useEffect, useRef } from 'react';
-import {
-  Button,
-  message,
-  Popconfirm,
-  Spin,
-  Tabs,
-  TabsProps,
-  Table,
-  Tag
-} from 'antd';
+import { message, Popconfirm, Spin, Tabs, TabsProps, Table, Tag } from 'antd';
+import Button from '@components/common/AppButton';
 import { filterSystemLogs } from '@/utils/systemLogs';
 import { getApiErrorMessage } from '@/utils/apiError';
 import type { TableColumnsType, TableProps } from 'antd';
@@ -349,6 +341,7 @@ export default function SystemLogsPage() {
                 okButtonProps={{ danger: true, loading: isClearingDb }}
               >
                 <Button
+                  tone="inherit"
                   danger
                   icon={<DeleteOutlined />}
                   className="w-full sm:w-auto"
@@ -433,6 +426,7 @@ export default function SystemLogsPage() {
 
             <div className="scrollbar-hide mt-1 flex w-full gap-2 overflow-x-auto pb-1 sm:mt-0 sm:ml-4 sm:w-auto sm:pb-0">
               <Button
+                tone="inherit"
                 type={filterLevel === 'ALL' ? 'primary' : 'default'}
                 onClick={() => setFilterLevel('ALL')}
                 className="flex-shrink-0"
@@ -440,6 +434,7 @@ export default function SystemLogsPage() {
                 Tất cả
               </Button>
               <Button
+                tone="inherit"
                 type={filterLevel === 'ERROR' ? 'primary' : 'default'}
                 danger={filterLevel === 'ERROR'}
                 onClick={() => setFilterLevel('ERROR')}
@@ -448,6 +443,7 @@ export default function SystemLogsPage() {
                 Chỉ Lỗi (Errors)
               </Button>
               <Button
+                tone="inherit"
                 type={filterLevel === 'INFO' ? 'primary' : 'default'}
                 className={`flex-shrink-0 ${filterLevel === 'INFO' ? 'bg-cyan-500 hover:bg-cyan-400' : ''}`}
                 onClick={() => setFilterLevel('INFO')}
@@ -466,6 +462,7 @@ export default function SystemLogsPage() {
                 okButtonProps={{ danger: true, loading: isClearing }}
               >
                 <Button
+                  tone="inherit"
                   danger
                   icon={<DeleteOutlined />}
                   className="w-full sm:w-auto"

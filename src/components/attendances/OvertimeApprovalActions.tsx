@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Button, Form, Input, Modal, message } from 'antd';
+import { Form, Input, Modal, message } from 'antd';
+import Button from '@components/common/AppButton';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { isAdmin } from '@/utils/authUtil';
@@ -8,6 +9,7 @@ import {
   type OvertimeApproval
 } from '@/utils/overtimeApproval';
 import { decideOvertimeApproval } from '@/services/AttendanceService';
+import styles from './OvertimeApprovalActions.module.css';
 
 export function OvertimeApprovalActions({
   record
@@ -86,18 +88,22 @@ export function OvertimeApprovalActions({
     approval.requests.every((request) => request.status === 'rejected');
   return (
     <>
-      <div className="mt-1 flex flex-wrap items-center justify-center gap-2">
+      <div
+        className={`${styles.actions} mt-1 flex flex-wrap items-center justify-end gap-1.5`}
+      >
         <Button
+          tone="inherit"
           size="small"
-          className="!h-7 !min-w-20 !px-2 !py-0 !text-xs"
+          className={styles.action}
           type="primary"
           onClick={() => setAction('approve')}
         >
           Xác nhận
         </Button>
         <Button
+          tone="inherit"
           size="small"
-          className="!h-7 !min-w-20 !px-2 !py-0 !text-xs"
+          className={styles.action}
           danger
           disabled={cancelled}
           onClick={() => setAction('cancel')}

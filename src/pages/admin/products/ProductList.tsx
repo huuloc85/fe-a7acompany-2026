@@ -1,3 +1,4 @@
+import QueryErrorNotice from '@components/common/QueryErrorNotice';
 import AppSearchInput from '@/components/common/AppSearchInput';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import type { Dayjs } from 'dayjs';
@@ -32,7 +33,6 @@ import { ProductDrawerProvider } from '@/contexts/ProductDrawerContext';
 import { ProductDetailDrawer } from './ProductDetailDrawer';
 
 import { QueryParams } from '@/types/queryParams';
-import { useCrudList } from '@hooks/useCrudList';
 import { ProductModelEnumOptions } from '@schemas/product/productModelEnum.enum';
 import { ProductModelSizeEnumOptions } from '@schemas/product/productModelSizeEnum.enum';
 import { productService } from '@services/ProductService';
@@ -50,16 +50,12 @@ const WIDE_MODAL_WIDTH = 'calc(100vw - var(--app-sidebar-width, 0px) - 32px)';
 export default function ProductList() {
   const [month, setMonth] = useState<Dayjs | null>(dayjs().startOf('month'));
   const [activeModal, setActiveModal] = useState<ModalType>(null);
+  const [activeTab, setActiveTab] = useState('total');
 
   const [params, setParams] = useState<QueryParams>({
     page: 1,
     limit: 50,
-    include: [
-      'totaldailyquantities',
-      'totalmonthquantities',
-      'dailyquantities',
-      'totaldailyquantitiespo'
-    ],
+    include: ['totalmonthquantities', 'totaldailyquantitiespo'],
     month: dayjs().format('YYYY-MM')
   });
 
@@ -75,10 +71,30 @@ export default function ProductList() {
     staleTime: 5 * 60 * 1000
   });
 
-  const { queryResult } = useCrudList({
-    service: productService,
-    queryKey: 'products',
-    initialFilters: params
+  const requestParams: QueryParams = {
+    ...params,
+    include: [
+      ...(params.include || []),
+      ...(activeTab === 'produce' ? ['dailyquantities'] : []),
+      ...(['check-200', 'error-200'].includes(activeTab)
+        ? ['totaldailyquantities']
+        : [])
+    ]
+  };
+
+  const queryResult = useQuery({
+    queryKey: ['products', requestParams, false],
+    queryFn: () => productService.list(requestParams),
+    placeholderData: (previousData, previousQuery) => {
+      const previousParams = previousQuery?.queryKey[1] as
+        | QueryParams
+        | undefined;
+      // A new tab must not render missing detail data as zero quantities.
+      return JSON.stringify(previousParams?.include) ===
+        JSON.stringify(requestParams.include)
+        ? previousData
+        : undefined;
+    }
   });
 
   const fallbackMonths = useMemo(() => {
@@ -238,11 +254,17 @@ export default function ProductList() {
     <ProductDrawerProvider>
       <ComponentCard
         title="Quản lý sản phẩm"
+        headingLevel={1}
         className="admin-sticky-table-card !overflow-visible"
       >
         <div className="space-y-5">
+          <QueryErrorNotice
+            isError={queryResult.isError}
+            isFetching={queryResult.isFetching}
+            onRetry={queryResult.refetch}
+          />
           {/* ── Action Bar ───────────────────────────────────────────── */}
-          <div className="flex flex-wrap items-center gap-2 rounded-xl border border-gray-100 bg-gray-50/80 p-3 dark:border-gray-700 dark:bg-gray-800/50">
+          <div className="ui-toolbar flex flex-wrap items-center gap-2 rounded-xl border border-gray-100 bg-gray-50/80 p-3 dark:border-gray-700 dark:bg-gray-800/50">
             <RefreshButton
               isLoading={queryResult.isFetching}
               refresh={queryResult.refetch}
@@ -296,10 +318,14 @@ export default function ProductList() {
           >
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
               <div className="flex flex-col gap-1">
-                <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                <label
+                  htmlFor="product-month"
+                  className="text-xs font-medium text-gray-500 dark:text-gray-400"
+                >
                   📅 Tháng
                 </label>
                 <DatePicker
+                  id="product-month"
                   format="MM/YYYY"
                   value={month}
                   picker="month"
@@ -318,11 +344,15 @@ export default function ProductList() {
                 />
               </div>
               <div className="flex flex-col gap-1">
-                <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                <label
+                  htmlFor="product-export-year"
+                  className="text-xs font-medium text-gray-500 dark:text-gray-400"
+                >
                   <FaChartBar className="mr-1 inline-block text-blue-500" />
                   Dữ liệu xuất hàng
                 </label>
                 <Select
+                  id="product-export-year"
                   value={activeDisplayMode}
                   onChange={setDisplayMode}
                   className="!rounded-lg"
@@ -341,11 +371,15 @@ export default function ProductList() {
                 />
               </div>
               <div className="flex flex-col gap-1">
-                <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                <label
+                  htmlFor="product-bin"
+                  className="text-xs font-medium text-gray-500 dark:text-gray-400"
+                >
                   <FaTag className="mr-1 inline-block text-emerald-500" />
                   Mã thùng
                 </label>
                 <Select
+                  id="product-bin"
                   options={ProductModelEnumOptions}
                   placeholder="Chọn mã thùng"
                   popupMatchSelectWidth={false}
@@ -366,11 +400,15 @@ export default function ProductList() {
                 />
               </div>
               <div className="flex flex-col gap-1">
-                <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                <label
+                  htmlFor="product-mold"
+                  className="text-xs font-medium text-gray-500 dark:text-gray-400"
+                >
                   <FaRulerCombined className="mr-1 inline-block text-orange-500" />
                   Kích thước khuôn
                 </label>
                 <Select
+                  id="product-mold"
                   options={ProductModelSizeEnumOptions}
                   placeholder="Chọn kích thước"
                   popupMatchSelectWidth={false}
@@ -391,11 +429,15 @@ export default function ProductList() {
                 />
               </div>
               <div className="flex flex-col gap-1">
-                <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                <label
+                  htmlFor="product-search"
+                  className="text-xs font-medium text-gray-500 dark:text-gray-400"
+                >
                   <FaSearch className="mr-1 inline-block text-gray-400" />
                   Tìm kiếm
                 </label>
                 <AppSearchInput
+                  id="product-search"
                   placeholder="Tìm kiếm sản phẩm..."
                   onChange={(e) => {
                     const inputValue = e.target.value;
@@ -408,6 +450,8 @@ export default function ProductList() {
 
           {/* ── Tabs ─────────────────────────────────────────────────── */}
           <Tabs
+            activeKey={activeTab}
+            onChange={setActiveTab}
             data-tour="products-tabs"
             items={productTabs}
             type="card"

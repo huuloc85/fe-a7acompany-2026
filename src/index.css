@@ -7377,7 +7377,7 @@ html.dark body .dashboard-redesign .dashboard-widget-icon {
   }
 
   .dashboard-redesign .dashboard-widget-title {
-    max-width: 14ch;
+    max-width: 20ch;
   }
 }
 
@@ -7445,12 +7445,11 @@ html
 
 html body #root .dashboard-redesign .dashboard-widget-title {
   color: #334155;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 html body #root .dashboard-redesign .dashboard-widget-value {
   color: #0f172a;
-  font-size: 1.6rem;
   font-weight: 700;
   letter-spacing: -0.03em;
   filter: none;

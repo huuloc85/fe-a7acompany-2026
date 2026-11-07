@@ -7,7 +7,7 @@ import { FaArrowLeft } from 'react-icons/fa6';
 const BackButton: React.FC<LinkProps> = ({ ...props }) => {
   return (
     <>
-      <Link to={props.to || '..'} className="mb-4 inline-block">
+      <Link to={props.to || '..'} className="inline-block">
         <motion.div
           whileHover={{ x: -4, scale: 1.02 }}
           whileTap={{ scale: 0.95 }}

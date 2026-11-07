@@ -31,22 +31,33 @@ export const ExportModal = () => {
   };
 
   // fetch data for export
-  const { data: monthList } = useQuery<{ months: string[] }>({
+  const {
+    data: monthList,
+    isFetching: isFetchingMonths,
+    isError: isMonthsError
+  } = useQuery<{ months: string[] }>({
     queryKey: ['months'],
     queryFn: () => {
       return axiosPrivate.get('/api/products/month-list');
-    }
+    },
+    enabled: open,
+    staleTime: 5 * 60 * 1000
   });
   const months = useMemo(
     () => (monthList?.months || []).slice().reverse(),
     [monthList]
   );
 
-  const { data: monthlyQuantities } = useQuery({
-    queryKey: ['month-quantities', 'po-export'],
+  const {
+    data: monthlyQuantities,
+    isFetching: isFetchingQuantities,
+    isError: isQuantitiesError
+  } = useQuery({
+    queryKey: ['month-quantities', 'po-export', 8],
     queryFn: () => {
       return getMonthlyQuantities({ limit: 0, status: 8 });
-    }
+    },
+    enabled: open
   });
 
   const { mutate, isPending } = useMutation({
@@ -708,6 +719,15 @@ export const ExportModal = () => {
         onOk={handleExport}
         onCancel={handleCancel}
         okText="Xuất"
+        okButtonProps={{
+          disabled:
+            isFetchingMonths ||
+            isFetchingQuantities ||
+            isMonthsError ||
+            isQuantitiesError ||
+            !monthList ||
+            !monthlyQuantities
+        }}
         loading={isPending}
         maskClosable={false}
         closable={false}

@@ -1,4 +1,5 @@
 import axiosPrivate from '@/api/axiosInstance';
+import QueryErrorNotice from '@components/common/QueryErrorNotice';
 import { workLegends } from '@/configs/legend/workLegends.config';
 import { PaginatedResponse } from '@/types/responseTypes';
 import { ScheduleDetailType } from '@/types/scheduleDetailType';
@@ -18,7 +19,9 @@ function MobileScheduleCard({ item }: { item: ScheduleDetailType }) {
   return (
     <div
       className={`flex items-center rounded-lg border px-3 py-2.5 transition-all ${
-        isWeekend ? 'border-gray-200 bg-gray-50' : 'border-gray-100 bg-white'
+        isWeekend
+          ? 'border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/30'
+          : 'border-gray-100 bg-white dark:border-gray-700 dark:bg-gray-800/50'
       }`}
       style={{ display: 'flex', alignItems: 'center', marginBottom: '6px' }}
     >
@@ -33,7 +36,7 @@ function MobileScheduleCard({ item }: { item: ScheduleDetailType }) {
       </span>
       {/* Date - grows */}
       <span
-        className="ml-2 flex-1 text-sm font-medium text-gray-700"
+        className="ml-2 flex-1 text-sm font-medium text-gray-700 dark:text-gray-300"
         style={{ flex: 1, marginLeft: '8px' }}
       >
         {date.format('DD/MM')}
@@ -60,7 +63,9 @@ function MobileScheduleCard({ item }: { item: ScheduleDetailType }) {
         >
           {legend ? legend.icon : <span className="text-gray-300">-</span>}
         </span>
-        <span className="text-[12px] text-gray-500">{legend?.label ?? ''}</span>
+        <span className="text-sm text-gray-500 dark:text-gray-400">
+          {legend?.label ?? ''}
+        </span>
       </div>
     </div>
   );
@@ -118,7 +123,7 @@ export const ScheduleDetailContent = ({
 }: ScheduleDetailContentProps) => {
   const { isMobile } = useStore(uiStore);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, isFetching, refetch } = useQuery({
     queryKey: ['empScheduleDetail', scheduleId],
     queryFn: async () => {
       const response = await axiosPrivate.get<
@@ -142,6 +147,11 @@ export const ScheduleDetailContent = ({
 
   return (
     <div className="space-y-4">
+      <QueryErrorNotice
+        isError={isError}
+        isFetching={isFetching}
+        onRetry={refetch}
+      />
       {/* ── Legend ──────────────────────────────────────────── */}
       <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800/50">
         <h3 className="mb-3 text-xs font-semibold tracking-wide text-gray-400 uppercase dark:text-gray-500">
@@ -162,7 +172,7 @@ export const ScheduleDetailContent = ({
       {/* ── Schedule Detail ──────────────────────────────────── */}
       <div className="rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800/50">
         {/* Month header */}
-        <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 dark:border-gray-700">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 px-4 py-3 dark:border-gray-700">
           <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
             📅 Chi tiết lịch làm việc
           </h3>
@@ -195,7 +205,8 @@ export const ScheduleDetailContent = ({
               </div>
             )
           ) : (
-            !isLoading && (
+            !isLoading &&
+            !isError && (
               <div className="p-6">
                 <Empty description="Không có dữ liệu" />
               </div>

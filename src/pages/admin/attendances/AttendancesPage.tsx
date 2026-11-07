@@ -1,7 +1,9 @@
+import QueryErrorNotice from '@components/common/QueryErrorNotice';
 import AppSearchInput from '@/components/common/AppSearchInput';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import {
   DatePicker,
+  Empty,
   Pagination,
   Select,
   Spin,
@@ -14,7 +16,7 @@ import {
   Tooltip
 } from 'antd';
 import { debounce } from 'lodash';
-import { useState } from 'react';
+import { useEffect, useId, useMemo, useState } from 'react';
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
 
@@ -53,6 +55,7 @@ import { useAttendanceMonth } from '@/hooks/useAttendanceMonth';
 import { OvertimeApprovalStatus } from '@/components/attendances/OvertimeApprovalStatus';
 import { OvertimeApprovalActions } from '@/components/attendances/OvertimeApprovalActions';
 import type { OvertimeApproval } from '@/utils/overtimeApproval';
+import { hasMissingOvertimeRequest } from '@/utils/missingOvertimeRequests';
 import {
   getAttendanceWindow,
   isCurrentAttendanceDate,
@@ -135,14 +138,19 @@ function FilterBar({
   monthValue,
   rangeValue
 }: FilterBarProps) {
+  const filterId = useId();
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
       <div className="flex flex-col gap-1">
-        <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
+        <label
+          htmlFor={`${filterId}-month`}
+          className="text-xs font-medium text-gray-500 dark:text-gray-400"
+        >
           <FaCalendarAlt className="mr-1 inline-block text-blue-500" />
           Tháng
         </label>
         <DatePicker
+          id={`${filterId}-month`}
           picker="month"
           disabledDate={isOutsideAttendanceWindow}
           format="MM/YYYY"
@@ -154,12 +162,16 @@ function FilterBar({
         />
       </div>
       <div className="flex flex-col gap-1">
-        <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
+        <label
+          htmlFor={`${filterId}-start`}
+          className="text-xs font-medium text-gray-500 dark:text-gray-400"
+        >
           <FaClock className="mr-1 inline-block text-purple-500" />
           Khoảng thời gian
         </label>
         <DatePicker.RangePicker
-          format="MM/YYYY"
+          id={{ start: `${filterId}-start`, end: `${filterId}-end` }}
+          format="DD/MM/YYYY"
           disabledDate={isOutsideAttendanceWindow}
           placeholder={['Từ ngày', 'Đến ngày']}
           inputReadOnly={false}
@@ -175,11 +187,15 @@ function FilterBar({
         />
       </div>
       <div className="flex flex-col gap-1">
-        <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
+        <label
+          htmlFor={`${filterId}-category`}
+          className="text-xs font-medium text-gray-500 dark:text-gray-400"
+        >
           <FaUsers className="mr-1 inline-block text-emerald-500" />
           Danh mục
         </label>
         <Select
+          id={`${filterId}-category`}
           options={categoryOptions}
           placeholder="Chọn danh mục"
           popupMatchSelectWidth={false}
@@ -190,10 +206,14 @@ function FilterBar({
         />
       </div>
       <div className="flex flex-col gap-1">
-        <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
+        <label
+          htmlFor={`${filterId}-search`}
+          className="text-xs font-medium text-gray-500 dark:text-gray-400"
+        >
           🔍 Tìm kiếm
         </label>
         <AppSearchInput
+          id={`${filterId}-search`}
           placeholder="Mã hoặc tên nhân viên..."
           onChange={(e) => {
             const inputValue = e.target.value;
@@ -225,7 +245,7 @@ function HistoryTab() {
   const {
     data: attendances,
     pagination,
-    queryResult: { isLoading, isFetching, refetch }
+    queryResult: { isLoading, isFetching, isError, refetch }
   } = useCrudList({
     service: attendanceService,
     queryKey: 'attendances',
@@ -239,27 +259,19 @@ function HistoryTab() {
     staleTime: 5 * 60 * 1000
   });
 
-  const handleSearch = debounce((value: string, type: 'name' | 'code') => {
-    setParams((prev) => ({
-      ...prev,
-      'filter[employees.id]': undefined,
-      'filter[employees.name]': undefined
-    }));
-    if (!value) {
-      return;
-    }
-    if (type == 'name') {
-      setParams((prev) => ({
-        ...prev,
-        'filter[employees.name]': value ? value : undefined
-      }));
-    } else if (type == 'code') {
-      setParams((prev) => ({
-        ...prev,
-        'filter[employees.id]': value ? value : undefined
-      }));
-    }
-  }, 500);
+  const handleSearch = useMemo(
+    () =>
+      debounce((value: string, type: 'name' | 'code') => {
+        setParams((prev) => ({
+          ...prev,
+          page: 1,
+          'filter[employees.id]': type === 'code' && value ? value : undefined,
+          'filter[employees.name]': type === 'name' && value ? value : undefined
+        }));
+      }, 500),
+    []
+  );
+  useEffect(() => () => handleSearch.cancel(), [handleSearch]);
 
   const handleChange: TableProps<HistoryTableColumns>['onChange'] = (
     pagination,
@@ -441,19 +453,18 @@ function HistoryTab() {
   return (
     <div className="space-y-5">
       {/* Action Bar */}
-      <div className="flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/50">
+      <QueryErrorNotice
+        isError={isError}
+        isFetching={isFetching}
+        onRetry={refetch}
+      />
+      <div className="ui-toolbar flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/50">
         <RefreshButton
           refresh={() => {
             refetch();
             refetchCategories();
           }}
           isLoading={isFetching}
-        />
-        <CreateModal
-          title="Thêm dữ liệu chấm công"
-          service={attendanceService}
-          schema={attendanceSchema}
-          fields={useAttendanceCreateFields()}
         />
       </div>
 
@@ -603,6 +614,8 @@ function RecordsTab() {
     'filter[date_between]': `${getAttendanceWindow().month.format('YYYY-MM-DD')},${getAttendanceWindow().end.format('YYYY-MM-DD')}`
   });
   const [forgottenDays, setForgottenDays] = useState<boolean>(false);
+  const [missingOvertimeRequests, setMissingOvertimeRequests] = useState(false);
+  const hasLocalFilter = forgottenDays || missingOvertimeRequests;
   const [month, setMonth] = useState<Dayjs>(getAttendanceWindow().month);
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs] | null>(null);
   const [filterType, setFilterType] = useState<'month' | 'range'>('month');
@@ -621,6 +634,7 @@ function RecordsTab() {
     data: response,
     isLoading,
     isFetching,
+    isError,
     refetch
   } = useQuery({
     queryKey: ['attendances', params],
@@ -647,30 +661,19 @@ function RecordsTab() {
     pagination: { total: 0, pageSize: params.limit, current: params.page }
   };
 
-  const handleSearch = debounce((value: string, type: 'name' | 'code') => {
-    setParams((prev) => ({
-      ...prev,
-      page: 1,
-      'filter[employee_id]': undefined,
-      'filter[employees.name]': undefined
-    }));
-    if (!value) {
-      return;
-    }
-    if (type == 'name') {
-      setParams((prev) => ({
-        ...prev,
-        page: 1,
-        'filter[employees.name]': value ? value : undefined
-      }));
-    } else if (type == 'code') {
-      setParams((prev) => ({
-        ...prev,
-        page: 1,
-        'filter[employee_id]': value ? value : undefined
-      }));
-    }
-  }, 300);
+  const handleSearch = useMemo(
+    () =>
+      debounce((value: string, type: 'name' | 'code') => {
+        setParams((prev) => ({
+          ...prev,
+          page: 1,
+          'filter[employee_id]': type === 'code' && value ? value : undefined,
+          'filter[employees.name]': type === 'name' && value ? value : undefined
+        }));
+      }, 300),
+    []
+  );
+  useEffect(() => () => handleSearch.cancel(), [handleSearch]);
 
   const handleChange: TableProps<RecordTableColumns>['onChange'] = (
     pagination,
@@ -779,8 +782,13 @@ function RecordsTab() {
       dataIndex: 'time_in',
       key: 'time_in',
       align: 'center',
-      render: (value) => {
-        if (!value) return <span className="text-gray-300">—</span>;
+      render: (value, record) => {
+        if (!value)
+          return record.shift > 0 && !isCurrentAttendanceDate(record.date) ? (
+            <Tag color="error">Thiếu giờ vào</Tag>
+          ) : (
+            <span className="text-gray-400">—</span>
+          );
         return (
           <Tag color="green" className="!text-xs">
             {new Date(value).toLocaleString('vi-VN', {
@@ -797,8 +805,13 @@ function RecordsTab() {
       dataIndex: 'time_out',
       key: 'time_out',
       align: 'center',
-      render: (value) => {
-        if (!value) return <span className="text-gray-300">—</span>;
+      render: (value, record) => {
+        if (!value)
+          return record.shift > 0 && !isCurrentAttendanceDate(record.date) ? (
+            <Tag color="error">Thiếu giờ ra</Tag>
+          ) : (
+            <span className="text-gray-400">—</span>
+          );
         return (
           <Tag color="orange" className="!text-xs">
             {new Date(value).toLocaleString('vi-VN', {
@@ -825,15 +838,13 @@ function RecordsTab() {
       ),
       dataIndex: 'total_hours',
       key: 'total_hours',
-      align: 'center',
+      align: 'right',
       render: (value, record) => {
         if (!record.shift) return <span className="text-gray-300">—</span>;
         return value ? (
           <span className="font-semibold text-blue-600">{value}</span>
-        ) : isCurrentAttendanceDate(record.date) ? (
-          <span className="text-gray-400">—</span>
         ) : (
-          <Tag color="red">Chấm công chưa đủ</Tag>
+          <span className="text-gray-400">—</span>
         );
       }
     },
@@ -845,17 +856,14 @@ function RecordsTab() {
       ),
       dataIndex: 'administrative_hours',
       key: 'administrative_hours',
-      align: 'center',
+      align: 'right',
       render: (_value, record) => {
         if (!record.shift) return <span className="text-gray-300">—</span>;
         const displayHours = getDisplayAdministrativeHours(record);
         return displayHours ? (
           <span className="font-semibold text-emerald-600">{displayHours}</span>
-        ) : isAdditionalShift(record.hnhc) ||
-          isCurrentAttendanceDate(record.date) ? (
-          <span className="text-gray-300">—</span>
         ) : (
-          <Tag color="red">Chấm công chưa đủ</Tag>
+          <span className="text-gray-400">—</span>
         );
       }
     },
@@ -867,12 +875,12 @@ function RecordsTab() {
       ),
       dataIndex: 'overtime_hours',
       key: 'overtime_hours',
-      align: 'center',
-      width: 320,
+      align: 'right',
+      width: forgottenDays ? 180 : 320,
       render: (_value, record) => {
         const displayHours = getDisplayOvertimeHours(record);
         return (
-          <div className="flex flex-col items-center justify-center gap-1">
+          <div className="flex flex-col items-end justify-center gap-1">
             <span className="font-semibold text-amber-600">
               {displayHours || '—'}
             </span>
@@ -913,20 +921,28 @@ function RecordsTab() {
     return false;
   });
 
+  const visibleAttendances = forgottenDays
+    ? forgetAttendance
+    : missingOvertimeRequests
+      ? attendances.filter(hasMissingOvertimeRequest)
+      : attendances;
+
   const tableProps: TableProps<RecordTableColumns> = {
     ...(customTableProps as unknown as TableProps<RecordTableColumns>),
     rowKey: (record) =>
       ['attendances', 'sheet', record.employee_id, record.date].join('-'),
     columns: columns,
-    dataSource: forgottenDays ? forgetAttendance : attendances,
-    loading: isLoading,
+    dataSource: visibleAttendances,
+    loading: isLoading || isFetching,
     pagination: {
       ...customTableProps.pagination,
-      current: pagination.current,
-      pageSize: forgottenDays ? forgetAttendance.length : pagination.pageSize,
-      total: forgottenDays ? forgetAttendance.length : pagination.total,
-      pageSizeOptions: forgottenDays
-        ? [forgetAttendance.length.toString()]
+      current: hasLocalFilter ? 1 : pagination.current,
+      pageSize: hasLocalFilter
+        ? Math.max(1, visibleAttendances.length)
+        : pagination.pageSize,
+      total: hasLocalFilter ? visibleAttendances.length : pagination.total,
+      pageSizeOptions: hasLocalFilter
+        ? [Math.max(1, visibleAttendances.length).toString()]
         : ['10', '20', '50', '100', '200', '500'],
       onShowSizeChange: (_current, size) => {
         setParams((prev) => ({
@@ -954,7 +970,12 @@ function RecordsTab() {
   return (
     <div className="space-y-5">
       {/* Action Bar */}
-      <div className="flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/50">
+      <QueryErrorNotice
+        isError={isError}
+        isFetching={isFetching}
+        onRetry={refetch}
+      />
+      <div className="ui-toolbar flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/50">
         <RefreshButton
           refresh={() => {
             refetch();
@@ -1027,20 +1048,24 @@ function RecordsTab() {
       </div>
 
       {/* Forgotten Days Toggle */}
-      <div className="flex items-center gap-3 rounded-xl border border-amber-100 bg-gradient-to-r from-amber-50 to-orange-50 px-4 py-3 dark:border-amber-900/50 dark:from-amber-900/20 dark:to-orange-900/20">
+      <div className="flex flex-wrap items-center gap-3 rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 dark:border-amber-900/50 dark:bg-amber-900/20">
         <Switch
           id="forgotten-days-switch"
           size="small"
+          checked={forgottenDays}
           onChange={(checked) => {
             setForgottenDays(checked);
+            setMissingOvertimeRequests(false);
             if (checked) {
               setParams((prev) => ({
                 ...prev,
+                page: 1,
                 limit: 0
               }));
             } else {
               setParams((prev) => ({
                 ...prev,
+                page: 1,
                 limit: 50
               }));
             }
@@ -1050,161 +1075,189 @@ function RecordsTab() {
           htmlFor="forgotten-days-switch"
           className="cursor-pointer text-sm font-medium text-amber-800 dark:text-amber-200"
         >
-          ⚠️ Hiển thị những ngày quên chấm công
+          Hiển thị những ngày quên chấm công
         </label>
-        {forgottenDays && (
+        <Switch
+          id="missing-overtime-requests-switch"
+          size="small"
+          checked={missingOvertimeRequests}
+          onChange={(checked) => {
+            setMissingOvertimeRequests(checked);
+            setForgottenDays(false);
+            setParams((prev) => ({
+              ...prev,
+              page: 1,
+              limit: checked ? 0 : 50
+            }));
+          }}
+        />
+        <label
+          htmlFor="missing-overtime-requests-switch"
+          className="cursor-pointer text-sm font-medium text-amber-800 dark:text-amber-200"
+        >
+          Chưa có đơn tăng ca
+        </label>
+        {hasLocalFilter && (
           <Tag color="warning" className="ml-auto !text-xs">
-            {forgetAttendance.length} ngày quên
+            {isFetching
+              ? 'Đang cập nhật…'
+              : `${visibleAttendances.length} dòng chấm công`}
           </Tag>
         )}
       </div>
 
       {/* Table */}
       {isMobile ? (
-        <Spin spinning={isLoading}>
+        <Spin spinning={isLoading || isFetching}>
           <div className="flex flex-col gap-3">
-            {(forgottenDays ? forgetAttendance : attendances).map(
-              (record, index) => {
-                const isSunday = record.date
-                  ? new Date(record.date).getDay() === 0
-                  : false;
-                return (
-                  <div
-                    key={[
-                      'attendances',
-                      'sheet',
-                      record.employee_id,
-                      record.date
-                    ].join('-')}
-                    className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800"
-                  >
-                    <div className="mb-2 flex items-center gap-2">
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[10px] font-bold text-blue-600 dark:bg-blue-900/40 dark:text-blue-400">
-                        {index +
-                          1 +
-                          (params.limit ?? 50) * ((params.page ?? 1) - 1)}
+            {!isLoading &&
+              !isFetching &&
+              !isError &&
+              visibleAttendances.length === 0 && (
+                <Empty description="Không có dữ liệu chấm công phù hợp với bộ lọc." />
+              )}
+            {visibleAttendances.map((record, index) => {
+              const isSunday = record.date
+                ? new Date(record.date).getDay() === 0
+                : false;
+              return (
+                <div
+                  key={[
+                    'attendances',
+                    'sheet',
+                    record.employee_id,
+                    record.date
+                  ].join('-')}
+                  className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+                >
+                  <div className="mb-2 flex items-center gap-2">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[10px] font-bold text-blue-600 dark:bg-blue-900/40 dark:text-blue-400">
+                      {index +
+                        1 +
+                        (params.limit ?? 50) * ((params.page ?? 1) - 1)}
+                    </span>
+                    <span className="line-clamp-1 text-[15px] font-semibold text-gray-800 dark:text-white/90">
+                      {record.name || (
+                        <span className="text-gray-400 italic">
+                          Chưa có thông tin
+                        </span>
+                      )}
+                    </span>
+                    <Tag
+                      color="blue"
+                      className="!m-0 ml-auto !font-mono !text-xs"
+                    >
+                      {record.employee_id}
+                    </Tag>
+                  </div>
+                  <div className="space-y-1 pl-8 text-[13px] text-gray-500">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={isSunday ? 'font-medium text-red-500' : ''}
+                      >
+                        {record.date
+                          ? new Date(record.date).toLocaleDateString('vi-VN', {
+                              weekday: 'long',
+                              day: '2-digit',
+                              month: '2-digit',
+                              year: 'numeric'
+                            })
+                          : '—'}
                       </span>
-                      <span className="line-clamp-1 text-[15px] font-semibold text-gray-800 dark:text-white/90">
-                        {record.name || (
-                          <span className="text-gray-400 italic">
-                            Chưa có thông tin
-                          </span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span>
+                        Vào:{' '}
+                        {record.time_in ? (
+                          <Tag color="green" className="!m-0 !text-xs">
+                            {new Date(record.time_in).toLocaleTimeString(
+                              'vi-VN',
+                              {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                second: '2-digit'
+                              }
+                            )}
+                          </Tag>
+                        ) : record.shift > 0 &&
+                          !isCurrentAttendanceDate(record.date) ? (
+                          <Tag color="error">Thiếu giờ vào</Tag>
+                        ) : (
+                          <span className="text-gray-400">—</span>
                         )}
                       </span>
-                      <Tag
-                        color="blue"
-                        className="!m-0 ml-auto !font-mono !text-xs"
-                      >
-                        {record.employee_id}
-                      </Tag>
-                    </div>
-                    <div className="space-y-1 pl-8 text-[13px] text-gray-500">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={isSunday ? 'font-medium text-red-500' : ''}
-                        >
-                          {record.date
-                            ? new Date(record.date).toLocaleDateString(
-                                'vi-VN',
-                                {
-                                  weekday: 'long',
-                                  day: '2-digit',
-                                  month: '2-digit',
-                                  year: 'numeric'
-                                }
-                              )
-                            : '—'}
-                        </span>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span>
-                          Vào:{' '}
-                          {record.time_in ? (
-                            <Tag color="green" className="!m-0 !text-xs">
-                              {new Date(record.time_in).toLocaleTimeString(
-                                'vi-VN',
-                                {
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                  second: '2-digit'
-                                }
-                              )}
-                            </Tag>
-                          ) : (
-                            <span className="text-gray-300">—</span>
-                          )}
-                        </span>
-                        <span>
-                          Ra:{' '}
-                          {record.time_out ? (
-                            <Tag color="orange" className="!m-0 !text-xs">
-                              {new Date(record.time_out).toLocaleTimeString(
-                                'vi-VN',
-                                {
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                  second: '2-digit'
-                                }
-                              )}
-                            </Tag>
-                          ) : (
-                            <span className="text-gray-300">—</span>
-                          )}
-                        </span>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        {getDayTypeTag(record)}
-                        {record.total_hours ? (
-                          <span>
-                            Tổng:{' '}
-                            <strong className="text-blue-600">
-                              {record.total_hours}h
-                            </strong>
-                          </span>
-                        ) : record.shift &&
-                          !isCurrentAttendanceDate(record.date) ? (
-                          <Tag color="red" className="!text-xs">
-                            Chấm công chưa đủ
+                      <span>
+                        Ra:{' '}
+                        {record.time_out ? (
+                          <Tag color="orange" className="!m-0 !text-xs">
+                            {new Date(record.time_out).toLocaleTimeString(
+                              'vi-VN',
+                              {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                second: '2-digit'
+                              }
+                            )}
                           </Tag>
-                        ) : null}
-                        {getDisplayAdministrativeHours(record) ? (
-                          <span>
-                            Chính:{' '}
-                            <strong className="text-emerald-600">
-                              {getDisplayAdministrativeHours(record)}h
-                            </strong>
-                          </span>
-                        ) : null}
-                        {getDisplayOvertimeHours(record) ? (
-                          <span>
-                            TC:{' '}
-                            <strong className="text-amber-600">
-                              {getDisplayOvertimeHours(record)}h
-                            </strong>
-                          </span>
-                        ) : null}
-                        <OvertimeApprovalStatus
-                          date={record.date}
-                          hours={getDisplayOvertimeHours(record)}
-                          approval={record.overtime_approval}
-                        />
-                        <OvertimeApprovalActions record={record} />
-                      </div>
+                        ) : record.shift > 0 &&
+                          !isCurrentAttendanceDate(record.date) ? (
+                          <Tag color="error">Thiếu giờ ra</Tag>
+                        ) : (
+                          <span className="text-gray-400">—</span>
+                        )}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {getDayTypeTag(record)}
+                      {record.total_hours ? (
+                        <span>
+                          Tổng:{' '}
+                          <strong className="text-blue-600">
+                            {record.total_hours}h
+                          </strong>
+                        </span>
+                      ) : null}
+                      {getDisplayAdministrativeHours(record) ? (
+                        <span>
+                          Chính:{' '}
+                          <strong className="text-emerald-600">
+                            {getDisplayAdministrativeHours(record)}h
+                          </strong>
+                        </span>
+                      ) : null}
+                      {getDisplayOvertimeHours(record) ? (
+                        <span>
+                          TC:{' '}
+                          <strong className="text-amber-600">
+                            {getDisplayOvertimeHours(record)}h
+                          </strong>
+                        </span>
+                      ) : null}
+                      <OvertimeApprovalStatus
+                        date={record.date}
+                        hours={getDisplayOvertimeHours(record)}
+                        approval={record.overtime_approval}
+                      />
+                      <OvertimeApprovalActions record={record} />
                     </div>
                   </div>
-                );
-              }
-            )}
+                </div>
+              );
+            })}
           </div>
           <div className="mt-4 flex justify-end">
             <Pagination
               {...customPaginationProps}
               size="small"
-              current={pagination.current}
+              current={hasLocalFilter ? 1 : pagination.current}
               pageSize={
-                forgottenDays ? forgetAttendance.length : pagination.pageSize
+                hasLocalFilter
+                  ? Math.max(1, visibleAttendances.length)
+                  : pagination.pageSize
               }
-              total={forgottenDays ? forgetAttendance.length : pagination.total}
+              total={
+                hasLocalFilter ? visibleAttendances.length : pagination.total
+              }
               onChange={(page, size) => {
                 setParams((prev) => ({ ...prev, page, limit: size }));
               }}
@@ -1214,7 +1267,7 @@ function RecordsTab() {
       ) : (
         <Table<RecordTableColumns>
           {...tableProps}
-          className="[&_.ant-table-tbody>.ant-table-row>td]:!h-24 [&_.ant-table-tbody>.ant-table-row>td]:!px-3 [&_.ant-table-tbody>.ant-table-row>td]:!py-2 [&_.ant-table-tbody>.ant-table-row>td]:!align-middle [&_.ant-table-tbody>.ant-table-row>th]:!h-24 [&_.ant-table-tbody>.ant-table-row>th]:!align-middle [&_.ant-tag]:!mr-0"
+          className="ui-data-table [&_.ant-table-tbody>.ant-table-row>td]:!align-middle [&_.ant-table-tbody>.ant-table-row>th]:!align-middle [&_.ant-tag]:!mr-0"
         />
       )}
     </div>
@@ -1227,10 +1280,17 @@ function RecordsTab() {
 
 export default function AttendancesPage() {
   const monthKey = useAttendanceMonth();
+  const attendanceCreateFields = useAttendanceCreateFields();
   return (
-    <ComponentCard title="Quản lý chấm công">
-      <div className="mb-4">
+    <ComponentCard title="Quản lý chấm công" headingLevel={1}>
+      <div className="ui-toolbar mb-4 flex flex-wrap items-center gap-3">
         <AttendanceImportButton />
+        <CreateModal
+          title="Thêm dữ liệu chấm công"
+          service={attendanceService}
+          schema={attendanceSchema}
+          fields={attendanceCreateFields}
+        />
       </div>
       <Tabs
         key={monthKey}

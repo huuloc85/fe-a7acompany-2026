@@ -62,7 +62,7 @@ const StatItem: React.FC<{
   value: string | number;
   color?: string;
 }> = ({ label, value, color = 'text-gray-900 dark:text-white' }) => (
-  <div className="rounded-lg bg-gray-50 px-2 py-1.5 dark:bg-gray-700/40">
+  <div className="ui-record-stat rounded-lg bg-gray-50 px-2 py-1.5 dark:bg-gray-700/40">
     <div className="text-[11px] leading-tight text-gray-500 dark:text-gray-400">
       {label}
     </div>
@@ -109,7 +109,7 @@ const TotalMobileCard: React.FC<{
   });
 
   return (
-    <div className="rounded-xl border border-gray-100 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+    <div className="ui-record-card rounded-xl border border-gray-100 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
       {/* ── Header ── */}
       <div className="flex items-start gap-3 p-3">
         <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-xs font-bold text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
@@ -185,6 +185,8 @@ const TotalMobileCard: React.FC<{
       {/* ── Expand toggle ── */}
       <button
         onClick={() => setExpanded(!expanded)}
+        type="button"
+        aria-expanded={expanded}
         className="flex w-full items-center justify-center gap-1.5 border-t border-gray-100 py-2 text-xs font-medium text-gray-400 transition-colors hover:text-gray-600 dark:border-gray-700 dark:text-gray-500"
       >
         {expanded ? (
@@ -409,7 +411,7 @@ export const TotalTable: React.FC<TotalTableProps> = ({
       title: <TotalHeaderTitle lines={['Sản Lượng', '(MOQ)']} />,
       width: 100,
       className: 'bg-indigo-300',
-      align: 'center',
+      align: 'right',
       dataIndex: 'stockMOQ',
       render: (value) => {
         if (!value) return 0;
@@ -420,7 +422,7 @@ export const TotalTable: React.FC<TotalTableProps> = ({
       title: <TotalHeaderTitle lines={['Thùng', 'CATON/tháng', '(MOQ)']} />,
       width: 120,
       className: 'bg-indigo-300',
-      align: 'center',
+      align: 'right',
       dataIndex: 'catonQuantity',
       render: (value) => {
         if (!value) return 0;
@@ -440,7 +442,7 @@ export const TotalTable: React.FC<TotalTableProps> = ({
         />
       ),
       width: 200,
-      align: 'center',
+      align: 'right',
       dataIndex: 'planTime',
       render: (value) => {
         if (!value) return 0;
@@ -462,7 +464,7 @@ export const TotalTable: React.FC<TotalTableProps> = ({
         />
       ),
       width: 200,
-      align: 'center',
+      align: 'right',
       dataIndex: 'realTime',
       render: (value) => {
         if (!value) return 0;
@@ -507,7 +509,7 @@ export const TotalTable: React.FC<TotalTableProps> = ({
     {
       title: <TotalHeaderTitle lines={['Số lượng', 'tồn đầu kỳ']} />,
       width: 100,
-      align: 'center',
+      align: 'right',
       dataIndex: 'stockStartQuantity',
       render: (value) => {
         if (!value) return 0;
@@ -519,7 +521,7 @@ export const TotalTable: React.FC<TotalTableProps> = ({
         <TotalHeaderTitle lines={['Thực tế', 'sản xuất', '(cái/tháng)']} />
       ),
       width: 100,
-      align: 'center',
+      align: 'right',
       dataIndex: 'realityQuantity',
       render: (value) => {
         if (!value) return 0;
@@ -529,7 +531,7 @@ export const TotalTable: React.FC<TotalTableProps> = ({
     {
       title: <TotalHeaderTitle lines={['Số Lượng', 'đã xuất']} />,
       width: 100,
-      align: 'center',
+      align: 'right',
       dataIndex: 'exportQuantity',
       render: (value) => {
         if (!value) return 0;
@@ -539,7 +541,7 @@ export const TotalTable: React.FC<TotalTableProps> = ({
     {
       title: <TotalHeaderTitle lines={['Số lượng', 'đã kiểm', '200%']} />,
       width: 100,
-      align: 'center',
+      align: 'right',
       dataIndex: 'checked200',
       render: (value) => {
         if (!value) return 0;
@@ -549,7 +551,7 @@ export const TotalTable: React.FC<TotalTableProps> = ({
     {
       title: <TotalHeaderTitle lines={['Số lượng', 'chưa kiểm', '200%']} />,
       width: 100,
-      align: 'center',
+      align: 'right',
       dataIndex: 'notCheck200',
       render: (value) => {
         if (!value) return 0;
@@ -559,7 +561,7 @@ export const TotalTable: React.FC<TotalTableProps> = ({
     {
       title: <TotalHeaderTitle lines={['Số lượng', 'tồn cuối kỳ']} />,
       width: 100,
-      align: 'center',
+      align: 'right',
       dataIndex: 'stockEndQuantity',
       render: (value) => {
         if (!value) return 0;
@@ -569,7 +571,7 @@ export const TotalTable: React.FC<TotalTableProps> = ({
     {
       title: <TotalHeaderTitle lines={['Số ngày', 'tồn kho']} />,
       width: 100,
-      align: 'center',
+      align: 'right',
       dataIndex: 'storageTime',
       render: (value) => {
         if (!value) return 0;

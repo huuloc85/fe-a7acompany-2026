@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Card, Space, Typography, Button, Alert, Row, Col, Tag } from 'antd';
+import { Card, Space, Typography, Alert, Row, Col, Tag } from 'antd';
+import Button from '@components/common/AppButton';
 import {
   BellOutlined,
   CalendarOutlined,
@@ -108,6 +109,7 @@ export default function NotificationDemo() {
                   <Text strong>Hành động:</Text>
                   <Space>
                     <Button
+                      tone="inherit"
                       size="small"
                       disabled={permission !== 'granted'}
                       icon={<ExperimentOutlined />}
@@ -142,6 +144,7 @@ export default function NotificationDemo() {
                       Test giao diện chúc mừng sinh nhật với 1 nhân sự.
                     </Text>
                     <Button
+                      tone="inherit"
                       type="primary"
                       icon={<GiftOutlined />}
                       onClick={() => setActiveModal('birthday')}
@@ -161,6 +164,7 @@ export default function NotificationDemo() {
                       Test nội dung khi user hiện tại là người sinh nhật.
                     </Text>
                     <Button
+                      tone="inherit"
                       type="primary"
                       icon={<GiftOutlined />}
                       onClick={() => setActiveModal('birthday-self')}
@@ -180,6 +184,7 @@ export default function NotificationDemo() {
                       Test danh sách nhiệm vụ trực hôm nay và sắp tới.
                     </Text>
                     <Button
+                      tone="inherit"
                       type="primary"
                       icon={<CalendarOutlined />}
                       onClick={() => setActiveModal('cleaning-duty')}
@@ -199,6 +204,7 @@ export default function NotificationDemo() {
                       Test popup lời chào ngày lễ đang dùng trong layout.
                     </Text>
                     <Button
+                      tone="inherit"
                       type="primary"
                       icon={<NotificationOutlined />}
                       onClick={() => setActiveModal('holiday')}
@@ -218,6 +224,7 @@ export default function NotificationDemo() {
                       Test popup xin quyền thông báo trình duyệt.
                     </Text>
                     <Button
+                      tone="inherit"
                       type="primary"
                       icon={<BellOutlined />}
                       onClick={() => setActiveModal('notification')}
@@ -234,6 +241,7 @@ export default function NotificationDemo() {
         <ComponentCard title="Test Quyền Thông Báo" uppercaseTitle={false}>
           <Space wrap>
             <Button
+              tone="inherit"
               icon={<ExperimentOutlined />}
               disabled={permission !== 'granted'}
               onClick={handleTestNotification}
@@ -242,6 +250,7 @@ export default function NotificationDemo() {
             </Button>
 
             <Button
+              tone="inherit"
               icon={<BellOutlined />}
               loading={isLoading}
               onClick={handleRequestPermission}

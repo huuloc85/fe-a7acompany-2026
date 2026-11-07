@@ -1,9 +1,9 @@
+import QueryErrorNotice from '@components/common/QueryErrorNotice';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useStore } from '@tanstack/react-store';
 import { authStore } from '@/stores/authStore';
 import { isAllowRole } from '@/utils/authUtil';
 import {
-  Alert,
   Empty,
   Modal,
   Radio,
@@ -92,7 +92,7 @@ export default function SalaryList() {
     }
   });
 
-  const { isLoading, isFetching, refetch } = queryResult;
+  const { isLoading, isFetching, isError, refetch } = queryResult;
 
   const salaries = useMemo(
     () =>
@@ -133,7 +133,8 @@ export default function SalaryList() {
     data: vvpSalaryData,
     isLoading: isVvpDetailLoading,
     isFetching: isVvpDetailFetching,
-    isError: isVvpDetailError
+    isError: isVvpDetailError,
+    refetch: refetchVvpDetail
   } = useQuery({
     queryKey: ['adminSalaryPreview', selectedSalaryId, 'vvp'],
     queryFn: () => fetchSalary({ id: selectedSalaryId!, company: 'vvp' }),
@@ -144,7 +145,8 @@ export default function SalaryList() {
     data: a7aSalaryData,
     isLoading: isA7aDetailLoading,
     isFetching: isA7aDetailFetching,
-    isError: isA7aDetailError
+    isError: isA7aDetailError,
+    refetch: refetchA7aDetail
   } = useQuery({
     queryKey: ['adminSalaryPreview', selectedSalaryId, 'a7a'],
     queryFn: () => fetchSalary({ id: selectedSalaryId!, company: 'a7a' }),
@@ -337,10 +339,21 @@ export default function SalaryList() {
       ) ??
       0;
 
+    const cash = [vvpSalaryData?.snapshot, a7aSalaryData?.snapshot].reduce(
+      (sum, snapshot) =>
+        sum +
+        (snapshot?.rows.reduce(
+          (subtotal, row) => subtotal + (row.cashTotal ?? 0),
+          0
+        ) ?? 0),
+      0
+    );
+
     return {
       vvp,
       a7a,
-      total: vvp + a7a
+      cash,
+      total: vvp + a7a + cash
     };
   }, [a7aSalaryData, vvpSalaryData]);
 
@@ -461,8 +474,17 @@ export default function SalaryList() {
   ];
 
   return (
-    <ComponentCard title="Quản lý bảng lương" className="payroll-sticky-card">
+    <ComponentCard
+      title="Quản lý bảng lương"
+      headingLevel={1}
+      className="payroll-sticky-card"
+    >
       <div className="space-y-5">
+        <QueryErrorNotice
+          isError={isError}
+          isFetching={isFetching}
+          onRetry={refetch}
+        />
         {canViewDrafts && (
           <Tabs
             activeKey={salaryStatus}
@@ -482,7 +504,7 @@ export default function SalaryList() {
           />
         )}
         {/* ── Action Bar ────────────────────────────────────────── */}
-        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/50">
+        <div className="ui-toolbar flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/50">
           <RefreshButton refresh={refetch} isLoading={isFetching} />
           <Link to="/admin/salaries/calculate">
             <AppButton tone="primary" icon={<FaMoneyBillWave />}>
@@ -593,6 +615,16 @@ export default function SalaryList() {
                       {formatVND(selectedSalaryCompanyTotals.a7a)}
                     </span>
                   </div>
+                  {selectedSalaryCompanyTotals.cash !== 0 && (
+                    <div className="inline-flex items-center gap-2 rounded-lg border border-emerald-200 bg-white px-3 py-2 dark:border-emerald-800 dark:bg-gray-900">
+                      <span className="text-xs font-medium text-emerald-700 dark:text-emerald-300">
+                        Tăng cường tiền mặt
+                      </span>
+                      <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                        {formatVND(selectedSalaryCompanyTotals.cash)}
+                      </span>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -673,16 +705,13 @@ export default function SalaryList() {
             </div>
           </div>
 
-          {isDetailError && (
-            <div className="mb-4 rounded-xl border border-red-100 bg-red-50 p-4 dark:border-red-900/50 dark:bg-red-900/20">
-              <Alert
-                message="Không tải được thông tin bảng lương"
-                description="Vui lòng thử lại hoặc chọn kỳ lương khác."
-                type="error"
-                showIcon
-              />
-            </div>
-          )}
+          <QueryErrorNotice
+            isError={isDetailError}
+            isFetching={isVvpDetailFetching || isA7aDetailFetching}
+            onRetry={() =>
+              Promise.all([refetchVvpDetail(), refetchA7aDetail()])
+            }
+          />
 
           <Spin spinning={isDetailLoading}>
             {selectedSalaryData?.snapshot ? (
@@ -717,6 +746,20 @@ export default function SalaryList() {
                             );
                             draftToSave = {
                               ...full.snapshot,
+                              reconciliation: updated.reconciliation
+                                ? {
+                                    sourceTotals: {
+                                      ...full.snapshot.reconciliation
+                                        ?.sourceTotals,
+                                      ...updated.reconciliation.sourceTotals
+                                    },
+                                    pending: [
+                                      ...(full.snapshot.reconciliation
+                                        ?.pending ?? []),
+                                      ...updated.reconciliation.pending
+                                    ]
+                                  }
+                                : full.snapshot.reconciliation,
                               rows: [
                                 ...full.snapshot.rows.filter(
                                   (row) => !ids.has(row.profile.employeeId)

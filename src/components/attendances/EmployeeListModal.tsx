@@ -3,7 +3,8 @@ import dayjs from 'dayjs';
 import { useCrudList } from '@hooks/useCrudList';
 
 import { scheduleDetailService } from '@services/ScheduleDetailService';
-import { Button, DatePicker, Modal, Spin, Typography } from 'antd';
+import { DatePicker, Modal, Spin, Typography } from 'antd';
+import Button from '@components/common/AppButton';
 import { useState } from 'react';
 import { FaUsers } from 'react-icons/fa6';
 
@@ -33,6 +34,7 @@ export const EmployeeListModal = () => {
   return (
     <>
       <Button
+        tone="inherit"
         onClick={handleOpen}
         color="cyan"
         variant="solid"

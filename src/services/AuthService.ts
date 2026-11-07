@@ -4,6 +4,11 @@ import { queryClient } from '@/lib/queryClient';
 import { User } from '@/types/authType';
 import { Gender } from '@schemas/genderEnum.schema';
 import {
+  getEmployeePreview,
+  getActiveAuthToken,
+  clearEmployeePreview
+} from '@/utils/employeePreview';
+import {
   authStore,
   clearAuth,
   setAuthChannelName,
@@ -99,6 +104,10 @@ export const authLogin = async (
 };
 
 export const authLogout = async () => {
+  if (getEmployeePreview()) {
+    await stopEmployeePreview();
+    return { message: 'Đã kết thúc phiên xem' };
+  }
   try {
     await axiosPrivate.post('/api/logout');
 
@@ -131,7 +140,11 @@ export const authCheck = async () => {
   const checkedToken = authStore.state.token;
   const response: AuthResponse = await axiosPrivate.post('/api/auth/check');
   // Do not restore a session that was logged out/replaced during the request.
-  if (!checkedToken || authStore.state.token !== checkedToken) {
+  if (
+    !checkedToken ||
+    authStore.state.token !== checkedToken ||
+    getActiveAuthToken() !== checkedToken
+  ) {
     throw new Error('Phiên đăng nhập đã thay đổi. Vui lòng thử lại.');
   }
   const currentUser = authStore.state.user;
@@ -139,6 +152,7 @@ export const authCheck = async () => {
   // Session checks may omit permissions. An explicit [] still revokes all grants.
   const userData: User = {
     id: response.id ?? currentUser?.id ?? '',
+    is_preview: !!getEmployeePreview(),
     name: response.name ?? currentUser?.name ?? '',
     gender: response.gender ?? currentUser?.gender ?? ('male' as Gender),
     role: response.role_id
@@ -163,3 +177,15 @@ export const authCheck = async () => {
 
   return response;
 };
+
+export async function stopEmployeePreview() {
+  try {
+    await axiosPrivate.post('/api/employee-preview/stop', undefined, {
+      timeout: 5000
+    });
+  } finally {
+    clearEmployeePreview();
+    queryClient.clear();
+    window.location.replace('/admin/employees');
+  }
+}

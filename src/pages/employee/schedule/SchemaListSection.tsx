@@ -20,8 +20,8 @@ export const ScheduleWcListSection = ({
         dayjs(item.date).day() === 0 || dayjs(item.date).day() === 6;
       return (
         <List.Item
-          key={`${item}`}
-          className={`${isWeekend ? 'bg-gray-400 dark:bg-gray-100' : 'bg-white dark:bg-gray-500'}`}
+          key={`${item.schedule_id}-${item.employee_id}-${item.date}`}
+          className={`${isWeekend ? 'bg-gray-400 dark:bg-gray-800' : 'bg-white dark:bg-gray-900'}`}
         >
           <List.Item.Meta
             title={

@@ -3,7 +3,7 @@ export default function Blank() {
     <>
       <div className="mb-6 flex flex-wrap items-center gap-3 py-3 text-left sm:py-4">
         <h2
-          className="ui-page-title !m-0 text-xl leading-snug font-semibold text-gray-800 uppercase sm:text-2xl dark:text-white/90"
+          className="ui-page-title !m-0 text-[22px] leading-snug font-semibold text-gray-800 uppercase sm:text-[28px] dark:text-white/90"
           x-text="pageName"
         >
           Blank Page

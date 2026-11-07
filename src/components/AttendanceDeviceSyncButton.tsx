@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Alert, Button, Input, Modal } from 'antd';
+import { Alert, Input, Modal } from 'antd';
+import Button from '@components/common/AppButton';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   getAttendanceDeviceSyncStatus,
@@ -100,7 +101,11 @@ export default function AttendanceDeviceSyncButton({
           }
           action={
             statusQuery.isError ? (
-              <Button size="small" onClick={() => void statusQuery.refetch()}>
+              <Button
+                tone="inherit"
+                size="small"
+                onClick={() => void statusQuery.refetch()}
+              >
                 Tải lại
               </Button>
             ) : undefined
@@ -108,6 +113,7 @@ export default function AttendanceDeviceSyncButton({
         />
       )}
       <Button
+        tone="inherit"
         danger={deleting}
         onClick={() => {
           setConfirmationCode('');
@@ -230,7 +236,11 @@ export default function AttendanceDeviceSyncButton({
         {statusQuery.isError && (
           <p role="alert" className="mt-3 text-red-600">
             Không đọc được trạng thái trên host.{' '}
-            <Button size="small" onClick={() => void statusQuery.refetch()}>
+            <Button
+              tone="inherit"
+              size="small"
+              onClick={() => void statusQuery.refetch()}
+            >
               Tải lại
             </Button>
           </p>

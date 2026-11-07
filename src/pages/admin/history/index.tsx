@@ -293,7 +293,7 @@ export default function HistoryPage() {
     <ComponentCard title="Lịch sử hoạt động">
       <div className="space-y-5">
         {/* ── Action Bar ──────────────────────────────────────────── */}
-        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/50">
+        <div className="ui-toolbar flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/50">
           <RefreshButton
             isLoading={queryResult.isFetching}
             refresh={queryResult.refetch}

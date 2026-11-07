@@ -6,7 +6,8 @@ import {
   savePayslipTemplate,
   usePayslipTemplate
 } from '@components/salaries/payslipTemplate';
-import { Button, Input, Select, Switch } from 'antd';
+import { Input, Select, Switch } from 'antd';
+import Button from '@components/common/AppButton';
 import { useEffect, useState } from 'react';
 import { FaUndo, FaSave } from 'react-icons/fa';
 
@@ -119,10 +120,11 @@ export function PayslipTemplateEditor() {
       </div>
 
       <div className="mt-4 flex flex-wrap justify-end gap-2">
-        <Button icon={<FaUndo />} onClick={resetPayslipTemplate}>
+        <Button tone="inherit" icon={<FaUndo />} onClick={resetPayslipTemplate}>
           Mặc định
         </Button>
         <Button
+          tone="inherit"
           type="primary"
           icon={<FaSave />}
           onClick={() => savePayslipTemplate(draftTemplate)}

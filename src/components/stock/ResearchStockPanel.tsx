@@ -1,5 +1,6 @@
 import React from 'react';
-import { Button, Select, Tag } from 'antd';
+import { Select, Tag } from 'antd';
+import Button from '@components/common/AppButton';
 import { SearchOutlined } from '@ant-design/icons';
 
 export interface ResearchStockResult {
@@ -98,6 +99,7 @@ const ResearchStockPanel: React.FC<ResearchStockPanelProps> = ({
           }
         />
         <Button
+          tone="inherit"
           type="primary"
           size="large"
           loading={loading}

@@ -3,7 +3,8 @@ import ComponentCard from '@components/common/ComponentCard';
 import { customFormProps } from '@components/custom/FormProps.custom';
 import { createNotification } from '@services/NotificationService';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Button, Form, FormProps, Input, message } from 'antd';
+import { Form, FormProps, Input, message } from 'antd';
+import Button from '@components/common/AppButton';
 import { NotificationTable } from './NotificationTable';
 
 type FormFields = NotificationCreateType;
@@ -59,7 +60,12 @@ export const AddNotification = () => {
           <Input placeholder="Nhập thông báo" />
         </Form.Item>
         <Form.Item>
-          <Button htmlType="submit" variant="solid" color="green">
+          <Button
+            tone="inherit"
+            htmlType="submit"
+            variant="solid"
+            color="green"
+          >
             Lưu
           </Button>
         </Form.Item>

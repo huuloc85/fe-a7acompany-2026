@@ -1,0 +1,143 @@
+/* Navigation-only material pilot. Business surfaces and the classic skin are unchanged. */
+@media screen {
+  html.liquid-ui-mode:not(.legacy-ui-mode) {
+    --chrome-surface: rgba(248, 251, 255, 0.88);
+    --chrome-solid: #f8fbff;
+    --chrome-content: #ffffff;
+    --chrome-edge: rgba(148, 163, 184, 0.28);
+    --chrome-blur: blur(16px) saturate(125%);
+  }
+
+  html.liquid-ui-mode:not(.legacy-ui-mode).dark {
+    --chrome-surface: rgba(15, 23, 42, 0.92);
+    --chrome-solid: #0f172a;
+    --chrome-content: #0f172a;
+    --chrome-edge: rgba(148, 163, 184, 0.24);
+  }
+
+  html.liquid-ui-mode:not(.legacy-ui-mode)
+    body
+    #root
+    header.app-header.liquid-glass-panel,
+  html.liquid-ui-mode:not(.legacy-ui-mode)
+    body
+    #root
+    .app-sidebar-sider.ant-layout-sider.liquid-glass-panel,
+  html.liquid-ui-mode:not(.legacy-ui-mode)
+    body
+    .app-sidebar-drawer.app-sidebar-drawer--liquid.ant-drawer
+    .ant-drawer-content {
+    background: var(--chrome-surface) !important;
+    border-color: var(--chrome-edge) !important;
+    box-shadow: none !important;
+    backdrop-filter: var(--chrome-blur) !important;
+    -webkit-backdrop-filter: var(--chrome-blur) !important;
+  }
+
+  /* The drawer owns the material; its inner sidebar must not blur it again. */
+  html.liquid-ui-mode:not(.legacy-ui-mode)
+    body
+    .app-sidebar-drawer.app-sidebar-drawer--liquid.ant-drawer
+    :is(.app-sidebar-mobile.liquid-glass-panel, .ant-drawer-body) {
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  html.liquid-ui-mode:not(.legacy-ui-mode)
+    body
+    #root
+    :is(header.app-header, .app-sidebar-sider).liquid-glass-panel::before,
+  html.liquid-ui-mode:not(.legacy-ui-mode)
+    body
+    #root
+    :is(header.app-header, .app-sidebar-sider).liquid-glass-panel::after,
+  html.liquid-ui-mode:not(.legacy-ui-mode)
+    body
+    .app-sidebar-drawer.app-sidebar-drawer--liquid
+    .app-sidebar-mobile::before,
+  html.liquid-ui-mode:not(.legacy-ui-mode)
+    body
+    .app-sidebar-drawer.app-sidebar-drawer--liquid
+    .app-sidebar-mobile::after {
+    content: none !important;
+  }
+
+  /* Preserve button colors and focus styles, removing only nested blur. */
+  html.liquid-ui-mode:not(.legacy-ui-mode)
+    body
+    #root
+    :is(.app-header, .app-sidebar-sider)
+    :is(button, .liquid-glass-control, .liquid-glass-icon),
+  html.liquid-ui-mode:not(.legacy-ui-mode)
+    body
+    .app-sidebar-drawer.app-sidebar-drawer--liquid
+    .app-sidebar-mobile
+    :is(button, .liquid-glass-control, .liquid-glass-icon) {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  /* First content drawer: a quiet reading surface with distinct navigation chrome. */
+  html.liquid-ui-mode:not(.legacy-ui-mode)
+    body
+    .app-material-drawer.ant-drawer
+    .ant-drawer-content {
+    background: var(--chrome-content) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    will-change: auto;
+  }
+
+  html.liquid-ui-mode:not(.legacy-ui-mode)
+    body
+    .app-material-drawer.ant-drawer
+    :is(.ant-drawer-header, .ant-drawer-footer) {
+    background: var(--chrome-solid) !important;
+    border-color: var(--chrome-edge) !important;
+  }
+
+  html.liquid-ui-mode:not(.legacy-ui-mode)
+    body
+    .app-material-drawer.ant-drawer
+    .ant-drawer-close {
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+    html.liquid-ui-mode:not(.legacy-ui-mode),
+    html.liquid-ui-mode:not(.legacy-ui-mode).dark {
+      --chrome-surface: var(--chrome-solid);
+      --chrome-blur: none;
+    }
+  }
+
+  @supports not (
+    (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
+  ) {
+    html.liquid-ui-mode:not(.legacy-ui-mode),
+    html.liquid-ui-mode:not(.legacy-ui-mode).dark {
+      --chrome-surface: var(--chrome-solid);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html.liquid-ui-mode:not(.legacy-ui-mode)
+      body
+      :is(.app-material-drawer, .app-sidebar-drawer)
+      :is(.ant-drawer-content-wrapper, .ant-drawer-mask),
+    html.liquid-ui-mode:not(.legacy-ui-mode)
+      body
+      #root
+      .app-sidebar-sider.ant-layout-sider {
+      transition-duration: 0.01ms !important;
+      animation-duration: 0.01ms !important;
+    }
+  }
+}

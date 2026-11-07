@@ -3,7 +3,6 @@ import { useObjectUrl } from '@/hooks/useObjectUrl';
 import {
   Form,
   Select,
-  Button,
   message,
   Card,
   Divider,
@@ -11,6 +10,7 @@ import {
   Upload,
   Tabs
 } from 'antd';
+import Button from '@components/common/AppButton';
 import { InboxOutlined, FileImageOutlined } from '@ant-design/icons';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { useStore } from '@tanstack/react-store';
@@ -41,7 +41,7 @@ import {
 import { User } from '@/types/authType';
 
 // Danh sách nhân viên nộp đơn thẳng cho quản lý, bỏ qua tổ trưởng
-const DIRECT_TO_MANAGER_IDS = ['22122900', '23080100', '23011400'] as const;
+const DIRECT_TO_MANAGER_IDS = ['22122902', '23080130', '23011410'] as const;
 
 interface CreateRequestFormProps {
   onSuccess?: () => void;
@@ -1004,6 +1004,7 @@ TP.Hồ Chí Minh, ngày ${dayjs().date()} tháng ${dayjs().month() + 1} năm ${
               {editData && !showSignaturePad ? (
                 <div className="py-8 text-center">
                   <Button
+                    tone="inherit"
                     type="primary"
                     size="large"
                     icon={<FileImageOutlined />}
@@ -1140,6 +1141,7 @@ TP.Hồ Chí Minh, ngày ${dayjs().date()} tháng ${dayjs().month() + 1} năm ${
         <Form.Item className="mt-6 mb-2">
           <div className="flex flex-col justify-end gap-2 sm:flex-row sm:gap-3">
             <Button
+              tone="inherit"
               size="large"
               onClick={() => {
                 if (editData) {
@@ -1162,6 +1164,7 @@ TP.Hồ Chí Minh, ngày ${dayjs().date()} tháng ${dayjs().month() + 1} năm ${
               Hủy
             </Button>
             <Button
+              tone="inherit"
               size="large"
               type="primary"
               htmlType="submit"

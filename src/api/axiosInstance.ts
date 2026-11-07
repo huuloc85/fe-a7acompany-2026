@@ -6,6 +6,11 @@ import { clearAuth } from '@stores/authStore';
 import { getLoginRedirectSearch } from '@utils/authRedirect';
 import { mapErrorCodesToMessages } from '@utils/validationMapper';
 import { message } from 'antd';
+import {
+  getActiveAuthToken,
+  getEmployeePreview,
+  clearEmployeePreview
+} from '@/utils/employeePreview';
 
 const BASE_API_URL = import.meta.env.VITE_BASE_API_URL;
 const LOGIN_CONFLICT_CODE = 'LOGGED_IN_ELSEWHERE';
@@ -27,7 +32,7 @@ const axiosPrivate = axios.create({
 });
 
 axiosPrivate.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  const token = getActiveAuthToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -45,6 +50,28 @@ axiosPrivate.interceptors.response.use(
     }
 
     const { status, data } = error.response;
+    const preview = getEmployeePreview();
+    if (
+      status === 401 &&
+      String(error.config?.headers.Authorization ?? '').startsWith(
+        'Bearer employee-preview_'
+      )
+    ) {
+      if (
+        preview &&
+        error.config?.headers.Authorization === `Bearer ${preview.token}`
+      ) {
+        clearEmployeePreview();
+        queryClient.clear();
+        window.location.replace('/admin/employees');
+      }
+      return Promise.reject(error);
+    }
+    if (status === 403 && preview) {
+      message.warning(
+        'Phiên xem chỉ cho phép đọc dữ liệu, không được thay đổi.'
+      );
+    }
 
     // Xử lý validation error
     if (status === 422 && data?.error?.errors) {

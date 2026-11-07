@@ -1,14 +1,17 @@
 import AppButton from '@components/common/AppButton';
+import QueryErrorNotice from '@components/common/QueryErrorNotice';
+import RefreshButton from '@components/common/RefreshButton';
 import ComponentCard from '@components/common/ComponentCard';
 import { UserInfo } from '@components/UserInfo';
 import { productStatusOptions } from '@constants/productStatus.enum';
 import { fetchTodoHistory } from '@services/TodoService';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import { DatePicker, Empty, Select, Spin, Tag } from 'antd';
+import { Empty, Select, Spin, Tag } from 'antd';
+import DatePicker from '@components/common/AppDatePicker';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { FaCalendarAlt, FaSearch } from 'react-icons/fa';
 import { FaClockRotateLeft } from 'react-icons/fa6';
 import { dateTimeToShift } from '@utils/dateTimeToShift';
@@ -21,12 +24,19 @@ interface TodoOption {
 }
 
 export const TodoHistory = () => {
+  const fieldId = useId();
   const [month, setMonth] = useState<Dayjs>(dayjs());
   const [selectProduct, setSelectProduct] = useState<string | undefined>(
     undefined
   );
 
-  const { data: histories, isLoading } = useQuery({
+  const {
+    data: histories,
+    isLoading,
+    isFetching,
+    isError,
+    refetch
+  } = useQuery({
     queryKey: ['product', 'todo', 'history', month, selectProduct],
     queryFn: () =>
       fetchTodoHistory({
@@ -46,6 +56,7 @@ export const TodoHistory = () => {
   return (
     <>
       <ComponentCard
+        headingLevel={1}
         title={
           <div className="flex items-center gap-3">
             <FaClockRotateLeft className="text-blue-500" />
@@ -55,13 +66,19 @@ export const TodoHistory = () => {
       >
         <div className="space-y-5">
           {/* ── Action Bar ─────────────────────────────────────── */}
-          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/50">
+          <div className="ui-toolbar flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/50">
             <Link to="/employee/todo/add-product">
               <AppButton tone="primary">← NHẬP SẢN PHẨM</AppButton>
             </Link>
+            <RefreshButton refresh={refetch} isLoading={isFetching} />
           </div>
+          <QueryErrorNotice
+            isError={isError}
+            isFetching={isFetching}
+            onRetry={refetch}
+          />
 
-          <div className="space-y-6 lg:w-1/2">
+          <div className="w-full space-y-6">
             {/* ── User Info ──────────────────────────────────────── */}
             <UserInfo />
 
@@ -72,13 +89,20 @@ export const TodoHistory = () => {
             >
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                  <label
+                    htmlFor={`${fieldId}-month`}
+                    className="text-sm font-medium text-gray-500 dark:text-gray-400"
+                  >
                     <FaCalendarAlt className="mr-1 inline-block text-blue-500" />
                     Tháng
                   </label>
                   <DatePicker
+                    id={`${fieldId}-month`}
                     value={month}
-                    onChange={(date) => setMonth(date)}
+                    allowClear={false}
+                    onChange={(date) => {
+                      if (date) setMonth(date);
+                    }}
                     placeholder="Chọn tháng"
                     format="MM/YYYY"
                     picker="month"
@@ -86,11 +110,15 @@ export const TodoHistory = () => {
                   />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                  <label
+                    htmlFor={`${fieldId}-product`}
+                    className="text-sm font-medium text-gray-500 dark:text-gray-400"
+                  >
                     <FaSearch className="mr-1 inline-block text-emerald-500" />
                     Sản phẩm
                   </label>
                   <Select
+                    id={`${fieldId}-product`}
                     options={todoOptions}
                     allowClear
                     showSearch
@@ -231,9 +259,12 @@ export const TodoHistory = () => {
                     ))}
                   </div>
                 ) : (
-                  <div className="py-8">
-                    <Empty description="Không có dữ liệu" />
-                  </div>
+                  !isLoading &&
+                  !isError && (
+                    <div className="py-8">
+                      <Empty description="Không có lịch sử sản lượng phù hợp." />
+                    </div>
+                  )
                 )}
               </Spin>
             </div>

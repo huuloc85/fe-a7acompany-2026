@@ -8,7 +8,6 @@ import {
 import { updateProductQuantity } from '@services/ProductService';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  Button,
   DatePicker,
   Form,
   InputNumber,
@@ -17,6 +16,7 @@ import {
   Select,
   SelectProps
 } from 'antd';
+import Button from '@components/common/AppButton';
 import { FormProps } from 'antd/lib';
 import type { Dayjs } from 'dayjs';
 import React, { useState } from 'react';
@@ -105,7 +105,7 @@ export const UpdateQuantityModal: React.FC<UpdateQuantityModalProps> = ({
 
   return (
     <>
-      <Button variant="solid" color="blue" onClick={handleOpen}>
+      <Button tone="inherit" variant="solid" color="blue" onClick={handleOpen}>
         Cập nhật sản lượng
       </Button>
       <Modal
@@ -181,7 +181,7 @@ export const UpdateQuantityModal: React.FC<UpdateQuantityModalProps> = ({
             </Form.Item>
           )}
           <Form.Item>
-            <Button type="primary" htmlType="submit">
+            <Button tone="inherit" type="primary" htmlType="submit">
               Cập nhật
             </Button>
           </Form.Item>

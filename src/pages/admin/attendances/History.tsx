@@ -1,14 +1,8 @@
 import AppSearchInput from '@/components/common/AppSearchInput';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
-import {
-  Button,
-  DatePicker,
-  Select,
-  Table,
-  TableColumnsType,
-  TableProps
-} from 'antd';
+import { DatePicker, Select, Table, TableColumnsType, TableProps } from 'antd';
+import Button from '@components/common/AppButton';
 import { debounce } from 'lodash';
 import { useState } from 'react';
 import dayjs from 'dayjs';
@@ -248,7 +242,12 @@ export const History = () => {
           fields={useAttendanceCreateFields()}
         />
         <Link to="/admin/attendances">
-          <Button color="blue" variant="solid" icon={<IconTable />}>
+          <Button
+            tone="inherit"
+            color="blue"
+            variant="solid"
+            icon={<IconTable />}
+          >
             Bảng tính công
           </Button>
         </Link>

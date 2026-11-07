@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import {
   Modal,
   Typography,
-  Button,
   DatePicker,
   Spin,
   Divider,
   InputNumber
 } from 'antd';
+import Button from '@components/common/AppButton';
 import { CalculatorOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
@@ -86,7 +86,7 @@ const StockCalculatorModal: React.FC<Props> = ({
       open={open}
       onCancel={onClose}
       footer={[
-        <Button key="close" type="primary" onClick={onClose}>
+        <Button tone="inherit" key="close" type="primary" onClick={onClose}>
           Đã hiểu
         </Button>
       ]}

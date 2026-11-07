@@ -212,8 +212,10 @@ export default function EmployeeTrash() {
 
   return (
     <div>
-      <BackButton />
-      <ComponentCard title="Danh sách nhân viên đã nghỉ việc">
+      <ComponentCard
+        actions={<BackButton />}
+        title="Danh sách nhân viên đã nghỉ việc"
+      >
         <RefreshButton refresh={refetch} isLoading={isFetching} />
         <div>
           <AppSearchInput

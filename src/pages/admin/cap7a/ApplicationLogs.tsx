@@ -3,6 +3,8 @@ import { Card, Select, Tag } from 'antd';
 import { useQuery } from '@tanstack/react-query';
 import { getTailAppLogs } from '@/services/Cap7AService';
 import { groupTailLogs } from './groupTailLogs';
+import useLiveClock from './useLiveClock';
+import { livePollingInterval } from './livePolling';
 
 const todayVN = () =>
   new Intl.DateTimeFormat('sv-SE', {
@@ -19,13 +21,26 @@ const stamp = (at: number) =>
 const levels = { error: 'Lỗi', warning: 'Cảnh báo', info: 'Thông tin' };
 const colors = { info: 'blue', warning: 'gold', error: 'red' };
 
-export default function ApplicationLogs({ online }: { online: boolean }) {
+export default function ApplicationLogs({
+  online,
+  active
+}: {
+  online: boolean;
+  active: boolean;
+}) {
+  useLiveClock(active);
+  const [expanded, setExpanded] = useState(false);
   const date = todayVN();
   const [level, setLevel] = useState('all');
   const query = useQuery({
     queryKey: ['cap7a', 'tail', 'logs', date],
     queryFn: ({ signal }) => getTailAppLogs(date, signal),
-    refetchInterval: 10000,
+    enabled: active && expanded,
+    staleTime: 1000,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    refetchInterval: (query) =>
+      livePollingInterval(1000, query.state.fetchFailureCount),
     refetchIntervalInBackground: false,
     retry: false
   });
@@ -36,9 +51,14 @@ export default function ApplicationLogs({ online }: { online: boolean }) {
 
   return (
     <Card size="small" className="liquid-glass-card !rounded-2xl">
-      <details>
+      <details
+        onToggle={(event) => {
+          const open = event.currentTarget.open;
+          setExpanded(open);
+        }}
+      >
         <summary className="cursor-pointer font-medium">
-          Nhật ký ứng dụng TAIL
+          Nhật ký kiểm tra điểm thiếu nhựa
           {!!groups.length && (
             <span className="ml-2 text-sm font-normal">({groups.length})</span>
           )}
@@ -72,7 +92,9 @@ export default function ApplicationLogs({ online }: { online: boolean }) {
         {query.isPending ? (
           <p className="mt-3 text-sm">Đang tải nhật ký…</p>
         ) : !query.data ? (
-          <p className="mt-3 text-sm">Chưa nhận nhật ký ứng dụng TAIL.</p>
+          <p className="mt-3 text-sm">
+            Chưa nhận nhật ký kiểm tra điểm thiếu nhựa.
+          </p>
         ) : rows.length === 0 ? (
           <p className="mt-3 text-sm">Không có sự kiện phù hợp.</p>
         ) : (

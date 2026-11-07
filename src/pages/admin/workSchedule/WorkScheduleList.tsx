@@ -1,3 +1,4 @@
+import QueryErrorNotice from '@components/common/QueryErrorNotice';
 import { Empty, Select, Spin } from 'antd';
 import dayjs from 'dayjs';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -31,7 +32,7 @@ export default function WorkScheduleList() {
   const {
     data,
     pagination,
-    queryResult: { isLoading, isFetching, refetch }
+    queryResult: { isLoading, isFetching, isError, refetch }
   } = useCrudList({
     service: scheduleService,
     queryKey: 'workSchedules',
@@ -83,10 +84,16 @@ export default function WorkScheduleList() {
     <ComponentCard
       className="!overflow-visible"
       title="Danh sách lịch làm việc"
+      headingLevel={1}
     >
       <div className="space-y-5">
+        <QueryErrorNotice
+          isError={isError}
+          isFetching={isFetching}
+          onRetry={refetch}
+        />
         {/* ── Action Bar ────────────────────────────────────────── */}
-        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/50">
+        <div className="ui-toolbar flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/50">
           <RefreshButton refresh={refetch} isLoading={isFetching} />
           {canManageWorkSchedules && (
             <AddWorkSchedule
@@ -137,11 +144,15 @@ export default function WorkScheduleList() {
             </div>
 
             <div className="w-full xl:w-[420px]">
-              <label className="mb-1.5 flex items-center gap-2 text-xs font-medium text-gray-500 dark:text-gray-400">
+              <label
+                htmlFor="work-schedule-period"
+                className="mb-1.5 flex items-center gap-2 text-xs font-medium text-gray-500 dark:text-gray-400"
+              >
                 <FaCalendarCheck className="text-blue-500" />
                 Kỳ lịch làm việc
               </label>
               <Select
+                id="work-schedule-period"
                 data-tour="total-schedules-select"
                 value={selectedId ?? undefined}
                 options={scheduleOptions}
@@ -177,7 +188,10 @@ export default function WorkScheduleList() {
             {selectedId ? (
               <Detail scheduleId={selectedId} isDrawer />
             ) : (
-              <Empty description="Không có dữ liệu lịch làm việc" />
+              !isError &&
+              !isLoading && (
+                <Empty description="Không có dữ liệu lịch làm việc" />
+              )
             )}
           </Spin>
         </div>

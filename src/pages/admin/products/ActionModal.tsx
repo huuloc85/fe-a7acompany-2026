@@ -2,7 +2,8 @@ import { ProductHistoryStatusType, ProductType } from '@/types/productType';
 import { DeleteButton, EditButton } from '@components/common/ActionButtons';
 import { deleteProductHistoryDetail } from '@services/ProductService';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Button, message, Modal } from 'antd';
+import { message, Modal } from 'antd';
+import Button from '@components/common/AppButton';
 import { ReactNode, useState } from 'react';
 
 interface EditModalProps {
@@ -97,7 +98,12 @@ export const DeleteModal: React.FC<DeleteModalProps> = ({
         loading={isPending}
         onCancel={handleClose}
         footer={
-          <Button variant="solid" color="danger" onClick={handleDelete}>
+          <Button
+            tone="inherit"
+            variant="solid"
+            color="danger"
+            onClick={handleDelete}
+          >
             Xóa
           </Button>
         }

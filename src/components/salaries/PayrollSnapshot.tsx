@@ -33,6 +33,7 @@ export function PayrollSnapshotPayslip({
     ['Tiền cơm', row.meal],
     ['Lễ / Tết', row.holidaySalary],
     ['Hiếu / hỷ', row.paidLeaveSalary],
+    ['Tiền phép năm', row.annualLeaveSalary ?? 0],
     ['Ngừng việc', row.downtimeSalary],
     ['Chế độ phụ nữ', row.menstrualSalary],
     ['Chuyên cần tháng', row.diligence],
@@ -112,7 +113,13 @@ export function PayrollSnapshotPayslip({
         <div>
           <p>Thực lãnh</p>
           <strong>
-            {number(row.net)} <span>đ</span>
+            {row.excelNetBlank ? (
+              'Chưa có trong Excel'
+            ) : (
+              <>
+                {number(row.net)} <span>đ</span>
+              </>
+            )}
           </strong>
           {row.net < 0 && (
             <p>Khấu trừ vượt thu nhập. Vui lòng liên hệ bộ phận tính lương.</p>
@@ -142,7 +149,9 @@ export function PayrollSnapshotPayslip({
         <span aria-hidden="true">=</span>
         <div>
           <span>Thực lãnh</span>
-          <strong>{number(row.net)} đ</strong>
+          <strong>
+            {row.excelNetBlank ? 'Chưa có trong Excel' : `${number(row.net)} đ`}
+          </strong>
         </div>
       </div>
       <div className="employee-slip-hours">
@@ -171,6 +180,21 @@ export function PayrollSnapshotPayslip({
           'deductions'
         )}
       </div>
+      {row.cashSource && (
+        <section className="employee-slip-group">
+          <header>
+            <h4>Tăng cường tiền mặt</h4>
+            <strong>{number(row.cashTotal ?? 0)} đ</strong>
+          </header>
+          <p>Khoản riêng, chưa cộng vào thực lãnh lương chính.</p>
+          {!row.excelNetBlank && (
+            <p>
+              Tổng lương chính và tăng cường:{' '}
+              <strong>{number(row.net + (row.cashTotal ?? 0))} đ</strong>
+            </p>
+          )}
+        </section>
+      )}
       {!!row.adjustments.note && (
         <aside className="employee-slip-note">
           <strong>Ghi chú</strong>
@@ -210,7 +234,10 @@ export default function PayrollSnapshot({ draft }: { draft: PayrollDraft }) {
             title,
             dataIndex: key,
             align: 'center' as const,
-            render: number
+            render: (value: number, row: PayrollRow) =>
+              key === 'net' && row.excelNetBlank
+                ? 'Chưa có trong Excel'
+                : number(value)
           }))
         ]}
       />

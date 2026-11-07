@@ -1,3 +1,4 @@
+import QueryErrorNotice from '@components/common/QueryErrorNotice';
 import {
   Table,
   TableColumnsType,
@@ -40,7 +41,7 @@ export default function RoleList() {
     }
   });
 
-  const { isLoading, isFetching, refetch } = queryResult;
+  const { isLoading, isFetching, isError, refetch } = queryResult;
 
   const roles = data || [];
   const total = pagination.total || 0;
@@ -166,10 +167,15 @@ export default function RoleList() {
   };
 
   return (
-    <ComponentCard title="Quản lý chức vụ">
+    <ComponentCard title="Quản lý chức vụ" headingLevel={1}>
       <div className="space-y-5">
+        <QueryErrorNotice
+          isError={isError}
+          isFetching={isFetching}
+          onRetry={refetch}
+        />
         {/* ── Action Bar ────────────────────────────────────────── */}
-        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/50">
+        <div className="ui-toolbar flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/50">
           <RefreshButton refresh={refetch} isLoading={isFetching} />
           <CreateModal
             schema={roleCreateSchema}

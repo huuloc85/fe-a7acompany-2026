@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { message, Modal, Alert, Spin, Tabs, Tag } from 'antd';
+import { message, Modal, Spin, Tabs, Tag } from 'antd';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { PlusOutlined } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
@@ -7,7 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { usePrefetchAuthorizableEmployees } from '@/hooks/useAuthorizedEmployee';
 import AppButton from '@components/common/AppButton';
 import RefreshButton from '@components/common/RefreshButton';
-import ComponentCard from '@components/common/ComponentCard';
+import QueryErrorNotice from '@components/common/QueryErrorNotice';
 import {
   DataTable,
   FilterPanel,
@@ -510,9 +510,10 @@ export default function RequestFormList() {
           />
 
           {/* ── Action Bar ──────────────────────────────────── */}
-          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/50">
+          <div className="ui-toolbar flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/50">
             <AppButton
               data-tour="request-create"
+              disabled={user?.is_preview}
               tone="success"
               onClick={() => setCreateModalVisible(true)}
             >
@@ -541,15 +542,11 @@ export default function RequestFormList() {
           </div>
 
           {/* ── Error Alert ────────────────────────────────── */}
-          {error && (
-            <div className="rounded-xl border border-red-100 bg-red-50 p-4 dark:border-red-900/50 dark:bg-red-900/20">
-              <Alert
-                message="Đã có lỗi xảy ra vui lòng thử lại sau"
-                type="error"
-                showIcon
-              />
-            </div>
-          )}
+          <QueryErrorNotice
+            isError={!!error}
+            isFetching={isFetching}
+            onRetry={refetch}
+          />
 
           {/* ── Table ──────────────────────────────────────── */}
           <Spin spinning={isLoading}>
@@ -593,7 +590,7 @@ export default function RequestFormList() {
                 />
 
                 {/* ── Action Bar ────────────────────────────── */}
-                <div className="flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/50">
+                <div className="ui-toolbar flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/50">
                   <RefreshButton
                     isLoading={adminIsFetching}
                     refresh={adminRefetch}
@@ -618,15 +615,11 @@ export default function RequestFormList() {
                 </div>
 
                 {/* ── Error Alert ───────────────────────────── */}
-                {adminError && (
-                  <div className="rounded-xl border border-red-100 bg-red-50 p-4 dark:border-red-900/50 dark:bg-red-900/20">
-                    <Alert
-                      message="Đã có lỗi xảy ra vui lòng thử lại sau"
-                      type="error"
-                      showIcon
-                    />
-                  </div>
-                )}
+                <QueryErrorNotice
+                  isError={!!adminError}
+                  isFetching={adminIsFetching}
+                  onRetry={adminRefetch}
+                />
 
                 {/* ── Table ────────────────────────────────── */}
                 <Spin spinning={adminIsLoading}>
@@ -652,14 +645,7 @@ export default function RequestFormList() {
 
   return (
     <>
-      <ComponentCard
-        title={
-          <div className="flex items-center gap-3">
-            <FaFileAlt className="text-blue-500" />
-            <span>Quản lý đơn yêu cầu</span>
-          </div>
-        }
-      >
+      <div className="min-w-0">
         <Tabs
           activeKey={activeTab}
           onChange={setActiveTab}
@@ -668,7 +654,7 @@ export default function RequestFormList() {
           size="large"
           animated
         />
-      </ComponentCard>
+      </div>
 
       {/* Delete Confirmation Modal */}
       <ConfirmDeleteModal

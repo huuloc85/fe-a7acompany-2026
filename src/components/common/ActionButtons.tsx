@@ -1,6 +1,5 @@
 import React from 'react';
 import { ButtonProps } from 'antd';
-import { motion } from 'framer-motion';
 import {
   IconEdit,
   IconDelete,
@@ -31,15 +30,11 @@ export const ActionGroup: React.FC<{
  */
 export const EditButton: React.FC<ButtonProps> = (props) => {
   return (
-    <motion.div
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
-      className="inline-block"
-    >
+    <div className="inline-block">
       <AppButton tone="primary" type="default" icon={<IconEdit />} {...props}>
         {props.children !== undefined ? props.children : 'Cập nhật'}
       </AppButton>
-    </motion.div>
+    </div>
   );
 };
 
@@ -48,15 +43,11 @@ export const EditButton: React.FC<ButtonProps> = (props) => {
  */
 export const DeleteButton: React.FC<ButtonProps> = (props) => {
   return (
-    <motion.div
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
-      className="inline-block"
-    >
+    <div className="inline-block">
       <AppButton tone="danger" type="default" icon={<IconDelete />} {...props}>
         {props.children !== undefined ? props.children : 'Xóa'}
       </AppButton>
-    </motion.div>
+    </div>
   );
 };
 
@@ -65,11 +56,7 @@ export const DeleteButton: React.FC<ButtonProps> = (props) => {
  */
 export const RestoreButton: React.FC<ButtonProps> = (props) => {
   return (
-    <motion.div
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
-      className="inline-block"
-    >
+    <div className="inline-block">
       <AppButton
         tone="warning"
         type="default"
@@ -78,7 +65,7 @@ export const RestoreButton: React.FC<ButtonProps> = (props) => {
       >
         {props.children !== undefined ? props.children : 'Khôi phục'}
       </AppButton>
-    </motion.div>
+    </div>
   );
 };
 
@@ -87,15 +74,11 @@ export const RestoreButton: React.FC<ButtonProps> = (props) => {
  */
 export const ViewButton: React.FC<ButtonProps> = (props) => {
   return (
-    <motion.div
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
-      className="inline-block"
-    >
+    <div className="inline-block">
       <AppButton tone="info" type="default" icon={<FaEye />} {...props}>
         {props.children !== undefined ? props.children : 'Chi tiết'}
       </AppButton>
-    </motion.div>
+    </div>
   );
 };
 
@@ -104,15 +87,11 @@ export const ViewButton: React.FC<ButtonProps> = (props) => {
  */
 export const PrintButton: React.FC<ButtonProps> = (props) => {
   return (
-    <motion.div
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
-      className="inline-block"
-    >
+    <div className="inline-block">
       <AppButton tone="primary" type="default" icon={<IconPrint />} {...props}>
         {props.children !== undefined ? props.children : 'IN'}
       </AppButton>
-    </motion.div>
+    </div>
   );
 };
 
@@ -121,14 +100,10 @@ export const PrintButton: React.FC<ButtonProps> = (props) => {
  */
 export const RejectButton: React.FC<ButtonProps> = (props) => {
   return (
-    <motion.div
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
-      className="inline-block"
-    >
+    <div className="inline-block">
       <AppButton tone="danger" type="default" icon={<FaBan />} {...props}>
         {props.children !== undefined ? props.children : 'Từ chối'}
       </AppButton>
-    </motion.div>
+    </div>
   );
 };

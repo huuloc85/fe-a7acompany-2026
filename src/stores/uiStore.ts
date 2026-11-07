@@ -112,8 +112,10 @@ export const setAppearance = (appearance: UIState['appearance']) => {
 };
 
 export const updateScreenSize = () => {
+  const isMobile = window.innerWidth < 768;
+  if (uiStore.state.isMobile === isMobile) return;
+
   uiStore.setState((prevState) => {
-    const newState = window.innerWidth < 768;
-    return { ...prevState, isMobile: newState };
+    return { ...prevState, isMobile };
   });
 };

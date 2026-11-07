@@ -1,5 +1,6 @@
 import React from 'react';
-import { Button, Modal, Space, Typography } from 'antd';
+import { Modal, Space, Typography } from 'antd';
+import Button from '@components/common/AppButton';
 import { BellOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { useNotificationPermission } from '@hooks/useNotificationPermission';
 
@@ -49,7 +50,7 @@ export const NotificationPermissionModal: React.FC<
         open={open}
         onCancel={onCancel}
         footer={[
-          <Button key="ok" type="primary" onClick={onCancel}>
+          <Button tone="inherit" key="ok" type="primary" onClick={onCancel}>
             Đã hiểu
           </Button>
         ]}
@@ -71,7 +72,7 @@ export const NotificationPermissionModal: React.FC<
         open={open}
         onCancel={onCancel}
         footer={[
-          <Button key="ok" type="primary" onClick={onCancel}>
+          <Button tone="inherit" key="ok" type="primary" onClick={onCancel}>
             Đóng
           </Button>
         ]}
@@ -92,10 +93,11 @@ export const NotificationPermissionModal: React.FC<
       open={open}
       onCancel={onCancel}
       footer={[
-        <Button key="deny" onClick={handleDeny}>
+        <Button tone="inherit" key="deny" onClick={handleDeny}>
           Không cho phép
         </Button>,
         <Button
+          tone="inherit"
           key="allow"
           type="primary"
           icon={<BellOutlined />}

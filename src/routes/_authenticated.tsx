@@ -3,9 +3,19 @@ import { createFileRoute, redirect } from '@tanstack/react-router';
 import { getLoginRedirectSearch } from '@utils/authRedirect';
 import { authStore } from '@stores/authStore';
 import { requirePermission } from '@utils/authUtil';
+import {
+  getEmployeePreview,
+  isEmployeePreviewPath
+} from '@/utils/employeePreview';
 
 export const Route = createFileRoute('/_authenticated')({
   beforeLoad: async ({ context, location }) => {
+    if (
+      getEmployeePreview() &&
+      !isEmployeePreviewPath(location.pathname.replace(/\/+$/, ''))
+    ) {
+      throw redirect({ to: '/employee/attendances', replace: true });
+    }
     const { isLogged } = context.authenticated;
     const isLoggedResult = await isLogged();
 

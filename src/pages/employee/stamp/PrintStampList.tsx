@@ -275,8 +275,8 @@ export const PrintStampList = () => {
 
   return (
     <>
-      <BackButton to="/employee/stamps/request" />
       <ComponentCard
+        actions={<BackButton to="/employee/stamps/request" />}
         title={
           <div className="flex items-center gap-3">
             <FaStamp className="text-indigo-500" />
@@ -289,7 +289,7 @@ export const PrintStampList = () => {
           <UserInfo />
 
           {/* ── Action Bar ─────────────────────────────────────── */}
-          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/50">
+          <div className="ui-toolbar flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/50">
             <RefreshButton isLoading={isFetching} refresh={refetch} />
 
             <div className="flex flex-1 items-center gap-2">
@@ -298,6 +298,8 @@ export const PrintStampList = () => {
                 Ngày:
               </label>
               <DatePicker
+                format="DD/MM"
+                classNames={{ popup: { root: 'user-date-picker-popup' } }}
                 value={date}
                 className="!w-full !rounded-lg sm:!w-auto"
                 onChange={(value) => {

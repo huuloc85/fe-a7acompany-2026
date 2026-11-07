@@ -1323,7 +1323,7 @@ function PermissionsManager() {
   return (
     <div className="space-y-5">
       {/* Action Bar */}
-      <div className="flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/50">
+      <div className="ui-toolbar flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/50">
         <AppButton tone="primary" icon={<FiPlus />} onClick={openCreate}>
           Thêm quyền
         </AppButton>
@@ -2430,7 +2430,7 @@ function AdminManager() {
   return (
     <div className="space-y-5">
       {/* Action Bar */}
-      <div className="flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/50">
+      <div className="ui-toolbar flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/50">
         <AppButton
           tone="purple"
           icon={<FiPlus />}
@@ -2647,7 +2647,7 @@ export default function RBACPage() {
     <ComponentCard title="Quản lý phân quyền (RBAC)">
       <div className="space-y-5">
         {/* ── Action Bar ────────────────────────────────────── */}
-        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/50">
+        <div className="ui-toolbar flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/50">
           <div className="flex items-center gap-2">
             <FaShieldAlt className="text-blue-500" />
             <span className="text-sm font-bold text-gray-700 dark:text-white">

@@ -1,14 +1,10 @@
-import { Outlet } from '@tanstack/react-router';
+import { Outlet, useLocation } from '@tanstack/react-router';
+import EmployeePreviewLayout from './EmployeePreviewLayout';
+import { getEmployeePreview } from '@/utils/employeePreview';
 import { OnboardingProvider } from '@/components/onboarding/Onboarding';
 import { IncompleteAttendanceAlert } from '@/components/attendances/IncompleteAttendanceAlert';
 import { isAdmin } from '@/utils/authUtil';
-import {
-  ConfigProvider,
-  Layout,
-  theme as antTheme,
-  message,
-  Modal
-} from 'antd';
+import { Layout, theme as antTheme, message, Modal } from 'antd';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import BirthdayModal from '@components/BirthdayModal';
@@ -35,7 +31,6 @@ import {
 } from '@stores/uiStore';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { Route } from '@routes/__root';
-import { motion } from 'framer-motion';
 import { useStore } from '@tanstack/react-store';
 import { FaMagic, FaRegWindowMaximize, FaTint } from 'react-icons/fa';
 
@@ -51,9 +46,9 @@ type LoginModalKey =
 const MODAL_CLOSE_ANIMATION_MS = 220;
 const LOGIN_MODAL_ROOT_CLASS = 'login-modal-sequence-root';
 
-function AppLayout() {
-  const { appearance, isMobile, isSidebarClose } = useStore(uiStore);
-  const isLiquidAppearance = appearance === 'liquid';
+function StandardAppLayout() {
+  const { pathname } = useLocation();
+  const { isMobile, isSidebarClose } = useStore(uiStore);
 
   useEffect(() => {
     window.addEventListener('resize', updateScreenSize);
@@ -281,76 +276,49 @@ function AppLayout() {
 
   return (
     <>
-      <ConfigProvider
-        popupOverflow="viewport"
-        theme={{
-          token: {
-            borderRadius: 12,
-            borderRadiusLG: 16,
-            colorPrimary: '#2563eb',
-            colorBgContainer: 'rgba(255, 255, 255, 0.72)',
-            colorBorderSecondary: 'rgba(148, 163, 184, 0.22)',
-            boxShadowSecondary: '0 14px 34px rgba(15, 23, 42, 0.08)'
-          },
-          components: {
-            Table: isLiquidAppearance
-              ? {
-                  headerBg: '#eef7ff',
-                  headerColor: '#1f2937',
-                  borderColor: 'rgba(125, 169, 215, 0.26)',
-                  bodySortBg: '#f6fbff',
-                  footerBg: '#f6fbff',
-                  rowHoverBg: '#eef7ff',
-                  rowSelectedBg: '#e2f0ff',
-                  rowSelectedHoverBg: '#d9ebff',
-                  rowExpandedBg: '#f6fbff'
-                }
-              : {}
-          }
-        }}
+      <a className="ui-skip-link" href="#main-content">
+        Đến nội dung chính
+      </a>
+      <OnboardingProvider
+        blocked={isLoginModalSequenceVisible || visibleLoginModals.length > 0}
       >
-        <OnboardingProvider
-          blocked={isLoginModalSequenceVisible || visibleLoginModals.length > 0}
+        <Layout
+          className="glass-app-shell"
+          style={{
+            borderRadius: borderRadiusLG
+          }}
+          hasSider
         >
-          <Layout
-            className="glass-app-shell"
-            style={{
-              borderRadius: borderRadiusLG
-            }}
-            hasSider
-          >
-            <Sidebar />
-            <Layout>
-              <Header />
-              <Content
-                style={{ overflow: 'initial' }}
-                className="glass-main ui-content min-w-0 p-4"
-              >
-                {messages.length > 0 && (
-                  <div className="mb-4">
-                    <MarqueeAlert messages={messages} />
-                  </div>
-                )}
-                {user && !isAdmin(user.role.name) && (
-                  <IncompleteAttendanceAlert
-                    key={user.id}
-                    employeeId={user.id}
-                  />
-                )}
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.98, y: 10 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  transition={{ duration: 0.3, ease: 'easeOut' }}
-                  className="ui-route-content min-w-0"
-                >
-                  <Outlet />
-                </motion.div>
-              </Content>
-              <AppFooter />
-            </Layout>
+          <Sidebar />
+          <Layout>
+            <Header />
+            <Content
+              id="main-content"
+              role="main"
+              tabIndex={-1}
+              style={{ overflow: 'initial' }}
+              className="glass-main ui-content min-w-0 p-4"
+            >
+              {messages.length > 0 && (
+                <div className="mb-4">
+                  <MarqueeAlert messages={messages} />
+                </div>
+              )}
+              {user && !isAdmin(user.role.name) && (
+                <IncompleteAttendanceAlert
+                  key={user.id}
+                  employeeId={user.id}
+                  showOvertimeReminder={pathname === '/'}
+                />
+              )}
+              <div className="ui-route-content min-w-0">
+                <Outlet />
+              </div>
+            </Content>
+            <AppFooter />
           </Layout>
-        </OnboardingProvider>
-      </ConfigProvider>
+        </Layout>
+      </OnboardingProvider>
 
       <div
         aria-hidden="true"
@@ -474,4 +442,10 @@ function AppLayout() {
   );
 }
 
-export default AppLayout;
+export default function AppLayout() {
+  return getEmployeePreview() ? (
+    <EmployeePreviewLayout />
+  ) : (
+    <StandardAppLayout />
+  );
+}

@@ -1,14 +1,6 @@
 import { useState } from 'react';
-import {
-  Card,
-  Space,
-  Typography,
-  Button,
-  Divider,
-  Row,
-  Col,
-  message
-} from 'antd';
+import { Card, Space, Typography, Divider, Row, Col, message } from 'antd';
+import Button from '@components/common/AppButton';
 import { BellOutlined, SettingOutlined } from '@ant-design/icons';
 import ComponentCard from '@components/common/ComponentCard';
 import { NotificationPermissionCard } from '@components/common/NotificationPermissionCard';
@@ -104,6 +96,7 @@ export default function NotificationPermissionDemo() {
         >
           <Paragraph>Modal để yêu cầu quyền thông báo:</Paragraph>
           <Button
+            tone="inherit"
             type="primary"
             icon={<SettingOutlined />}
             onClick={() => setModalOpen(true)}
@@ -135,6 +128,7 @@ export default function NotificationPermissionDemo() {
                 <Space direction="vertical">
                   <Text strong>Hành động:</Text>
                   <Button
+                    tone="inherit"
                     size="small"
                     disabled={permission !== 'granted'}
                     onClick={handleSendTestNotification}

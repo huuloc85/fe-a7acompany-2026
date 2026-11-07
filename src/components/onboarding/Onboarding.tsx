@@ -5,7 +5,8 @@ import {
   OnboardingContext as Context,
   useOnboarding
 } from './OnboardingContext';
-import { Alert, App as AntApp, Button, Modal, Tooltip, Tour } from 'antd';
+import { Alert, App as AntApp, Modal, Tooltip, Tour } from 'antd';
+import Button from '@components/common/AppButton';
 import { FaRegQuestionCircle } from 'react-icons/fa';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocation, useNavigate } from '@tanstack/react-router';
@@ -548,6 +549,7 @@ function Session({
         </p>
         <div className="onboarding-welcome-actions">
           <Button
+            tone="inherit"
             type="primary"
             size="large"
             loading={startingGuide === 'welcome'}
@@ -556,6 +558,7 @@ function Session({
             Bắt đầu hướng dẫn
           </Button>
           <Button
+            tone="inherit"
             size="large"
             onClick={() => {
               ++startRequest.current;
@@ -592,6 +595,7 @@ function Session({
             {[{ id: 'welcome', title: 'Tổng quan' }, ...allowed].map(
               (guide) => (
                 <Button
+                  tone="inherit"
                   key={guide.id}
                   type={guideId === guide.id ? 'primary' : 'default'}
                   loading={startingGuide === guide.id}
@@ -611,7 +615,9 @@ function Session({
               showIcon
               message="Chưa tải được phần hướng dẫn đã lưu"
               action={
-                <Button onClick={() => void progress.refetch()}>Thử lại</Button>
+                <Button tone="inherit" onClick={() => void progress.refetch()}>
+                  Thử lại
+                </Button>
               }
             />
           )}
@@ -634,6 +640,7 @@ function Session({
                     .
                   </p>
                   <Button
+                    tone="inherit"
                     disabled={
                       saving || !!progress.data.task_results.profile_reviewed
                     }
@@ -644,6 +651,7 @@ function Session({
                       : 'Tôi đã kiểm tra thông tin'}
                   </Button>
                   <Button
+                    tone="inherit"
                     disabled={
                       saving || !!progress.data.task_results.avatar_updated
                     }
@@ -651,7 +659,7 @@ function Session({
                   >
                     Giữ ảnh hiện tại
                   </Button>
-                  <Button onClick={() => setHelpOpen(false)}>
+                  <Button tone="inherit" onClick={() => setHelpOpen(false)}>
                     Đóng để cập nhật hồ sơ
                   </Button>
                 </div>

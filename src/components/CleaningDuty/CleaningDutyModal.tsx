@@ -5,7 +5,8 @@ import {
   BellOutlined
 } from '@ant-design/icons';
 import { IconDelete } from '@components/icons';
-import { Button, Checkbox, Modal, Tag, Typography } from 'antd';
+import { Checkbox, Modal, Tag, Typography } from 'antd';
+import Button from '@components/common/AppButton';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 import React, { useState } from 'react';
@@ -143,6 +144,7 @@ const CleaningDutyModal: React.FC<CleaningDutyModalProps> = ({
             </Checkbox>
           </div>
           <Button
+            tone="inherit"
             type="primary"
             onClick={() => {
               if (onDontShowAgain) {

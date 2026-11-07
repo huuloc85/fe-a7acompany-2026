@@ -1,3 +1,5 @@
+import QueryErrorNotice from '@components/common/QueryErrorNotice';
+import { EmployeePreviewButton } from '@/components/employees/EmployeePreviewButton';
 import AppSearchInput from '@/components/common/AppSearchInput';
 import { Link } from '@tanstack/react-router';
 import {
@@ -11,7 +13,7 @@ import {
   Tag
 } from 'antd';
 import { debounce } from 'lodash';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FaUser, FaSearch } from 'react-icons/fa';
 import { FaFingerprint } from 'react-icons/fa6';
 import { LuUserRoundPlus } from 'react-icons/lu';
@@ -43,34 +45,26 @@ export default function EmployeeList() {
   const {
     data: employees,
     pagination,
-    queryResult: { isLoading, isFetching, refetch }
+    queryResult: { isLoading, isFetching, isError, refetch }
   } = useCrudList({
     service: employeeService,
     queryKey: 'employees',
     initialFilters: params
   });
 
-  const handleSearch = debounce((value: string, type: 'name' | 'code') => {
-    setParams((prev) => ({
-      ...prev,
-      'filter[name]': undefined,
-      'filter[id]': undefined
-    }));
-    if (!value) {
-      return;
-    }
-    if (type == 'name') {
-      setParams((prev) => ({
-        ...prev,
-        'filter[name]': value
-      }));
-    } else if (type == 'code') {
-      setParams((prev) => ({
-        ...prev,
-        'filter[id]': value
-      }));
-    }
-  }, 300);
+  const handleSearch = useMemo(
+    () =>
+      debounce((value: string, type: 'name' | 'code') => {
+        setParams((prev) => ({
+          ...prev,
+          page: 1,
+          'filter[name]': type === 'name' && value ? value : undefined,
+          'filter[id]': type === 'code' && value ? value : undefined
+        }));
+      }, 300),
+    []
+  );
+  useEffect(() => () => handleSearch.cancel(), [handleSearch]);
 
   const handleChange: TableProps<EmployeeType>['onChange'] = (
     _pagination,
@@ -215,6 +209,7 @@ export default function EmployeeList() {
       render: (_value, _record) => {
         return (
           <ActionGroup>
+            <EmployeePreviewButton employee={_record} />
             <Link to={`/admin/employees/edit/$id`} params={{ id: _record.id }}>
               <EditButton />
             </Link>
@@ -265,10 +260,15 @@ export default function EmployeeList() {
   };
 
   return (
-    <ComponentCard title="Quản lý nhân viên">
+    <ComponentCard title="Quản lý nhân viên" headingLevel={1}>
+      <QueryErrorNotice
+        isError={isError}
+        isFetching={isFetching}
+        onRetry={refetch}
+      />
       <div className="space-y-5">
         {/* ── Action Bar ────────────────────────────────────────── */}
-        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/50">
+        <div className="ui-toolbar flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/50">
           <RefreshButton refresh={refetch} isLoading={isFetching} />
           <Link to="/admin/employees/add">
             <AppButton tone="success">
@@ -403,6 +403,7 @@ export default function EmployeeList() {
 
                       {/* Actions */}
                       <ActionGroup className="mt-3 !justify-end border-t border-gray-100 pt-3 dark:border-gray-700">
+                        <EmployeePreviewButton employee={record} />
                         <Link
                           to={`/admin/employees/edit/$id`}
                           params={{ id: record.id }}

@@ -36,6 +36,9 @@ export const useAuth = () => {
       await authCheck();
       return true;
     } catch (error) {
+      // Preview failures must never clear the saved administrator session.
+      // The interceptor returns to the admin screen on an expired preview.
+      if (token.startsWith('employee-preview_')) throw error;
       const status = (error as { response?: { status?: number } })?.response
         ?.status;
 

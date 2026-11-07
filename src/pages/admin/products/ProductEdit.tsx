@@ -12,8 +12,10 @@ export default function ProductEdit() {
   const { id } = routeApi.useParams();
   return (
     <>
-      <BackButton to="/admin/products" />
-      <ComponentCard title="Cập nhật sản phẩm">
+      <ComponentCard
+        actions={<BackButton to="/admin/products" />}
+        title="Cập nhật sản phẩm"
+      >
         <UpdateForm
           id={id}
           fields={productUpdateFields}

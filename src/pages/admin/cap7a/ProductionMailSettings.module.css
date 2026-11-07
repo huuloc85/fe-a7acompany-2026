@@ -1,0 +1,121 @@
+@media screen {
+  .root {
+    color: var(--mail-text);
+  }
+  .root h3,
+  .root h4,
+  .root p {
+    margin: 0;
+  }
+  .header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .header h3 {
+    font-size: 22px;
+    line-height: 1.35;
+    font-weight: 600;
+  }
+  .header p {
+    margin-top: 6px;
+    color: var(--mail-secondary);
+    line-height: 1.6;
+  }
+  .status {
+    flex-shrink: 0;
+    margin: 4px 0 0;
+  }
+  .layout {
+    width: 100%;
+    max-width: 800px;
+    padding-top: 24px;
+  }
+  .settings {
+    min-width: 0;
+  }
+  .settings :global(.ant-input),
+  .settings :global(.ant-input-affix-wrapper) {
+    color: var(--mail-text);
+  }
+  .settings :global(.ant-form-item-extra) {
+    color: var(--mail-secondary);
+  }
+  .sectionTitle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .sectionTitle > svg {
+    width: 18px;
+    height: 18px;
+    color: var(--mail-secondary);
+    flex-shrink: 0;
+  }
+  .sectionTitle h4 {
+    font-size: 16px;
+    line-height: 1.5;
+    font-weight: 600;
+  }
+  .toggleRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 24px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--mail-border);
+  }
+  .toggleRow label {
+    color: var(--mail-text);
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .toggleRow p {
+    margin-top: 4px;
+    color: var(--mail-secondary);
+    line-height: 1.6;
+  }
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 24px;
+  }
+  .root .note {
+    font-size: 13px;
+    line-height: 1.65;
+    color: var(--mail-secondary);
+  }
+  .actions + .note {
+    margin-top: 10px;
+  }
+  .rules {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--mail-border);
+  }
+  .rules > p {
+    line-height: 1.7;
+    max-width: 65ch;
+  }
+}
+
+@media screen and (max-width: 800px) {
+  .header {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .header h3 {
+    font-size: 20px;
+  }
+  .toggleRow {
+    min-height: 64px;
+  }
+  .actions > button {
+    min-height: 44px;
+  }
+}

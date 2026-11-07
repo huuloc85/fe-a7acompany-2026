@@ -1,12 +1,5 @@
-import {
-  Button,
-  Form,
-  FormProps,
-  InputNumber,
-  message,
-  Select,
-  Spin
-} from 'antd';
+import { Form, FormProps, InputNumber, message, Select, Spin } from 'antd';
+import Button from '@components/common/AppButton';
 import { useState, useEffect, useMemo } from 'react';
 import dayjs from 'dayjs';
 
@@ -235,6 +228,7 @@ export default function ProductQuantityUpdate() {
           {productList.length > 0 && (
             <Form.Item>
               <Button
+                tone="inherit"
                 variant="solid"
                 color="blue"
                 loading={isPending}

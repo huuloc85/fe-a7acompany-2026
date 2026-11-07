@@ -1,6 +1,6 @@
 import { useState } from 'react';
+import { authStore } from '@/stores/authStore';
 import {
-  Button,
   Modal,
   Input,
   message,
@@ -11,6 +11,7 @@ import {
   Space,
   Tooltip
 } from 'antd';
+import Button from '@components/common/AppButton';
 import { CheckOutlined, CloseOutlined, EyeOutlined } from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
@@ -25,6 +26,7 @@ import {
 import { SignaturePad } from '@/components/common/SignaturePad';
 import { DetailView } from '@/components/RequestForm';
 import RefreshButton from '@components/common/RefreshButton';
+import QueryErrorNotice from '@components/common/QueryErrorNotice';
 import { customTableProps } from '@components/custom/TableProps.custom';
 import { dataURLToStandardFile } from '@/utils/signatureUtil';
 
@@ -42,7 +44,7 @@ function AuthorizedRequestFormsPage() {
   const [signatureData, setSignatureData] = useState<string>('');
 
   // Fetch ALL requests (both pending and approved) với optimizations
-  const { data, isLoading, isFetching, refetch } = useQuery({
+  const { data, isLoading, isFetching, isError, refetch } = useQuery({
     queryKey: ['authorized-request-forms-all'],
     queryFn: async () => {
       const response = await requestFormService.employee.getAuthorizedToMe({});
@@ -245,6 +247,7 @@ function AuthorizedRequestFormsPage() {
 
   // Helper: Check if can approve/reject
   const canApproveOrReject = (record: RequestForm): boolean => {
+    if (authStore.state.user?.is_preview) return false;
     return record.status === 'pending';
   };
 
@@ -399,6 +402,7 @@ function AuthorizedRequestFormsPage() {
         <Space size="small">
           <Tooltip title="Xem chi tiết">
             <Button
+              tone="inherit"
               type="text"
               size="small"
               icon={<EyeOutlined />}
@@ -410,6 +414,7 @@ function AuthorizedRequestFormsPage() {
             <>
               <Tooltip title="Duyệt đơn">
                 <Button
+                  tone="inherit"
                   type="text"
                   size="small"
                   style={{ color: '#52c41a' }}
@@ -419,6 +424,7 @@ function AuthorizedRequestFormsPage() {
               </Tooltip>
               <Tooltip title="Từ chối">
                 <Button
+                  tone="inherit"
                   type="text"
                   size="small"
                   danger
@@ -450,8 +456,13 @@ function AuthorizedRequestFormsPage() {
   return (
     <>
       <div className="space-y-5">
+        <QueryErrorNotice
+          isError={isError}
+          isFetching={isFetching}
+          onRetry={refetch}
+        />
         {/* ── Action Bar ──────────────────────────────────────── */}
-        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/50">
+        <div className="ui-toolbar flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/50">
           <RefreshButton isLoading={isFetching} refresh={refetch} />
           <div className="ml-auto flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 dark:border-gray-600 dark:bg-gray-800">
             <Tag color="blue" className="!m-0 !text-xs">
@@ -498,6 +509,7 @@ function AuthorizedRequestFormsPage() {
                     onClick={(e) => e.stopPropagation()}
                   >
                     <Button
+                      tone="inherit"
                       type="text"
                       size="small"
                       icon={<EyeOutlined />}
@@ -509,6 +521,7 @@ function AuthorizedRequestFormsPage() {
                       <>
                         <div className="flex-1" />
                         <Button
+                          tone="inherit"
                           type="text"
                           size="small"
                           style={{ color: '#52c41a' }}
@@ -518,6 +531,7 @@ function AuthorizedRequestFormsPage() {
                           Duyệt
                         </Button>
                         <Button
+                          tone="inherit"
                           type="text"
                           size="small"
                           danger
@@ -533,9 +547,11 @@ function AuthorizedRequestFormsPage() {
               ))}
             </div>
           ) : (
-            <div className="py-8 text-center text-sm text-gray-400">
-              Không có đơn ủy quyền nào
-            </div>
+            !isError && (
+              <div className="py-8 text-center text-sm text-gray-400">
+                Không có đơn ủy quyền nào
+              </div>
+            )
           )}
         </div>
 
@@ -560,7 +576,11 @@ function AuthorizedRequestFormsPage() {
           setSelectedRequest(null);
         }}
         footer={[
-          <Button key="close" onClick={() => setIsViewModalVisible(false)}>
+          <Button
+            tone="inherit"
+            key="close"
+            onClick={() => setIsViewModalVisible(false)}
+          >
             Đóng
           </Button>
         ]}

@@ -179,11 +179,10 @@ export default function SalaryDetail() {
 
   return (
     <>
-      <BackButton />
-      <ComponentCard title="Chi tiết bảng lương">
+      <ComponentCard actions={<BackButton />} title="Chi tiết bảng lương">
         <div className="space-y-5">
           {/* ── Action Bar ──────────────────────────────────────── */}
-          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/50">
+          <div className="ui-toolbar flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/50">
             <RefreshButton isLoading={isFetching} refresh={refetch} />
             <div className="ml-auto flex items-center gap-2">
               <span className="mr-2 text-xs font-medium text-gray-500 dark:text-gray-400">

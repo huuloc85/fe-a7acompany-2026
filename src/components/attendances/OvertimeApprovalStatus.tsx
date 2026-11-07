@@ -16,25 +16,28 @@ export function OvertimeApprovalStatus({
   approval?: OvertimeApproval;
   compact?: boolean;
 }) {
+  const messages = getOvertimeApprovalMessages(hours, approval, date);
+  if (!messages.length) return null;
+
   return (
-    <div className="flex w-full min-w-0 flex-col items-center gap-1 text-center">
-      {getOvertimeApprovalMessages(hours, approval, date).map(
-        ({ color, text }) => (
-          <Tooltip key={text} title={compact ? text : undefined}>
-            <Tag
-              color={color}
-              className={
-                compact
-                  ? '!mr-0 !max-w-full truncate'
-                  : '!mr-0 !whitespace-normal'
-              }
-              icon={color === 'warning' ? <WarningOutlined /> : undefined}
-            >
-              {text}
-            </Tag>
-          </Tooltip>
-        )
-      )}
+    <div
+      className={`flex w-full min-w-0 flex-col gap-1 ${compact ? 'items-end text-right' : 'items-center text-center'}`}
+    >
+      {messages.map(({ color, text }) => (
+        <Tooltip key={text} title={compact ? text : undefined}>
+          <Tag
+            color={color}
+            className={
+              compact
+                ? '!mr-0 !max-w-full !text-xs !leading-5 !whitespace-normal'
+                : '!mr-0 !whitespace-normal'
+            }
+            icon={color === 'warning' ? <WarningOutlined /> : undefined}
+          >
+            {text}
+          </Tag>
+        </Tooltip>
+      ))}
     </div>
   );
 }

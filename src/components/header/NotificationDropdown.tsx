@@ -105,6 +105,18 @@ export default function NotificationDropdown() {
 
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      setOpen(false);
+      triggerRef.current?.focus();
+    };
+    document.addEventListener('keydown', closeOnEscape);
+    return () => document.removeEventListener('keydown', closeOnEscape);
+  }, [open]);
 
   // Close on click outside
   useEffect(() => {
@@ -197,6 +209,11 @@ export default function NotificationDropdown() {
       {/* ── Bell Button ── */}
       <Badge count={count} size="small" offset={[-2, 2]}>
         <button
+          ref={triggerRef}
+          type="button"
+          aria-label="Thông báo"
+          aria-expanded={open}
+          aria-controls={open ? 'notifications-panel' : undefined}
           onClick={() => setOpen((v) => !v)}
           className="notification-trigger-btn relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 transition-all duration-300 hover:bg-gray-50 hover:text-gray-700 hover:shadow-sm active:scale-95 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
         >
@@ -206,7 +223,10 @@ export default function NotificationDropdown() {
 
       {/* ── Dropdown Panel ── */}
       {open && (
-        <div className="app-notification-dropdown glass-dropdown app-dropdown-enter absolute top-full right-0 mt-1.5 w-72 overflow-hidden rounded-xl sm:w-80">
+        <div
+          id="notifications-panel"
+          className="app-notification-dropdown glass-dropdown app-dropdown-enter absolute top-full right-0 mt-1.5 w-72 overflow-hidden rounded-xl sm:w-80"
+        >
           {/* ── Header ── */}
           <div className="app-dropdown-header flex items-center justify-between px-3.5 py-2.5">
             <div className="flex items-center gap-2">

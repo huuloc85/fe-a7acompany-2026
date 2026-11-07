@@ -4,16 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import { OvertimeApprovalStatus } from './OvertimeApprovalStatus';
 import { OvertimeApprovalActions } from './OvertimeApprovalActions';
 import { getOvertimeApprovalMessages } from '@/utils/overtimeApproval';
-import {
-  Alert,
-  Button,
-  DatePicker,
-  Modal,
-  Select,
-  Space,
-  Table,
-  message
-} from 'antd';
+import { Alert, DatePicker, Modal, Select, Space, Table, message } from 'antd';
+import Button from '@components/common/AppButton';
 import type { TableColumnsType } from 'antd';
 import { DatabaseOutlined, DownloadOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
@@ -228,10 +220,15 @@ export default function AttendanceArchiveButton() {
                 setPage(1);
               }}
             />
-            <Button loading={isFetching} onClick={() => void refetch()}>
+            <Button
+              tone="inherit"
+              loading={isFetching}
+              onClick={() => void refetch()}
+            >
               Làm mới
             </Button>
             <Button
+              tone="inherit"
               icon={<DownloadOutlined />}
               loading={exporting}
               disabled={isFetching || isError || !data?.total}

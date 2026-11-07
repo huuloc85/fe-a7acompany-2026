@@ -3,7 +3,8 @@ import {
   GiftOutlined,
   HeartOutlined
 } from '@ant-design/icons';
-import { Button, Image, Modal, Typography } from 'antd';
+import { Image, Modal, Typography } from 'antd';
+import Button from '@components/common/AppButton';
 import React, { useEffect, useMemo, useState } from 'react';
 
 const { Title, Text } = Typography;
@@ -1017,6 +1018,7 @@ const BirthdayModal: React.FC<BirthdayModalProps> = ({
 
             <div className="bd-footer">
               <Button
+                tone="inherit"
                 type="primary"
                 size="large"
                 onClick={onClose}

@@ -65,13 +65,13 @@ interface HNHCGroupedData {
 const normalizeText = (value?: string | null) => value?.toLowerCase().trim();
 
 // Current employee IDs, aligned with backend AttendanceEmployeeCode mappings.
-const QC_LEADER_EMPLOYEE_IDS = ['24070400', '22120701', '25060400'] as const;
-const WAREHOUSE_LEADER_EMPLOYEE_IDS = ['24061901', '22022200'] as const;
+const QC_LEADER_EMPLOYEE_IDS = ['24070417', '22120718', '25060406'] as const;
+const WAREHOUSE_LEADER_EMPLOYEE_IDS = ['24061914', '22022200'] as const;
 const MOLD_LEADER_EMPLOYEE_IDS = [
-  '22120400',
-  '24110201',
-  '25110800',
-  '26050301'
+  '22120411',
+  '24110212',
+  '25110832',
+  '26050333'
 ] as const;
 const PRODUCTION_LEADER_CATEGORY_NAMES = [
   'Nhóm Đi Xoay Ca - Hàng Nhật',
@@ -925,11 +925,11 @@ export default function Detail({
 
   return (
     <>
-      {!isDrawer && <BackButton />}
       {isDrawer ? (
         mainContent
       ) : (
         <ComponentCard
+          actions={<BackButton />}
           className="!overflow-visible"
           title={
             isLoadingSchedule

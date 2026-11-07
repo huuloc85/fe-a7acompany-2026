@@ -1,5 +1,9 @@
 import { User } from '@/types/authType';
 import { Store } from '@tanstack/react-store';
+import {
+  getEmployeePreview,
+  clearEmployeePreview
+} from '@/utils/employeePreview';
 
 type AuthState = {
   user: User | null;
@@ -10,19 +14,34 @@ type AuthState = {
 };
 
 // Load state from localStorage or set default values
-const initialState: AuthState = {
-  user: JSON.parse(localStorage.getItem('user') || 'null'),
-  isAuthenticated: localStorage.getItem('isAuthenticated') === 'true',
-  token: localStorage.getItem('token') || null,
-  sessionId: localStorage.getItem('auth_session_id') || null,
-  authChannelName: localStorage.getItem('auth_channel_name') || null
-};
+const preview = getEmployeePreview();
+const initialState: AuthState = preview
+  ? {
+      user: preview.user,
+      isAuthenticated: true,
+      token: preview.token,
+      sessionId: null,
+      authChannelName: null
+    }
+  : {
+      user: JSON.parse(localStorage.getItem('user') || 'null'),
+      isAuthenticated: localStorage.getItem('isAuthenticated') === 'true',
+      token: localStorage.getItem('token') || null,
+      sessionId: localStorage.getItem('auth_session_id') || null,
+      authChannelName: localStorage.getItem('auth_channel_name') || null
+    };
 
 // Create the store instance
 export const authStore = new Store(initialState);
 
 // Subscribe to state changes to update localStorage
 authStore.subscribe((state) => {
+  if (
+    getEmployeePreview() ||
+    state.currentVal.user?.is_preview ||
+    state.currentVal.token?.startsWith('employee-preview_')
+  )
+    return;
   localStorage.setItem('user', JSON.stringify(state.currentVal.user));
 
   localStorage.setItem(
@@ -82,6 +101,11 @@ export const setAuthChannelName = (authChannelName: string | null) => {
 };
 
 export const clearAuth = () => {
+  if (getEmployeePreview()) {
+    clearEmployeePreview();
+    window.location.replace('/admin/employees');
+    return;
+  }
   try {
     sessionStorage.removeItem('cap7a.vnc-password');
     sessionStorage.removeItem('cap7a.tail.vnc-password');

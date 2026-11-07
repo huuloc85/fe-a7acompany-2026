@@ -17,8 +17,7 @@ export default function EmployeeAdd() {
   const queryClient = useQueryClient();
   return (
     <>
-      <BackButton />
-      <ComponentCard title="Thêm nhân sự">
+      <ComponentCard actions={<BackButton />} title="Thêm nhân sự">
         <p className="mb-4 text-sm text-gray-500">
           Khi lưu nhân viên, hệ thống tự gửi yêu cầu thêm hồ sơ và cấp quyền
           chấm công qua bridge (trừ nhóm tài khoản không đồng bộ). Bạn không cần

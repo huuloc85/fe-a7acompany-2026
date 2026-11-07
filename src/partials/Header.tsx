@@ -1,4 +1,4 @@
-import { Button } from 'antd';
+import Button from '@components/common/AppButton';
 import { OnboardingHelpButton } from '@/components/onboarding/Onboarding';
 import { IconContext } from 'react-icons';
 
@@ -21,6 +21,7 @@ const Header = () => {
       <header className="app-header liquid-glass-panel sticky top-0 z-40 flex w-full items-center justify-between gap-1 border-x-0 border-t-0 px-2 py-2 sm:justify-end sm:gap-3 sm:px-4 lg:border-b lg:px-6">
         <div className="shrink-0 sm:mr-auto">
           <Button
+            tone="inherit"
             data-tour="navigation-menu"
             aria-label={isSidebarClose ? 'Mở menu' : 'Đóng menu'}
             type="text"

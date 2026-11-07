@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Button, Space } from 'antd';
+import { Space } from 'antd';
+import Button from '@components/common/AppButton';
 import { BellOutlined } from '@ant-design/icons';
 import { useNotificationPermission } from '@hooks/useNotificationPermission';
 
@@ -101,7 +102,7 @@ export const NotificationPermissionButton: React.FC<
 
   if (!isSupported) {
     return (
-      <Button disabled icon={<BellOutlined />} size={size}>
+      <Button tone="inherit" disabled icon={<BellOutlined />} size={size}>
         Không hỗ trợ
       </Button>
     );
@@ -109,10 +110,13 @@ export const NotificationPermissionButton: React.FC<
 
   return (
     <Space size="small">
-      <Button {...getButtonProps()}>{getButtonText()}</Button>
+      <Button tone="inherit" {...getButtonProps()}>
+        {getButtonText()}
+      </Button>
 
       {showTestButton && permission === 'granted' && (
         <Button
+          tone="inherit"
           type="dashed"
           size={size}
           loading={testLoading}

@@ -27,7 +27,7 @@ export default function SpikeApplicationLogs({
     <Card size="small" className="liquid-glass-card !rounded-2xl">
       <details>
         <summary className="cursor-pointer font-medium">
-          Nhật ký ứng dụng SPIKE
+          Nhật ký kiểm tra cổng keo cao
           {!!logs?.events.length && (
             <span className="ml-2 text-sm font-normal">
               ({logs.events.length})
@@ -69,7 +69,7 @@ export default function SpikeApplicationLogs({
         )}
         {!logs ? (
           <p className="mt-3 text-sm">
-            Chưa nhận nhật ký. Cập nhật SPIKE và mở app bằng icon desktop.
+            Chưa nhận nhật ký kiểm tra cổng keo cao.
           </p>
         ) : events.length === 0 ? (
           <p className="mt-3 text-sm">Không có sự kiện phù hợp.</p>

@@ -42,7 +42,7 @@ export const getMonthlyQuantities = async (params: QueryParams) => {
     TotalMonthQuantityType,
     PaginatedResponse<TotalMonthQuantityType>
   >(`${ENDPOINT}/monthly`, {
-    params
+    params: { ...params, include: params.include?.join(',') }
   });
   return response.data;
 };

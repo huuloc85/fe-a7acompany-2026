@@ -8,7 +8,8 @@ import { resetPassword } from '@services/ProfileService';
 import { handleApiError } from '@utils/handleApiError';
 import { useMutation } from '@tanstack/react-query';
 import { getRouteApi } from '@tanstack/react-router';
-import { Button, message } from 'antd';
+import { message } from 'antd';
+import Button from '@components/common/AppButton';
 import AttendanceDeviceSyncButton from '@components/AttendanceDeviceSyncButton';
 
 const routeApi = getRouteApi('/_authenticated/admin/employees/edit/$id');
@@ -41,12 +42,15 @@ export default function EmployeeEdit() {
 
   return (
     <>
-      <BackButton to="/admin/employees" />
-      <ComponentCard title="Cập nhật nhân sự">
+      <ComponentCard
+        actions={<BackButton to="/admin/employees" />}
+        title="Cập nhật nhân sự"
+      >
         <div className="text-end">
           <AttendanceDeviceSyncButton id={id} />
           <AttendanceDeviceSyncButton id={id} action="delete" />
           <Button
+            tone="inherit"
             color="danger"
             variant="outlined"
             onClick={() => mutate()}

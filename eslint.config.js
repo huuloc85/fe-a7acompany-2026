@@ -30,5 +30,24 @@ export default tseslint.config(
     }
   },
   ...pluginRouter.configs['flat/recommended'],
-  ...pluginQuery.configs['flat/recommended']
+  ...pluginQuery.configs['flat/recommended'],
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: ['src/components/common/AppButton.tsx'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'antd',
+              importNames: ['Button'],
+              message:
+                'Dùng AppButton từ @components/common/AppButton để giữ định dạng nút thống nhất.'
+            }
+          ]
+        }
+      ]
+    }
+  }
 );

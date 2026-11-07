@@ -1,5 +1,6 @@
 import React from 'react';
-import { Button, Card, Space, Typography, Alert } from 'antd';
+import { Card, Space, Typography, Alert } from 'antd';
+import Button from '@components/common/AppButton';
 import {
   BellOutlined,
   CheckCircleOutlined,
@@ -106,6 +107,7 @@ export const NotificationPermissionCard: React.FC<
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           {permission !== 'granted' && (
             <Button
+              tone="inherit"
               type="primary"
               icon={<BellOutlined />}
               loading={isLoading}
@@ -117,7 +119,12 @@ export const NotificationPermissionCard: React.FC<
           )}
 
           {permission === 'granted' && (
-            <Button type="default" icon={<CheckCircleOutlined />} disabled>
+            <Button
+              tone="inherit"
+              type="default"
+              icon={<CheckCircleOutlined />}
+              disabled
+            >
               Đã được cấp quyền
             </Button>
           )}

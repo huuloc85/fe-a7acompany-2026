@@ -1,4 +1,8 @@
-import type { PayrollRules } from './payrollCalculation';
+import {
+  payrollPeriodInputKeys,
+  type PayrollRules,
+  type PayrollPeriodInputs
+} from './payrollCalculation';
 
 // Explicit order keeps the formula references stable when rule objects are reordered.
 export const payrollRuleKeys: (keyof PayrollRules)[] = [
@@ -18,7 +22,8 @@ export const payrollRuleKeys: (keyof PayrollRules)[] = [
 
 export function payrollExcelFormulas(
   row: number,
-  employeeCount: number
+  employeeCount: number,
+  inputRow?: number
 ): Record<string, string> {
   const config = (key: keyof PayrollRules) =>
     `'Cấu hình'!$B$${payrollRuleKeys.indexOf(key) + 2}`;
@@ -28,38 +33,54 @@ export function payrollExcelFormulas(
     `INDEX('Tổng hợp công'!$${column}$3:$${column}$${employeeCount + 2},MATCH($A${row},'Tổng hợp công'!$A$3:$A$${employeeCount + 2},0))`;
   const daily = `(${profile('F')}+${profile('G')})/${config('standardDays')}`;
   const hourly = `${daily}/${config('hoursPerDay')}`;
+  const input = (key: keyof PayrollPeriodInputs, fallback: string) => {
+    if (inputRow === undefined) return fallback;
+    const index = payrollPeriodInputKeys.indexOf(key) + 2;
+    const column =
+      index <= 26
+        ? String.fromCharCode(64 + index)
+        : `A${String.fromCharCode(64 + index - 26)}`;
+    const ref = `'Thông số kỳ'!$${column}$${inputRow}`;
+    return `IF(${ref}="",${fallback},${ref})`;
+  };
   const taxable = `AJ${row}`;
   return {
     B: profile('C'),
     C: profile('D'),
     D: `${hours('C')}/${config('hoursPerDay')}`,
-    E: `ROUND(${daily}*D${row},0)`,
+    E: `ROUND(${input('dayRate', daily)}*D${row},0)`,
     F: `${hours('D')}/${config('hoursPerDay')}`,
-    G: `ROUND(${daily}*F${row}*${config('nightMultiplier')},0)`,
+    G: `ROUND(${input('nightRate', `${daily}*${config('nightMultiplier')}`)}*F${row},0)`,
     H: hours('E'),
     I: `ROUND(${hourly}*H${row}*${config('dayOvertimeMultiplier')},0)`,
     J: hours('F'),
     K: `ROUND(${hourly}*J${row}*${config('nightOvertimeMultiplier')},0)`,
     L: `D${row}+F${row}`,
-    M: `ROUND(L${row}*${profile('H')},0)`,
-    N: `ROUND(L${row}*${profile('I')},0)`,
-    O: `ROUND(L${row}*${profile('J')},0)`,
-    Q: `ROUND(${daily}*P${row},0)`,
-    S: `ROUND(${daily}*R${row},0)`,
-    U: `ROUND(${daily}*T${row},0)`,
-    Y: `ROUND(${hourly}*X${row},0)`,
-    AB: `SUM(E${row},G${row},I${row},K${row},M${row}:O${row},Q${row},S${row},U${row},W${row},Y${row}:AA${row},AO${row})`,
-    AC: `(${profile('F')}+${profile('G')})*${config('unionRate')}`,
-    AD: `(${profile('F')}+${profile('G')})*${config('socialRate')}`,
-    AE: `(${profile('F')}+${profile('G')})*${config('healthRate')}`,
-    AF: `(${profile('F')}+${profile('G')})*${config('unemploymentRate')}`,
-    AG: config('personalDeduction'),
-    AH: `${profile('N')}*${config('dependentDeduction')}`,
-    AJ: `MAX(0,AB${row}-SUM(AD${row}:AG${row})-AI${row})`,
+    M: `ROUND(L${row}*${input('housingPerDay', profile('H'))},0)`,
+    N: `ROUND(L${row}*${input('travelPerDay', profile('I'))},0)`,
+    O: `ROUND(L${row}*${input('mealPerDay', profile('J'))},0)`,
+    Q: `ROUND(${input('downtimeDailyRate', daily)}*P${row},0)`,
+    S: `ROUND(${input('holidayDailyRate', daily)}*R${row},0)`,
+    U: `ROUND(${input('paidLeaveDailyRate', daily)}*T${row},0)`,
+    Y: `ROUND(${input('menstrualHourlyRate', hourly)}*X${row},0)`,
+    AB: `SUM(E${row},G${row},I${row},K${row},M${row}:O${row},Q${row},S${row},U${row},W${row},Y${row}:AA${row},AN${row}:AO${row})`,
+    AC: `${input('unionBase', `(${profile('F')}+${profile('G')})`)}*${config('unionRate')}`,
+    AD: `${input('insuranceBase', `(${profile('F')}+${profile('G')})`)}*${config('socialRate')}`,
+    AE: `${input('insuranceBase', `(${profile('F')}+${profile('G')})`)}*${config('healthRate')}`,
+    AF: `${input('insuranceBase', `(${profile('F')}+${profile('G')})`)}*${config('unemploymentRate')}`,
+    AG: input('personalDeduction', config('personalDeduction')),
+    AH: input(
+      'dependentDeduction',
+      `${profile('N')}*${config('dependentDeduction')}`
+    ),
+    AJ: input(
+      'taxable',
+      `MAX(0,AB${row}-M${row}-O${row}-SUM(AD${row}:AG${row})-AI${row})`
+    ),
     AK: `ROUND(IF(${taxable}<=10000000,${taxable}*5%,IF(${taxable}<=30000000,(${taxable}-10000000)*10%+500000,IF(${taxable}<=60000000,(${taxable}-30000000)*20%+2500000,IF(${taxable}<=100000000,(${taxable}-60000000)*30%+8500000,(${taxable}-100000000)*35%+20500000)))),0)`,
     AL: `AB${row}-SUM(AC${row}:AF${row})-AK${row}-AP${row}-AQ${row}`,
-    AM: hours('G'),
-    AN: `ROUND(${hourly}*AM${row}*${config('reinforcementMultiplier')},0)`,
+    AM: input('mainReinforcementHours', '0'),
+    AN: `ROUND(${input('mainReinforcementHourlyRate', `${hourly}*${config('reinforcementMultiplier')}`)}*AM${row},0)`,
     AR: profile('E')
   };
 }
@@ -78,7 +99,7 @@ export const payrollFormulaNotes: Record<string, string> = {
   S: 'Mẫu T8: ROUND((lương căn bản + trách nhiệm) / 25 × ngày lễ, 0).',
   U: 'Cách tính như mẫu V8 (hiếu/hỷ); trên web dùng mục nghỉ hưởng lương.',
   Y: 'Mẫu AB8: ROUND((lương căn bản + trách nhiệm) / 200 × giờ hành kinh, 0).',
-  AB: 'Cộng các khoản lương chính theo AE8. Tăng cường tách riêng; thu nhập bổ sung trên web chỉ cộng khi có nhập.',
+  AB: 'Cộng các khoản lương chính và tăng cường trong bảng lương. Tăng cường tiền mặt theo dõi riêng.',
   AC: 'Mẫu AF8: (lương căn bản + trách nhiệm) × 0,5%, không ROUND.',
   AD: 'Mẫu AG8: (lương căn bản + trách nhiệm) × 8%, không ROUND.',
   AE: 'Mẫu AH8: (lương căn bản + trách nhiệm) × 1,5%, không ROUND.',

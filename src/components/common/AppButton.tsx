@@ -1,4 +1,4 @@
-import { Button, ButtonProps } from 'antd';
+import { Button } from 'antd';
 import React from 'react';
 
 export type AppButtonTone =
@@ -10,9 +10,10 @@ export type AppButtonTone =
   | 'danger'
   | 'purple';
 
-interface AppButtonProps extends ButtonProps {
-  tone?: AppButtonTone;
-}
+export type AppButtonProps = React.ComponentProps<typeof Button> & {
+  /** Keep an existing Ant Design color/variant without applying a semantic tone. */
+  tone?: AppButtonTone | 'inherit';
+};
 
 const toneClassMap: Record<AppButtonTone, string> = {
   neutral: 'header-action-btn--neutral',
@@ -25,10 +26,15 @@ const toneClassMap: Record<AppButtonTone, string> = {
 };
 
 const getAppButtonClassName = (
-  tone: AppButtonTone = 'neutral',
+  tone: AppButtonTone | 'inherit' = 'neutral',
   className?: string
 ) =>
-  ['header-action-btn', toneClassMap[tone], className]
+  [
+    'app-button',
+    tone !== 'inherit' && 'header-action-btn',
+    tone !== 'inherit' && toneClassMap[tone],
+    className
+  ]
     .filter(Boolean)
     .join(' ');
 

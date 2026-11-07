@@ -29,7 +29,7 @@ export default function RequestFormTabs() {
       label: (
         <span className="flex items-center gap-2">
           <FaFileAlt />
-          <span>Đơn Yêu Cầu</span>
+          <span>Đơn yêu cầu</span>
         </span>
       ),
       children: <RequestFormList />
@@ -39,7 +39,7 @@ export default function RequestFormTabs() {
       label: (
         <span className="flex items-center gap-2">
           <FaUserCheck />
-          <span>Duyệt Đơn Ủy Quyền</span>
+          <span>Duyệt đơn ủy quyền</span>
         </span>
       ),
       children: <AuthorizedRequestFormsPage />
@@ -48,8 +48,11 @@ export default function RequestFormTabs() {
 
   return (
     <>
-      <BackButton to="/" />
-      <ComponentCard title="Quản lý đơn yêu cầu">
+      <ComponentCard
+        actions={<BackButton to="/" />}
+        title="Quản lý đơn yêu cầu"
+        headingLevel={1}
+      >
         <Tabs
           data-tour="authorized-requests-tabs"
           activeKey={activeTab}

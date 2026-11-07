@@ -2,6 +2,36 @@ import axiosPrivate from '@/api/axiosInstance';
 
 export type Cap7ASystem = 'tail' | 'spike';
 
+export interface Cap7AMailSettings {
+  enabled: boolean;
+  recipient: string;
+}
+
+export const sendCap7ATestMail = (recipient: string) =>
+  axiosPrivate.post<unknown, { message: string }>(
+    '/api/cap7a/production-mail/test',
+    { recipient, confirmed: true },
+    { timeout: 30000 }
+  );
+
+export const getCap7AMailSettings = (signal?: AbortSignal) =>
+  axiosPrivate.get<unknown, Cap7AMailSettings>(
+    '/api/cap7a/production-mail/settings',
+    {
+      signal,
+      timeout: 12000
+    }
+  );
+
+export const updateCap7AMailSettings = (settings: Cap7AMailSettings) =>
+  axiosPrivate.put<unknown, Cap7AMailSettings>(
+    '/api/cap7a/production-mail/settings',
+    settings,
+    {
+      timeout: 15000
+    }
+  );
+
 export interface TailAppLog {
   id: string;
   at_ms: number;
@@ -28,7 +58,8 @@ export type SpikeAction =
   | 'reset_counters'
   | 'move_roi'
   | 'save_roi'
-  | 'reset_roi';
+  | 'reset_roi'
+  | 'close_app';
 export interface SpikeControlsState {
   core_session: string;
   revision: number;
@@ -47,15 +78,18 @@ export interface Cap7ACapabilities {
 }
 
 export type Cap7AAction =
+  | 'close_app'
   | 'ping'
   | 'run'
   | 'stop'
   | 'test'
   | 'reset_counters'
+  | 'reset_runtime'
   | 'set_threshold'
   | 'set_roi'
   | 'clear_roi';
 export interface Cap7AState {
+  processing_fps?: number | null;
   controls?: SpikeControlsState;
   app_started_at_ms?: number | null;
   app_exited_at_ms?: number | null;
@@ -112,6 +146,31 @@ export const getCap7AStatus = (system: Cap7ASystem, signal?: AbortSignal) =>
     timeout: 12000
   });
 
+export interface TailLauncherStatus {
+  enabled: boolean;
+  online: boolean;
+  state: null | {
+    session_id: string;
+    sampled_at_ms: number;
+    app_running: boolean;
+    desktop_ready: boolean;
+    last_exit_code: number | null;
+  };
+}
+
+export const getTailLauncher = (signal?: AbortSignal) =>
+  axiosPrivate.get<unknown, TailLauncherStatus>('/api/cap7a/tail/launcher', {
+    signal,
+    timeout: 12000
+  });
+
+export const startTailApplication = (session: string) =>
+  axiosPrivate.post<unknown, { ok: boolean; message: string; status?: string }>(
+    '/api/cap7a/tail/launcher/start',
+    { request_id: crypto.randomUUID(), session_id: session, confirmed: true },
+    { timeout: 15000 }
+  );
+
 export interface Cap7ADaily {
   available: boolean;
   date: string;
@@ -131,8 +190,26 @@ export interface Cap7ADaily {
   } | null;
 }
 
-export const getCap7ADaily = (system: Cap7ASystem, date: string) =>
+export const getSpikeLauncher = (signal?: AbortSignal) =>
+  axiosPrivate.get<unknown, TailLauncherStatus>('/api/cap7a/spike/launcher', {
+    signal,
+    timeout: 12000
+  });
+
+export const startSpikeApplication = (session: string) =>
+  axiosPrivate.post<unknown, { ok: boolean; message: string; status?: string }>(
+    '/api/cap7a/spike/launcher/start',
+    { request_id: crypto.randomUUID(), session_id: session, confirmed: true },
+    { timeout: 15000 }
+  );
+
+export const getCap7ADaily = (
+  system: Cap7ASystem,
+  date: string,
+  signal?: AbortSignal
+) =>
   axiosPrivate.get<unknown, Cap7ADaily>(`/api/cap7a/${system}/daily`, {
+    signal,
     params: { date },
     timeout: 12000
   });

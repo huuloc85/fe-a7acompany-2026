@@ -1,0 +1,61 @@
+/* Shared action-button geometry. Colors remain owned by existing skins/tones.
+   Include portals so modal/drawer/confirmation buttons use the same format. */
+@media screen {
+  html body :is(#root, .ant-modal-root, .ant-drawer, .ant-popover) .ant-btn {
+    --app-button-height: 36px;
+    --app-button-padding: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-weight: 600 !important;
+  }
+
+  html body :is(#root, .ant-modal-root, .ant-drawer, .ant-popover) .ant-btn-sm {
+    --app-button-height: 32px;
+    --app-button-padding: 12px;
+  }
+
+  html body :is(#root, .ant-modal-root, .ant-drawer, .ant-popover) .ant-btn-lg {
+    --app-button-height: 44px;
+    --app-button-padding: 20px;
+  }
+
+  html
+    body
+    :is(#root, .ant-modal-root, .ant-drawer, .ant-popover)
+    .ant-btn:not(.ant-btn-link, .ant-btn-text) {
+    height: var(--app-button-height);
+    padding-block: 0;
+    padding-inline: var(--app-button-padding);
+  }
+
+  html
+    body
+    :is(#root, .ant-modal-root, .ant-drawer, .ant-popover)
+    .ant-btn:is(.ant-btn-icon-only, .ant-btn-circle) {
+    width: var(--app-button-height);
+    padding-inline: 0;
+    flex-shrink: 0;
+  }
+
+  .app-button > .ant-btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .ui-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+  }
+
+  @media (max-width: 767px) {
+    html body :is(#root, .ant-modal-root, .ant-drawer, .ant-popover) .ant-btn {
+      --app-button-height: 44px;
+    }
+  }
+}

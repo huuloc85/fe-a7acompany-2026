@@ -2,6 +2,7 @@ import Echo from 'laravel-echo';
 import type { Broadcaster } from 'laravel-echo';
 import { API_URL } from '@/configs/environment.config';
 import Pusher from 'pusher-js';
+import { getActiveAuthToken } from '@/utils/employeePreview';
 
 declare global {
   interface Window {
@@ -18,7 +19,7 @@ window.Pusher = Pusher;
 const broadcastingAuthEndpoint = `${API_URL.replace(/\/+$/, '')}/broadcasting/auth`;
 const userAuthEndpoint = `${API_URL.replace(/\/+$/, '')}/broadcasting/user-auth`;
 const getAuthHeaders = (): Record<string, string> => {
-  const token = localStorage.getItem('token');
+  const token = getActiveAuthToken();
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 const isLocalDev = ['localhost', '127.0.0.1'].includes(

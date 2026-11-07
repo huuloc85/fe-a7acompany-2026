@@ -23,7 +23,15 @@ import {
   Drawer,
   Image
 } from 'antd';
-import { FaCommentDots, FaReply, FaTrashAlt, FaEye } from 'react-icons/fa';
+import {
+  FaCommentDots,
+  FaReply,
+  FaTrashAlt,
+  FaEye,
+  FaPen
+} from 'react-icons/fa';
+import FeedbackStatusTag from '@/components/feedback/FeedbackStatusTag';
+import { usePendingFeedbackCount } from '@/hooks/usePendingFeedbackCount';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import 'dayjs/locale/vi';
@@ -56,13 +64,6 @@ const TYPE_LABEL: Record<FeedbackType, string> = {
   other: 'Khác'
 };
 
-const STATUS_CONFIG: Record<FeedbackStatus, { label: string; dot: string }> = {
-  pending: { label: 'Chờ xử lý', dot: 'bg-amber-400' },
-  reviewed: { label: 'Đã xem', dot: 'bg-blue-400' },
-  resolved: { label: 'Đã xử lý', dot: 'bg-emerald-500' },
-  rejected: { label: 'Từ chối', dot: 'bg-red-400' }
-};
-
 const TYPE_OPTIONS = [
   { value: 'suggestion', label: 'Góp ý' },
   { value: 'complaint', label: 'Khiếu nại' },
@@ -72,6 +73,7 @@ const TYPE_OPTIONS = [
 
 const STATUS_OPTIONS = [
   { value: 'pending', label: 'Chờ xử lý' },
+  { value: 'reviewed', label: 'Đã xem' },
   { value: 'resolved', label: 'Đã xử lý' },
   { value: 'rejected', label: 'Từ chối' }
 ];
@@ -122,6 +124,7 @@ export default function FeedbackPage() {
   const [filterStatus, setFilterStatus] = useState<FeedbackStatus | ''>('');
   const [search, setSearch] = useState('');
   const [detailOpen, setDetailOpen] = useState(false);
+  const [editingReply, setEditingReply] = useState(false);
   const [selectedFeedback, setSelectedFeedback] = useState<Feedback | null>(
     null
   );
@@ -162,10 +165,15 @@ export default function FeedbackPage() {
       payload: ReplyFeedbackPayload;
     }) => replyFeedback(id, payload),
     onSuccess: () => {
-      message.success('Đã phản hồi!');
+      message.success(
+        selectedFeedback?.admin_reply
+          ? 'Đã cập nhật phản hồi'
+          : 'Đã gửi phản hồi'
+      );
       setReplyForm({ admin_reply: '', status: 'resolved' });
       setDetailOpen(false);
       queryClient.invalidateQueries({ queryKey: ['admin-feedbacks'] });
+      queryClient.invalidateQueries({ queryKey: ['my-feedbacks'] });
     },
     onError: () => message.error('Phản hồi thất bại!')
   });
@@ -176,25 +184,26 @@ export default function FeedbackPage() {
       return;
     }
     if (selectedFeedback) {
-      replyMutation.mutate({ id: selectedFeedback.id, payload: replyForm });
+      replyMutation.mutate({
+        id: selectedFeedback.id,
+        payload: { ...replyForm, admin_reply: replyForm.admin_reply.trim() }
+      });
     }
   };
 
   const openDetail = useCallback((feedback: Feedback) => {
+    setEditingReply(false);
     setSelectedFeedback(feedback);
     setReplyForm({
       admin_reply: feedback.admin_reply || '',
-      status:
-        feedback.status === 'pending' || feedback.status === 'reviewed'
-          ? 'resolved'
-          : feedback.status
+      status: feedback.status === 'pending' ? 'resolved' : feedback.status
     });
     setDetailOpen(true);
   }, []);
 
   const feedbacks = useMemo(() => data?.data ?? [], [data?.data]);
   const total = data?.total ?? 0;
-  const pendingCount = feedbacks.filter((f) => f.status === 'pending').length;
+  const { data: pendingCount = 0 } = usePendingFeedbackCount(true);
 
   // ── Auto open detail from notification highlight ─────────────────────
   useEffect(() => {
@@ -267,17 +276,9 @@ export default function FeedbackPage() {
       key: 'status',
       width: 110,
       align: 'center',
-      render: (_: unknown, record: Feedback) => {
-        const cfg = STATUS_CONFIG[record.status];
-        return (
-          <div className="flex items-center justify-center gap-1.5">
-            <span className={`h-1.5 w-1.5 rounded-full ${cfg.dot}`} />
-            <span className="text-xs text-gray-600 dark:text-gray-400">
-              {cfg.label}
-            </span>
-          </div>
-        );
-      }
+      render: (_: unknown, record: Feedback) => (
+        <FeedbackStatusTag status={record.status} />
+      )
     },
     {
       title: 'Thời gian',
@@ -403,7 +404,6 @@ export default function FeedbackPage() {
             <Spin spinning={isLoading}>
               <div className="flex flex-col gap-3">
                 {feedbacks.map((record, index) => {
-                  const cfg = STATUS_CONFIG[record.status];
                   const isHighlighted = String(record.id) === highlightId;
                   return (
                     <div
@@ -425,14 +425,7 @@ export default function FeedbackPage() {
                             {TYPE_LABEL[record.type]}
                           </span>
                         </div>
-                        <div className="flex items-center gap-1.5">
-                          <span
-                            className={`h-1.5 w-1.5 rounded-full ${cfg.dot}`}
-                          />
-                          <span className="text-[11px] text-gray-500 dark:text-gray-400">
-                            {cfg.label}
-                          </span>
-                        </div>
+                        <FeedbackStatusTag status={record.status} />
                       </div>
 
                       {/* Subject */}
@@ -521,7 +514,9 @@ export default function FeedbackPage() {
           </div>
         }
         open={detailOpen}
-        onClose={() => setDetailOpen(false)}
+        onClose={() => {
+          if (!replyMutation.isPending) setDetailOpen(false);
+        }}
         width={
           typeof window !== 'undefined' && window.innerWidth < 640
             ? '100%'
@@ -536,14 +531,7 @@ export default function FeedbackPage() {
                 <span className="text-xs text-gray-500">
                   {TYPE_LABEL[selectedFeedback.type]}
                 </span>
-                <div className="flex items-center gap-1.5">
-                  <span
-                    className={`h-1.5 w-1.5 rounded-full ${STATUS_CONFIG[selectedFeedback.status].dot}`}
-                  />
-                  <span className="text-xs text-gray-500">
-                    {STATUS_CONFIG[selectedFeedback.status].label}
-                  </span>
-                </div>
+                <FeedbackStatusTag status={selectedFeedback.status} />
               </div>
               <h3 className="text-base font-semibold text-gray-800 dark:text-white">
                 {selectedFeedback.subject}
@@ -585,20 +573,13 @@ export default function FeedbackPage() {
 
             {/* ── Reply Section ── */}
             <div className="mt-1 border-t border-slate-100 pt-5 dark:border-slate-700">
-              {selectedFeedback.admin_reply ? (
-                /* ── Already replied — read only ── */
+              {selectedFeedback.admin_reply && !editingReply ? (
+                /* ── Saved reply ── */
                 <div className="space-y-2">
                   <label className="flex items-center gap-1 text-[10px] font-medium tracking-wider text-slate-500 uppercase">
                     <FaReply className="text-[8px]" /> Phản hồi từ Admin
                   </label>
-                  <div className="mb-2 flex items-center gap-1.5">
-                    <span
-                      className={`h-1.5 w-1.5 rounded-full ${STATUS_CONFIG[selectedFeedback.status].dot}`}
-                    />
-                    <span className="text-xs text-gray-600 dark:text-gray-400">
-                      {STATUS_CONFIG[selectedFeedback.status].label}
-                    </span>
-                  </div>
+                  <FeedbackStatusTag status={selectedFeedback.status} />
                   <div className="rounded-lg border border-slate-100 bg-white p-3 text-sm leading-relaxed whitespace-pre-wrap text-gray-700 dark:border-slate-700 dark:bg-slate-800/50 dark:text-gray-300">
                     {selectedFeedback.admin_reply}
                   </div>
@@ -612,20 +593,30 @@ export default function FeedbackPage() {
                         )
                       : ''}
                   </div>
+                  <AppButton
+                    size="small"
+                    icon={<FaPen />}
+                    onClick={() => setEditingReply(true)}
+                  >
+                    Sửa phản hồi
+                  </AppButton>
                 </div>
               ) : (
-                /* ── Not yet replied — form ── */
+                /* ── Create or edit reply ── */
                 <div className="space-y-4">
                   <label className="flex items-center gap-1 text-[10px] font-medium tracking-wider text-slate-500 uppercase">
                     <FaReply className="text-[8px]" /> Phản hồi góp ý
                   </label>
 
                   <Select
+                    aria-label="Trạng thái phản hồi"
+                    disabled={replyMutation.isPending}
                     value={replyForm.status}
                     onChange={(v) => setReplyForm((p) => ({ ...p, status: v }))}
                     className="!w-full"
                     size="small"
                     options={[
+                      { value: 'reviewed', label: 'Đã xem' },
                       {
                         value: 'resolved',
                         label: (
@@ -647,6 +638,8 @@ export default function FeedbackPage() {
 
                   <div className="mt-3">
                     <Input.TextArea
+                      aria-label="Nội dung phản hồi"
+                      disabled={replyMutation.isPending}
                       placeholder="Nhập nội dung phản hồi..."
                       value={replyForm.admin_reply}
                       onChange={(e) =>
@@ -670,8 +663,25 @@ export default function FeedbackPage() {
                     loading={replyMutation.isPending}
                     className="!h-9"
                   >
-                    Gửi phản hồi
+                    {selectedFeedback.admin_reply
+                      ? 'Lưu thay đổi'
+                      : 'Gửi phản hồi'}
                   </AppButton>
+                  {selectedFeedback.admin_reply && (
+                    <AppButton
+                      block
+                      disabled={replyMutation.isPending}
+                      onClick={() => {
+                        setEditingReply(false);
+                        setReplyForm({
+                          admin_reply: selectedFeedback.admin_reply || '',
+                          status: selectedFeedback.status
+                        });
+                      }}
+                    >
+                      Hủy chỉnh sửa
+                    </AppButton>
+                  )}
                 </div>
               )}
             </div>

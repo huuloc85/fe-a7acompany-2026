@@ -18,6 +18,18 @@ export default function UserDropdown() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      setOpen(false);
+      triggerRef.current?.focus();
+    };
+    document.addEventListener('keydown', closeOnEscape);
+    return () => document.removeEventListener('keydown', closeOnEscape);
+  }, [open]);
 
   // Close on click outside
   useEffect(() => {
@@ -68,6 +80,11 @@ export default function UserDropdown() {
   return (
     <div className="relative" ref={dropdownRef}>
       <button
+        ref={triggerRef}
+        type="button"
+        aria-label="Tài khoản"
+        aria-expanded={open}
+        aria-controls={open ? 'account-panel' : undefined}
         data-tour="profile-menu"
         className="profile-trigger-btn cursor-pointer rounded-full ring-2 ring-transparent transition-all duration-300 hover:shadow-md hover:ring-blue-200 active:scale-95 dark:hover:ring-blue-700"
         onClick={() => setOpen((v) => !v)}
@@ -76,7 +93,10 @@ export default function UserDropdown() {
       </button>
 
       {open && (
-        <div className="app-profile-dropdown glass-dropdown app-dropdown-enter absolute top-full right-0 mt-3 w-56 overflow-hidden rounded-2xl">
+        <div
+          id="account-panel"
+          className="app-profile-dropdown glass-dropdown app-dropdown-enter absolute top-full right-0 mt-3 w-56 overflow-hidden rounded-2xl"
+        >
           {/* ── User Info ── */}
           <div className="app-profile-summary flex items-center gap-3 px-4 py-4">
             <div className="app-profile-avatar flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
@@ -107,7 +127,7 @@ export default function UserDropdown() {
             <Link
               to="/profile"
               onClick={() => setOpen(false)}
-              className="app-profile-menu-item flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13.5px] !text-black/80 no-underline transition-all duration-200 hover:bg-gray-50 hover:!text-black active:scale-[0.98] dark:!text-gray-200 dark:hover:bg-white/5 dark:hover:!text-white"
+              className="app-profile-menu-item flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] !text-black/80 no-underline transition-all duration-200 hover:bg-gray-50 hover:!text-black active:scale-[0.98] dark:!text-gray-200 dark:hover:bg-white/5 dark:hover:!text-white"
             >
               <FaUserCircle className="text-base text-black/50 dark:text-gray-400" />
               <span>Hồ sơ</span>
@@ -117,7 +137,7 @@ export default function UserDropdown() {
               <Link
                 to="/employee/request-forms"
                 onClick={() => setOpen(false)}
-                className="app-profile-menu-item flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13.5px] !text-black/80 no-underline transition-all duration-200 hover:bg-gray-50 hover:!text-black active:scale-[0.98] dark:!text-gray-200 dark:hover:bg-white/5 dark:hover:!text-white"
+                className="app-profile-menu-item flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] !text-black/80 no-underline transition-all duration-200 hover:bg-gray-50 hover:!text-black active:scale-[0.98] dark:!text-gray-200 dark:hover:bg-white/5 dark:hover:!text-white"
               >
                 <FaFileAlt className="text-base text-black/50 dark:text-gray-400" />
                 <span>Đơn yêu cầu</span>
@@ -132,7 +152,7 @@ export default function UserDropdown() {
             <button
               onClick={handleLogout}
               disabled={isLoggingOut}
-              className="app-profile-logout flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[13.5px] text-red-500 transition-all duration-200 hover:bg-red-50 hover:text-red-600 active:scale-[0.98] disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-900/15"
+              className="app-profile-logout flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] text-red-500 transition-all duration-200 hover:bg-red-50 hover:text-red-600 active:scale-[0.98] disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-900/15"
             >
               <IconLogOut className="text-base" />
               <span>{isLoggingOut ? 'Đang xuất...' : 'Đăng xuất'}</span>

@@ -1,6 +1,7 @@
 import AppSearchInput from '@/components/common/AppSearchInput';
-import React from 'react';
-import { Row, Col, Select, Button } from 'antd';
+import React, { useId } from 'react';
+import { Row, Col, Select } from 'antd';
+import Button from '@components/common/AppButton';
 import { ClearOutlined } from '@ant-design/icons';
 import {
   type RequestFormFilters as RequestFormFiltersType,
@@ -26,6 +27,7 @@ export const FilterPanel: React.FC<RequestFormFiltersProps> = ({
   searchText = '',
   onSearchTextChange
 }) => {
+  const filterId = useId();
   const handleFilterChange = (
     key: keyof RequestFormFiltersType,
     value: unknown
@@ -48,10 +50,14 @@ export const FilterPanel: React.FC<RequestFormFiltersProps> = ({
         {onSearchTextChange && (
           <Col xs={12} sm={8} md={6}>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-gray-700 sm:text-sm">
+              <label
+                htmlFor={`${filterId}-search`}
+                className="text-xs font-medium text-gray-700 sm:text-sm dark:text-gray-300"
+              >
                 Tìm nhân viên
               </label>
               <AppSearchInput
+                id={`${filterId}-search`}
                 placeholder="Nhập tên hoặc MSNV"
                 value={searchText}
                 onChange={(e) => onSearchTextChange(e.target.value)}
@@ -63,10 +69,14 @@ export const FilterPanel: React.FC<RequestFormFiltersProps> = ({
 
         <Col xs={12} sm={8} md={5}>
           <div className="space-y-1">
-            <label className="text-xs font-medium text-gray-700 sm:text-sm">
+            <label
+              htmlFor={`${filterId}-type`}
+              className="text-xs font-medium text-gray-700 sm:text-sm dark:text-gray-300"
+            >
               Loại đơn
             </label>
             <Select
+              id={`${filterId}-type`}
               placeholder="Chọn loại đơn"
               allowClear
               value={filters.type}
@@ -85,11 +95,15 @@ export const FilterPanel: React.FC<RequestFormFiltersProps> = ({
 
         <Col xs={12} sm={8} md={6}>
           <div className="space-y-1">
-            <label className="text-xs font-medium text-gray-700 sm:text-sm">
+            <label
+              htmlFor={`${filterId}-status`}
+              className="text-xs font-medium text-gray-700 sm:text-sm dark:text-gray-300"
+            >
               Trạng thái
             </label>
             <Select
               placeholder="Chọn trạng thái"
+              id={`${filterId}-status`}
               allowClear
               value={filters.status}
               onChange={(value) => handleFilterChange('status', value)}
@@ -107,6 +121,7 @@ export const FilterPanel: React.FC<RequestFormFiltersProps> = ({
 
         <Col xs={24} sm={8} md={4}>
           <Button
+            tone="inherit"
             type="default"
             icon={<ClearOutlined />}
             onClick={handleClearAll}

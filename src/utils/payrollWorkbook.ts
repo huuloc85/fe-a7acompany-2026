@@ -1,4 +1,5 @@
 import ExcelJS from 'exceljs';
+import { payrollPeriodInputKeys } from './payrollCalculation';
 import { payrollBankBin, payrollBankName } from './payrollBanks.ts';
 import { payrollEmployeeCode } from './payrollIdentity.ts';
 import {
@@ -156,7 +157,10 @@ export const payrollColumns: PayrollColumn[] = [
   { title: 'Thu nhập tính thuế', value: (r) => r.taxable },
   { title: 'Thuế TNCN', value: (r) => r.tax },
   { title: 'Thực lãnh', value: (r) => r.net },
-  { title: 'Giờ tăng cường', value: (r) => r.hours.reinforcement },
+  {
+    title: 'Giờ tăng cường',
+    value: (r) => r.adjustments.calculation?.mainReinforcementHours ?? 0
+  },
   { title: 'Tiền tăng cường', value: (r) => r.reinforcementSalary },
   { title: 'Thu nhập bổ sung', value: (r) => r.adjustments.otherIncome },
   { title: 'Tạm ứng', value: (r) => r.adjustments.advance },
@@ -262,6 +266,52 @@ export async function buildPayrollWorkbook(
       }
     ];
   } else {
+    const inputs = workbook.addWorksheet('Thông số kỳ');
+    inputs.addRow([
+      'Mã nhân viên',
+      'Công ngày',
+      'Công đêm',
+      'Đơn giá ngày',
+      'Đơn giá đêm',
+      'Giờ TC ngày',
+      'Giờ TC đêm',
+      'Giờ tăng cường lương chính',
+      'Đơn giá tăng cường lương chính',
+      'Nhà ở/ngày',
+      'Đi lại/ngày',
+      'Cơm/ngày',
+      'Đơn giá ngừng việc',
+      'Đơn giá lễ',
+      'Đơn giá nghỉ hưởng lương',
+      'Đơn giá hành kinh',
+      'Căn cứ đoàn phí',
+      'Căn cứ bảo hiểm',
+      'Giảm trừ bản thân',
+      'Giảm trừ phụ thuộc',
+      'Thu nhập tính thuế nhập tay',
+      'Chuyên cần nhập tay',
+      'Giờ TC tiền mặt',
+      'Căn cứ TC tiền mặt',
+      'Ngày phép năm tiền mặt',
+      'Căn cứ phép năm tiền mặt',
+      'Ngừng việc tiền mặt',
+      'Thu nhập khác tiền mặt',
+      'Giờ tăng cường tiền mặt',
+      'Đơn giá tăng cường tiền mặt',
+      'Cơm tăng cường',
+      'Phụ cấp TC',
+      'Nhà ở tăng cường',
+      'Đi lại tăng cường'
+    ]);
+    draft.rows.forEach((row) =>
+      inputs.addRow([
+        payrollEmployeeCode(row.profile),
+        ...payrollPeriodInputKeys.map(
+          (key) => row.adjustments.calculation?.[key] ?? null
+        )
+      ])
+    );
+    styleSheet(inputs, 1);
     const salary = workbook.addWorksheet('Tính lương');
     salary.addRow(['VINH VINH PHÁT — BẢNG LƯƠNG NHÁP']);
     salary.addRow([period]);
@@ -273,7 +323,11 @@ export async function buildPayrollWorkbook(
       const excelRow = salary.addRow(
         payrollColumns.map((column) => column.value(row))
       );
-      const formulas = payrollExcelFormulas(index + 5, draft.rows.length);
+      const formulas = payrollExcelFormulas(
+        index + 5,
+        draft.rows.length,
+        index + 2
+      );
       Object.entries(formulas).forEach(([column, formula]) => {
         const cell = salary.getCell(`${column}${excelRow.number}`);
         cell.value = { formula, result: cell.value as string | number };

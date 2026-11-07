@@ -1,15 +1,9 @@
 import { useState } from 'react';
+import QueryErrorNotice from '@components/common/QueryErrorNotice';
+import RefreshButton from '@components/common/RefreshButton';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  Button,
-  Tag,
-  Empty,
-  Popconfirm,
-  message,
-  Spin,
-  Badge,
-  Image
-} from 'antd';
+import { Tag, Empty, Popconfirm, message, Spin, Badge, Image } from 'antd';
+import Button from '@components/common/AppButton';
 import {
   FaPaperPlane,
   FaLightbulb,
@@ -75,7 +69,7 @@ export default function EmployeeFeedbackPage() {
 
   // ── Queries & Mutations ─────────────────────────────────────────────────
 
-  const { data, isLoading, isFetching } = useQuery({
+  const { data, isLoading, isFetching, isError, refetch } = useQuery({
     queryKey: ['my-feedbacks'],
     queryFn: () => fetchMyFeedbacks({ per_page: 50 })
   });
@@ -95,7 +89,7 @@ export default function EmployeeFeedbackPage() {
   const repliedCount = feedbacks.filter((f) => f.admin_reply).length;
 
   return (
-    <ComponentCard title="Góp ý của tôi">
+    <ComponentCard title="Góp ý của tôi" headingLevel={1}>
       <div className="space-y-5">
         {/* ── Header ────────────────────────────────────────────── */}
         <div className="flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-violet-50 to-purple-50 p-4 dark:border-gray-700 dark:from-violet-900/10 dark:to-purple-900/10">
@@ -106,8 +100,9 @@ export default function EmployeeFeedbackPage() {
           >
             Gửi góp ý mới
           </AppButton>
+          <RefreshButton refresh={refetch} isLoading={isFetching} />
 
-          <div className="ml-auto flex items-center gap-3">
+          <div className="ml-auto flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-1.5 rounded-lg bg-white/80 px-3 py-1.5 text-xs dark:bg-gray-800/50">
               <span className="text-gray-500">Tổng:</span>
               <span className="font-bold text-violet-600">
@@ -138,6 +133,12 @@ export default function EmployeeFeedbackPage() {
           <div className="flex justify-center py-12">
             <Spin />
           </div>
+        ) : isError && feedbacks.length === 0 ? (
+          <QueryErrorNotice
+            isError={isError}
+            isFetching={isFetching}
+            onRetry={refetch}
+          />
         ) : feedbacks.length === 0 ? (
           <Empty
             image={Empty.PRESENTED_IMAGE_SIMPLE}
@@ -249,6 +250,7 @@ export default function EmployeeFeedbackPage() {
                             cancelText="Hủy"
                           >
                             <Button
+                              tone="inherit"
                               type="text"
                               size="small"
                               danger

@@ -1,5 +1,7 @@
 import BackButton from '@components/common/BackButton';
+import DatePicker from '@components/common/AppDatePicker';
 import ComponentCard from '@components/common/ComponentCard';
+import QueryErrorNotice from '@components/common/QueryErrorNotice';
 import { customTableProps } from '@components/custom/TableProps.custom';
 import {
   AttendanceResponse,
@@ -10,7 +12,6 @@ import { uiStore } from '@stores/uiStore';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useStore } from '@tanstack/react-store';
 import {
-  DatePicker,
   Empty,
   Segmented,
   Spin,
@@ -28,6 +29,10 @@ import { useMemo, useState } from 'react';
 import { useAttendanceMonth } from '@/hooks/useAttendanceMonth';
 import { OvertimeApprovalStatus } from '@/components/attendances/OvertimeApprovalStatus';
 import type { OvertimeApproval } from '@/utils/overtimeApproval';
+import {
+  AttendanceRequestStatus,
+  type AttendanceRequest
+} from '@/components/attendances/AttendanceRequestStatus';
 import {
   clampAttendanceRange,
   isCurrentAttendanceDate,
@@ -59,6 +64,7 @@ interface CalculatedRow {
   overtime_hours: number | null;
   administrative_hours: number | null;
   overtime_approval?: OvertimeApproval;
+  attendance_requests?: AttendanceRequest[];
 }
 
 type ActiveTab = 'history' | 'calculate';
@@ -606,6 +612,11 @@ function MobileCalculateRow({ item }: { item: CalculatedRow }) {
       {isMissing && (
         <div className="mt-2 text-xs text-red-400">⚠ Chưa đủ chấm công</div>
       )}
+      {!!item.attendance_requests?.length && (
+        <div className="mt-2">
+          <AttendanceRequestStatus requests={item.attendance_requests} />
+        </div>
+      )}
     </div>
   );
 }
@@ -705,7 +716,13 @@ const AttendancePageContent = () => {
   const calculateDateRange = getDateRange(month, cycleMode);
 
   // ── Calculate data (include_calculation=1, no pagination) ────────────────
-  const { data: calcResponse, isLoading: calcLoading } = useQuery({
+  const {
+    data: calcResponse,
+    isLoading: calcLoading,
+    isError: calcError,
+    isFetching: calcFetching,
+    refetch: refetchCalc
+  } = useQuery({
     queryKey: ['emp-attendance', 'calculate', calculateDateRange],
     queryFn: async () => {
       return await fetchEmpAttendances({
@@ -719,7 +736,13 @@ const AttendancePageContent = () => {
   });
 
   // ── History (raw) data ──────────────────────────────────────────────────
-  const { data: historyResponse, isLoading: historyLoading } = useQuery({
+  const {
+    data: historyResponse,
+    isLoading: historyLoading,
+    isError: historyError,
+    isFetching: historyFetching,
+    refetch: refetchHistory
+  } = useQuery({
     queryKey: ['emp-attendance', 'history', historyParams],
     queryFn: async () => {
       return await fetchEmpAttendances(historyParams);
@@ -923,6 +946,15 @@ const AttendancePageContent = () => {
           </div>
         );
       }
+    },
+    {
+      title: 'Đơn nghỉ / đi trễ - về sớm',
+      key: 'attendance_requests',
+      width: 260,
+      hidden: !filteredCalcData.some((row) => row.attendance_requests?.length),
+      render: (_, record) => (
+        <AttendanceRequestStatus requests={record.attendance_requests} />
+      )
     }
   ];
 
@@ -1080,8 +1112,8 @@ const AttendancePageContent = () => {
 
   return (
     <>
-      <BackButton to="/" />
       <ComponentCard
+        actions={<BackButton to="/" />}
         title={
           <div className="flex items-center gap-3">
             <FiCalendar className="text-blue-500" />
@@ -1281,6 +1313,13 @@ const AttendancePageContent = () => {
         )}
 
         {/* ── Data Area ───────────────────────────────────────────────── */}
+        <QueryErrorNotice
+          isError={activeTab === 'calculate' ? calcError : historyError}
+          isFetching={
+            activeTab === 'calculate' ? calcFetching : historyFetching
+          }
+          onRetry={activeTab === 'calculate' ? refetchCalc : refetchHistory}
+        />
         {activeTab === 'calculate' ? (
           isMobile ? (
             <Spin spinning={calcLoading}>
@@ -1294,7 +1333,10 @@ const AttendancePageContent = () => {
                   ))}
                 </div>
               ) : (
-                <Empty description="Không có dữ liệu" />
+                !calcLoading &&
+                !calcError && (
+                  <Empty description="Không có dữ liệu chấm công phù hợp." />
+                )
               )}
             </Spin>
           ) : (
@@ -1312,7 +1354,10 @@ const AttendancePageContent = () => {
                 ))}
               </div>
             ) : (
-              <Empty description="Không có dữ liệu" />
+              !historyLoading &&
+              !historyError && (
+                <Empty description="Không có lịch sử chấm công phù hợp." />
+              )
             )}
           </Spin>
         ) : (

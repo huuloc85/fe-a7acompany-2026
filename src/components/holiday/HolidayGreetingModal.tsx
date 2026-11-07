@@ -6,7 +6,8 @@
  */
 
 import React, { useEffect, useState, useMemo } from 'react';
-import { Modal, Button, Typography } from 'antd';
+import { Modal, Typography } from 'antd';
+import Button from '@components/common/AppButton';
 
 const { Title, Text } = Typography;
 
@@ -403,7 +404,12 @@ const HolidayGreetingModal: React.FC<HolidayGreetingModalProps> = ({
           <div className="hm-company">{companyName}</div>
 
           {/* CTA */}
-          <Button size="large" onClick={handleClose} className="hm-cta">
+          <Button
+            tone="inherit"
+            size="large"
+            onClick={handleClose}
+            className="hm-cta"
+          >
             🇻🇳 Cảm ơn & Đóng
           </Button>
         </div>

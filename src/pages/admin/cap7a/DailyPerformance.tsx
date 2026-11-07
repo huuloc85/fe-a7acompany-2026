@@ -7,6 +7,8 @@ import { getCap7ADaily, resetCap7ADaily } from '@/services/Cap7AService';
 import { getApiErrorMessage } from '@/utils/apiError';
 import type { Cap7AState, Cap7ASystem } from '@/services/Cap7AService';
 import LivePerformance from './LivePerformance';
+import useLiveClock from './useLiveClock';
+import { livePollingInterval } from './livePolling';
 
 const todayVN = () =>
   new Intl.DateTimeFormat('sv-SE', {
@@ -17,25 +19,41 @@ const todayVN = () =>
   }).format(new Date());
 
 export default function DailyPerformance({
+  active,
   system,
   state,
   online,
   receivedAt
 }: {
+  active: boolean;
   system: Cap7ASystem;
   state?: Cap7AState | null;
   online: boolean;
   receivedAt?: number | null;
 }) {
-  const [date, setDate] = useState(todayVN);
+  useLiveClock(active);
+  const today = todayVN();
+  // null follows today's date across midnight; explicit dates remain historical.
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const date = selectedDate ?? today;
+  const setDate = (value: string) =>
+    setSelectedDate(value === today ? null : value);
   const [resetting, setResetting] = useState(false);
   const historical = date !== todayVN();
   const queryClient = useQueryClient();
   const query = useQuery({
     queryKey: ['cap7a', system, 'daily', date],
-    queryFn: () => getCap7ADaily(system, date),
-    enabled: !!date,
-    refetchOnWindowFocus: false,
+    queryFn: ({ signal }) => getCap7ADaily(system, date, signal),
+    enabled: active && !!date,
+    staleTime: historical ? 30000 : 1000,
+    refetchInterval: (query) =>
+      livePollingInterval(
+        historical ? 30000 : 1000,
+        query.state.fetchFailureCount
+      ),
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
     retry: false
   });
   const reset = async () => {

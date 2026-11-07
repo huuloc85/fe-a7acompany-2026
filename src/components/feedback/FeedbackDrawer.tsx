@@ -15,6 +15,7 @@ import 'dayjs/locale/vi';
 
 import AppButton from '@components/common/AppButton';
 import FeedbackModal from '@components/feedback/FeedbackModal';
+import FeedbackStatusTag from './FeedbackStatusTag';
 import {
   fetchMyFeedbacks,
   deleteMyFeedback,
@@ -73,6 +74,7 @@ export default function FeedbackDrawer({ open, onClose }: FeedbackDrawerProps) {
   return (
     <>
       <Drawer
+        rootClassName="app-material-drawer"
         title={
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
@@ -184,7 +186,7 @@ export default function FeedbackDrawer({ open, onClose }: FeedbackDrawerProps) {
                       <div className="mt-0.5 flex items-center gap-1.5 text-[10px] text-gray-400">
                         <span>{TYPE_LABEL[fb.type]}</span>
                         <span>·</span>
-                        <span>{statusCfg.label}</span>
+                        <FeedbackStatusTag status={fb.status} />
                         <span>·</span>
                         <span>{dayjs(fb.created_at).fromNow()}</span>
                       </div>

@@ -6,7 +6,17 @@ import axiosPrivate from '@/api/axiosInstance';
 import { getApiErrorMessage } from '@/utils/apiError';
 import type { Cap7ASystem } from '@/services/Cap7AService';
 
-export default function ScreenViewer({ system }: { system: Cap7ASystem }) {
+export default function ScreenViewer({
+  system,
+  autoConnectRequest = 0,
+  tabActive = true,
+  appOnline = false
+}: {
+  system: Cap7ASystem;
+  autoConnectRequest?: number;
+  tabActive?: boolean;
+  appOnline?: boolean;
+}) {
   const passwordKey = `cap7a.${system}.vnc-password`;
   const target = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -68,8 +78,12 @@ export default function ScreenViewer({ system }: { system: Cap7ASystem }) {
   const resumeHandshake = useRef<(() => void) | null>(null);
   const retries = useRef(0);
   const submittedPassword = useRef('');
+  const handledAutoRequest = useRef(0);
+  const connectionAuthSession = useRef<string | null>(null);
+  const connectRef = useRef<() => Promise<void>>(async () => {});
   const [status, setStatus] = useState('Chưa kết nối màn hình');
   const [active, setActive] = useState(false);
+  const [waitingForApp, setWaitingForApp] = useState(false);
   const [passwordNeeded, setPasswordNeeded] = useState(false);
   const [password, setPassword] = useState('');
   useEffect(() => {
@@ -77,10 +91,15 @@ export default function ScreenViewer({ system }: { system: Cap7ASystem }) {
     try {
       localStorage.removeItem('cap7a.vnc-password');
       sessionStorage.removeItem('cap7a.vnc-password');
+      // TAIL now authenticates at its gateway; purge any previous browser copy.
+      if (system === 'tail') {
+        localStorage.removeItem(passwordKey);
+        sessionStorage.removeItem(passwordKey);
+      }
     } catch {
       /* Storage unavailable. */
     }
-  }, []);
+  }, [system, passwordKey]);
   const forgetPassword = () => {
     submittedPassword.current = '';
     try {
@@ -107,13 +126,39 @@ export default function ScreenViewer({ system }: { system: Cap7ASystem }) {
     submittedPassword.current = '';
   }, []);
   const disconnect = () => {
+    handledAutoRequest.current = autoConnectRequest;
     release();
     setActive(false);
+    setWaitingForApp(false);
     setPasswordNeeded(false);
     setPassword('');
     setStatus('Đã ngắt màn hình');
   };
   useEffect(() => release, [release]);
+
+  useEffect(() => {
+    if (!active && !waitingForApp) return;
+    const checkSession = () => {
+      if (
+        connectionAuthSession.current ===
+        localStorage.getItem('auth_session_id')
+      )
+        return;
+      handledAutoRequest.current = autoConnectRequest;
+      release();
+      setActive(false);
+      setWaitingForApp(false);
+      setPasswordNeeded(false);
+      setPassword('');
+      setStatus('Phiên đăng nhập đã kết thúc.');
+    };
+    const timer = setInterval(checkSession, 1000);
+    window.addEventListener('storage', checkSession);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('storage', checkSession);
+    };
+  }, [active, waitingForApp, autoConnectRequest, release]);
 
   const connect = async (retry = false) => {
     release();
@@ -121,6 +166,7 @@ export default function ScreenViewer({ system }: { system: Cap7ASystem }) {
     const current = generation.current;
     submittedPassword.current = '';
     const authSession = localStorage.getItem('auth_session_id');
+    connectionAuthSession.current = authSession;
     let triedSavedPassword = false;
     setActive(true);
     setPasswordNeeded(false);
@@ -172,6 +218,10 @@ export default function ScreenViewer({ system }: { system: Cap7ASystem }) {
         { timeout: 12000, signal: controller.signal }
       );
       if (generation.current !== current || !target.current) return;
+      if (authSession !== localStorage.getItem('auth_session_id')) {
+        disconnect();
+        return;
+      }
       pendingRequest.current = null;
       const url = new URL(session.websocket_url);
       if (url.protocol !== 'wss:' || session.view_only !== true) {
@@ -195,6 +245,7 @@ export default function ScreenViewer({ system }: { system: Cap7ASystem }) {
         retries.current = 0;
         setPasswordNeeded(false);
         if (
+          system !== 'tail' &&
           submittedPassword.current &&
           authSession &&
           authSession === localStorage.getItem('auth_session_id')
@@ -216,6 +267,13 @@ export default function ScreenViewer({ system }: { system: Cap7ASystem }) {
       });
       rfb.addEventListener('credentialsrequired', () => {
         if (generation.current !== current) return;
+        if (system === 'tail') {
+          disconnect();
+          setStatus(
+            'Cần cập nhật gateway Screen 1 để xác thực VNC tại Jetson.'
+          );
+          return;
+        }
         try {
           const saved = JSON.parse(
             sessionStorage.getItem(passwordKey) ?? 'null'
@@ -278,13 +336,56 @@ export default function ScreenViewer({ system }: { system: Cap7ASystem }) {
     }
   };
 
+  useEffect(() => {
+    connectRef.current = () => connect();
+  });
+
+  useEffect(() => {
+    if (
+      !tabActive ||
+      !autoConnectRequest ||
+      handledAutoRequest.current === autoConnectRequest
+    )
+      return;
+    // One viewing attempt per tab visit or accepted launch. Never send an app command.
+    if (active) {
+      handledAutoRequest.current = autoConnectRequest;
+      return;
+    }
+    const remaining = autoConnectRequest + 120000 - Date.now();
+    if (remaining <= 0) {
+      handledAutoRequest.current = autoConnectRequest;
+      setWaitingForApp(false);
+      setStatus('Chưa nhận trạng thái ứng dụng. Bấm Xem màn hình để thử lại.');
+      return;
+    }
+    if (appOnline) {
+      handledAutoRequest.current = autoConnectRequest;
+      setWaitingForApp(false);
+      void connectRef.current();
+      return;
+    }
+    connectionAuthSession.current = localStorage.getItem('auth_session_id');
+    setWaitingForApp(true);
+    setStatus('Đang chờ ứng dụng kết nối để mở màn hình…');
+    const timer = setTimeout(() => {
+      handledAutoRequest.current = autoConnectRequest;
+      setWaitingForApp(false);
+      setStatus('Chưa nhận trạng thái ứng dụng. Bấm Xem màn hình để thử lại.');
+    }, remaining);
+    return () => clearTimeout(timer);
+  }, [system, autoConnectRequest, appOnline, active, waitingForApp, tabActive]);
+
   return (
     <div className="cap7a-viewer">
       <div className="flex flex-wrap items-center gap-3">
-        <Button disabled={active} onClick={() => void connect()}>
+        <Button
+          disabled={active || waitingForApp}
+          onClick={() => void connect()}
+        >
           Xem màn hình
         </Button>
-        <Button disabled={!active} onClick={disconnect}>
+        <Button disabled={!active && !waitingForApp} onClick={disconnect}>
           Ngắt
         </Button>
         <span className="min-w-0 text-xs">{status}</span>

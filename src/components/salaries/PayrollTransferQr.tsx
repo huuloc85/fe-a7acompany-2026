@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Alert, Button, Descriptions, Modal, QRCode, Select } from 'antd';
+import { Alert, Descriptions, Modal, QRCode, Select } from 'antd';
+import Button from '@components/common/AppButton';
 import type { PayrollDraft, PayrollRow } from '@/utils/payrollCalculation';
 import { buildPayrollVietQr } from '@/utils/payrollVietQr';
 import { payrollBankBin } from '@/utils/payrollBanks';
@@ -90,6 +91,7 @@ export default function PayrollTransferQr({
   return (
     <>
       <Button
+        tone="inherit"
         disabled={!ready}
         onClick={() => {
           setOpen(true);
@@ -103,7 +105,11 @@ export default function PayrollTransferQr({
         onCancel={() => {
           setOpen(false);
         }}
-        footer={<Button onClick={() => setOpen(false)}>Đóng</Button>}
+        footer={
+          <Button tone="inherit" onClick={() => setOpen(false)}>
+            Đóng
+          </Button>
+        }
         width={600}
         destroyOnHidden
       >

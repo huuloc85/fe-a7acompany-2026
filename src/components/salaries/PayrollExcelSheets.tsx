@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import dayjs from 'dayjs';
 import { DeleteOutlined } from '@ant-design/icons';
 import {
-  Button,
+  Checkbox,
   Empty,
   Input,
   InputNumber,
@@ -13,6 +13,7 @@ import {
   Table,
   Tabs
 } from 'antd';
+import Button from '@components/common/AppButton';
 import type { ColumnsType } from 'antd/es/table';
 import type { AttendanceResult } from '@/utils/attendanceUtil';
 import { calculatePayrollDiligence } from '@/utils/payrollCalculation';
@@ -114,6 +115,7 @@ function Payslip({
   startDate: string;
   endDate: string;
 }) {
+  const [onlyActive, setOnlyActive] = useState(false);
   const r = row,
     a = r.adjustments;
   // The workbook bases employer contributions on basic salary plus responsibility.
@@ -210,27 +212,65 @@ function Payslip({
   ];
   return (
     <article className="vvp-payslip">
-      <h3>
-        PHIẾU LƯƠNG THÁNG {dayjs(endDate).format('MM')} (từ{' '}
-        {dayjs(startDate).format('DD-MM')} đến {dayjs(endDate).format('DD-MM')})
-      </h3>
-      <p>
-        - Tên nhân viên : <strong>{r.profile.name}</strong> · Mã NV:{' '}
-        {payrollEmployeeCode(r.profile)}
-      </p>
-      <p>
-        - Bộ phận : {r.profile.department}{' '}
-        <span className="float-right">
-          Ngày nhận lương: {paymentDate.format('DD-MM-YYYY')}
-        </span>
-      </p>
+      <header className="vvp-payslip-header">
+        <h3>PHIẾU LƯƠNG THÁNG {dayjs(endDate).format('MM')}</h3>
+        <p>
+          Từ {dayjs(startDate).format('DD-MM')} đến{' '}
+          {dayjs(endDate).format('DD-MM')}
+        </p>
+      </header>
+      <dl className="vvp-payslip-employee">
+        <div className="vvp-payslip-employee-name">
+          <dt>Tên nhân viên</dt>
+          <dd>{r.profile.name}</dd>
+        </div>
+        <div>
+          <dt>Mã NV</dt>
+          <dd>{payrollEmployeeCode(r.profile)}</dd>
+        </div>
+        <div>
+          <dt>Bộ phận</dt>
+          <dd>{r.profile.department}</dd>
+        </div>
+        <div className="vvp-payslip-payment-date">
+          <dt>Ngày nhận lương:</dt>
+          <dd>{paymentDate.format('DD-MM-YYYY')}</dd>
+        </div>
+      </dl>
+      <div className="vvp-payslip-overview">
+        <div className="vvp-payslip-net">
+          <span>Thực nhận tiền lương</span>
+          <strong>{display(r.net)} đ</strong>
+        </div>
+        <dl>
+          <div>
+            <dt>Tổng thu nhập</dt>
+            <dd>{display(r.gross)} đ</dd>
+          </div>
+          <div>
+            <dt>Các khoản giảm trừ</dt>
+            <dd>{display(lines.find(([no]) => no === 'II')?.[3] ?? 0)} đ</dd>
+          </div>
+        </dl>
+      </div>
       <h4>THÔNG TIN CHI TIẾT LƯƠNG</h4>
-      <table>
+      <div className="vvp-payslip-options">
+        <Checkbox
+          checked={onlyActive}
+          onChange={(event) => setOnlyActive(event.target.checked)}
+        >
+          Ẩn các dòng có số lượng và số tiền bằng 0
+        </Checkbox>
+        <span>Đơn vị tiền: đồng</span>
+      </div>
+      <table aria-label="Thông tin chi tiết lương">
         <thead>
           <tr>
             {['Stt', 'Diễn giải', 'Số giờ/ công', 'Tính tiền', 'Ghi chú'].map(
               (v) => (
-                <th key={v}>{v}</th>
+                <th key={v} scope="col">
+                  {v}
+                </th>
               )
             )}
           </tr>
@@ -240,14 +280,25 @@ function Payslip({
             <tr
               key={i}
               className={
-                /^[IV]+$/.test(no) ? `vvp-section vvp-section-${no}` : ''
+                /^[IV]+$/.test(no)
+                  ? `vvp-section vvp-section-${no}`
+                  : onlyActive && !Number(amount) && !Number(quantity)
+                    ? 'vvp-payslip-zero'
+                    : ''
               }
             >
-              <td>{no}</td>
-              <td>{label}</td>
-              <td className="vvp-number">{display(quantity)}</td>
-              <td className="vvp-number">{display(amount)}</td>
-              <td>{note}</td>
+              <td className="vvp-payslip-order">{no}</td>
+              <td className="vvp-payslip-label">{label}</td>
+              <td
+                className="vvp-number vvp-payslip-quantity"
+                data-label="Số giờ/công"
+              >
+                {display(quantity)}
+              </td>
+              <td className="vvp-number vvp-payslip-amount">
+                {display(amount)}
+              </td>
+              <td className="vvp-payslip-note">{note}</td>
             </tr>
           ))}
         </tbody>
@@ -597,6 +648,7 @@ export default function PayrollExcelSheets(props: Props) {
           if (active === 'Tính lương' && i === 18)
             return (
               <Button
+                tone="inherit"
                 type="link"
                 disabled={
                   !props.canEditHolidays ||
@@ -684,6 +736,7 @@ export default function PayrollExcelSheets(props: Props) {
       fixed: 'right',
       render: (_, record) => (
         <Button
+          tone="inherit"
           type="text"
           danger
           size="small"
@@ -748,6 +801,7 @@ export default function PayrollExcelSheets(props: Props) {
         )}
         {!props.draftPreview && (
           <Button
+            tone="inherit"
             className="mt-3"
             disabled={!props.canExport || !selected}
             onClick={props.exportPayslip}
@@ -859,6 +913,7 @@ export default function PayrollExcelSheets(props: Props) {
               }
             />
             <Button
+              tone="inherit"
               disabled={props.busy}
               onClick={async () => {
                 if (
@@ -887,6 +942,7 @@ export default function PayrollExcelSheets(props: Props) {
           <Space>
             {active === 'Danh muc' && props.canEditProfiles && (
               <Button
+                tone="inherit"
                 type="primary"
                 disabled={props.busy}
                 onClick={props.createProfile}

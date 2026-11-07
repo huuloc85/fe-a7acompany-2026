@@ -1,4 +1,5 @@
-import { Modal, Space, Typography, Button } from 'antd';
+import { Modal, Space, Typography } from 'antd';
+import Button from '@components/common/AppButton';
 import { BellOutlined, InfoCircleOutlined } from '@ant-design/icons';
 
 const { Text, Title } = Typography;
@@ -34,10 +35,11 @@ export const NotificationRequestModal: React.FC<
       closable={false}
       maskClosable={false}
       footer={[
-        <Button key="later" onClick={onDeny}>
+        <Button tone="inherit" key="later" onClick={onDeny}>
           Để sau
         </Button>,
         <Button
+          tone="inherit"
           key="allow"
           type="primary"
           icon={<BellOutlined />}

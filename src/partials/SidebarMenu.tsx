@@ -103,14 +103,21 @@ function SidebarItem({
         </motion.span>
       )}
       {!isCollapsed && (
-        <span className="truncate text-[13.5px] capitalize">{label}</span>
+        <span className="truncate text-[15px] normal-case">{label}</span>
       )}
     </motion.div>
   );
 
   if (path) {
     return (
-      <Link to={path} onClick={onClick} className="block no-underline">
+      <Link
+        to={path}
+        onClick={onClick}
+        className="block no-underline"
+        aria-current={isActive ? 'page' : undefined}
+        aria-label={typeof label === 'string' ? label : undefined}
+        title={typeof label === 'string' ? label : undefined}
+      >
         {content}
       </Link>
     );
@@ -142,8 +149,15 @@ function SidebarSubmenu({
   const label = extractLabel(item);
   const icon = extractIcon(item);
   const children = ('children' in item ? item.children : []) as MenuItem[];
+  const submenuId = React.useId();
   const hoverTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(
     null
+  );
+  React.useEffect(
+    () => () => {
+      if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+    },
+    []
   );
 
   // Check if any child is active
@@ -153,7 +167,7 @@ function SidebarSubmenu({
   });
 
   const handleMouseEnter = () => {
-    if (isMobile) return;
+    if (isMobile || isCollapsed) return;
     if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
     if (!isOpen) {
       hoverTimerRef.current = setTimeout(() => {
@@ -163,7 +177,7 @@ function SidebarSubmenu({
   };
 
   const handleMouseLeave = () => {
-    if (isMobile) return;
+    if (isMobile || isCollapsed) return;
     if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
     if (isOpen) {
       hoverTimerRef.current = setTimeout(() => {
@@ -176,6 +190,11 @@ function SidebarSubmenu({
     <div onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
       {/* Parent button */}
       <motion.button
+        type="button"
+        aria-label={typeof label === 'string' ? label : undefined}
+        title={typeof label === 'string' ? label : undefined}
+        aria-expanded={!isCollapsed && isOpen}
+        aria-controls={!isCollapsed && isOpen ? submenuId : undefined}
         whileHover={isMobile ? {} : { scale: 1.02, x: 4 }}
         whileTap={{ scale: 0.98 }}
         onClick={onToggle}
@@ -202,7 +221,7 @@ function SidebarSubmenu({
         )}
         {!isCollapsed && (
           <>
-            <span className="flex-1 truncate text-[13.5px] capitalize">
+            <span className="flex-1 truncate text-[15px] normal-case">
               {label}
             </span>
             <FaChevronDown
@@ -218,6 +237,7 @@ function SidebarSubmenu({
       <AnimatePresence initial={false}>
         {!isCollapsed && isOpen && (
           <motion.div
+            id={submenuId}
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
@@ -242,6 +262,7 @@ function SidebarSubmenu({
                     )}
                     to={(childPath || '/') as string}
                     onClick={onClick}
+                    aria-current={isChildActive ? 'page' : undefined}
                     className="block no-underline"
                   >
                     <motion.div
@@ -257,7 +278,8 @@ function SidebarSubmenu({
                     >
                       {childIcon && (
                         <span
-                          className={`text-[13px] ${
+                          aria-hidden="true"
+                          className={`flex h-5 w-5 shrink-0 items-center justify-center text-[13px] ${
                             isChildActive
                               ? isMidAutumn
                                 ? 'text-inherit'
@@ -268,7 +290,7 @@ function SidebarSubmenu({
                           {childIcon}
                         </span>
                       )}
-                      <span className="truncate text-[12.5px] capitalize">
+                      <span className="truncate text-sm normal-case">
                         {childLabel}
                       </span>
                     </motion.div>
@@ -296,6 +318,7 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
   const [openKey, setOpenKey] = React.useState<string | null>(null);
 
   const handleToggle = (key: string) => {
+    if (isSidebarClose) toggleSidebar();
     setOpenKey((prev) => (prev === key ? null : key));
   };
 
@@ -403,7 +426,7 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
       )}
 
       {/* ── Menu Items ─────────────────────────────────── */}
-      <nav className="py-3">
+      <nav aria-label="Chức năng chính" className="py-3">
         {items.map((item) => {
           if (!item || typeof item !== 'object') return null;
 

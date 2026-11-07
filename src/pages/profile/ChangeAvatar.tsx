@@ -3,7 +3,8 @@ import { useOnboarding } from '@/components/onboarding/OnboardingContext';
 import { changeAvatar } from '@services/ProfileService';
 import { authStore, updateUserImage } from '@stores/authStore';
 import { useMutation } from '@tanstack/react-query';
-import { Avatar, Button, message, Typography, Upload } from 'antd';
+import { Avatar, message, Typography, Upload } from 'antd';
+import Button from '@components/common/AppButton';
 import ImgCrop from 'antd-img-crop';
 import type { RcFile, UploadFile } from 'antd/es/upload/interface';
 import { useState } from 'react';
@@ -161,6 +162,7 @@ export const ChangeAvatar = ({
               className="block"
             >
               <Button
+                tone="inherit"
                 size="large"
                 type="primary"
                 className="flex h-12 w-full items-center justify-center gap-2 text-base font-medium"
@@ -178,6 +180,7 @@ export const ChangeAvatar = ({
           <div className="border-t border-gray-200 pt-4">
             <div className="flex gap-3">
               <Button
+                tone="inherit"
                 type="primary"
                 size="large"
                 onClick={handleUpload}
@@ -188,6 +191,7 @@ export const ChangeAvatar = ({
                 {isPending ? 'Đang cập nhật...' : 'Lưu ảnh đại diện'}
               </Button>
               <Button
+                tone="inherit"
                 size="large"
                 onClick={handleRemove}
                 disabled={isPending}

@@ -1,5 +1,6 @@
 import React from 'react';
-import { Modal, Button } from 'antd';
+import { Modal } from 'antd';
+import Button from '@components/common/AppButton';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { RequestForm } from '@/types/requestFormType';
 
@@ -30,10 +31,11 @@ export const ConfirmDeleteModal: React.FC<DeleteConfirmModalProps> = ({
       onCancel={onCancel}
       width="min(400px, 92vw)"
       footer={[
-        <Button key="cancel" onClick={onCancel}>
+        <Button tone="inherit" key="cancel" onClick={onCancel}>
           Hủy
         </Button>,
         <Button
+          tone="inherit"
           key="confirm"
           type="primary"
           danger

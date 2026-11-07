@@ -19,10 +19,45 @@ import type { IconType } from 'react-icons';
 import * as FaIcons from 'react-icons/fa';
 import { SidebarMenu } from './SidebarMenu';
 import { HiOutlineHome } from 'react-icons/hi';
-import { FaCommentDots, FaFlask, FaServer, FaTerminal } from 'react-icons/fa';
+import { FaCommentDots, FaServer, FaTerminal } from 'react-icons/fa';
 import FeedbackDrawer from '@components/feedback/FeedbackDrawer';
+import FeedbackSidebarIcon from '@components/feedback/FeedbackSidebarIcon';
 
 const { Sider } = Layout;
+
+// Normalize known UI labels only; preserve configured names and acronyms.
+const sidebarLabelCasing: Record<string, string> = {
+  'quản lý nhân sự': 'Quản lý nhân sự',
+  'quản lý tem': 'Quản lý tem',
+  'nhân viên': 'Nhân viên',
+  'chức vụ': 'Chức vụ',
+  'bảng lương': 'Bảng lương',
+  'xuất nhập tồn': 'Xuất nhập tồn',
+  'góp ý': 'Góp ý và báo lỗi',
+  'trang chủ': 'Trang chủ',
+  'sản phẩm': 'Sản phẩm',
+  'chọn sản phẩm': 'Chọn sản phẩm',
+  'nhập sản lượng': 'Nhập sản lượng',
+  'nhập sản lượng lỗi': 'Nhập sản lượng lỗi',
+  'lịch sử nhập số lượng': 'Lịch sử nhập số lượng',
+  'chấm công': 'Chấm công',
+  'lịch làm việc': 'Lịch làm việc',
+  'lịch làm việc tổng': 'Lịch làm việc tổng',
+  'danh mục lịch làm việc': 'Danh mục lịch làm việc',
+  'danh sách po': 'Danh sách PO',
+  'lịch sử trang web': 'Lịch sử trang web',
+  'đơn xin phép': 'Đơn xin phép',
+  'đơn yêu cầu': 'Đơn yêu cầu',
+  'tạo tem': 'Tạo tem',
+  'in tem': 'In tem',
+  'lịch sử in tem': 'Lịch sử in tem',
+  'danh sách tem cần in': 'Danh sách tem cần in',
+  'yêu cầu in tem': 'Yêu cầu in tem'
+};
+
+const formatSidebarLabel = (label: string) =>
+  sidebarLabelCasing[label.normalize('NFC').trim().toLocaleLowerCase('vi')] ??
+  label;
 
 const normalizeLegacySidebarUrl = (url?: string | null): string => {
   if (!url) return '/';
@@ -114,7 +149,7 @@ function Sidebar() {
       key: '/',
       label: (
         <Link to={'/'}>
-          <span className="capitalize">Trang chủ</span>
+          <span className="normal-case">Trang chủ</span>
         </Link>
       ),
       icon: <HiOutlineHome className="text-lg" />
@@ -150,26 +185,47 @@ function Sidebar() {
       return <DefaultIcon className="text-lg" />;
     };
 
+    const withFeedbackBadge = (
+      url: string | null | undefined,
+      icon: React.ReactNode
+    ) =>
+      url?.replace(/\/$/, '') === '/admin/feedbacks' ? (
+        <FeedbackSidebarIcon>{icon}</FeedbackSidebarIcon>
+      ) : (
+        icon
+      );
+
     const rbacItems = permissions
       .filter((p) => ['sidebar', 'both'].includes(p.display_area))
       .map((perm) => {
         if (perm.sidebar_items?.length > 0) {
           return {
             key: perm.key,
-            label: <span className="capitalize">{perm.name}</span>,
-            icon: renderPermissionIcon(perm),
+            label: (
+              <span className="normal-case">
+                {formatSidebarLabel(perm.name)}
+              </span>
+            ),
+            icon: withFeedbackBadge(
+              perm.sidebar_items.some(
+                (item) => item.url?.replace(/\/$/, '') === '/admin/feedbacks'
+              )
+                ? '/admin/feedbacks'
+                : perm.url,
+              renderPermissionIcon(perm)
+            ),
             children: perm.sidebar_items.map((item) => ({
               key: item.key,
               label: (
                 <Link to={normalizeLegacySidebarUrl(item.url) as string}>
-                  <span className="capitalize">
+                  <span className="normal-case">
                     {item.url === '/admin/request-forms'
-                      ? 'Đơn Xin Phép'
-                      : item.title}
+                      ? 'Đơn xin phép'
+                      : formatSidebarLabel(item.title)}
                   </span>
                 </Link>
               ),
-              icon: renderSidebarIcon(item.icon)
+              icon: withFeedbackBadge(item.url, renderSidebarIcon(item.icon))
             }))
           };
         }
@@ -178,14 +234,14 @@ function Sidebar() {
           key: perm.key,
           label: (
             <Link to={normalizeLegacySidebarUrl(perm.url) as string}>
-              <span className="capitalize">
+              <span className="normal-case">
                 {perm.url === '/admin/request-forms'
-                  ? 'Đơn Xin Phép'
-                  : perm.name}
+                  ? 'Đơn xin phép'
+                  : formatSidebarLabel(perm.name)}
               </span>
             </Link>
           ),
-          icon: renderPermissionIcon(perm)
+          icon: withFeedbackBadge(perm.url, renderPermissionIcon(perm))
         };
       });
 
@@ -199,7 +255,7 @@ function Sidebar() {
         key: 'work-schedules',
         label: (
           <Link to="/work-schedules">
-            <span className="capitalize">Lịch Làm Việc Tổng</span>
+            <span className="normal-case">Lịch làm việc tổng</span>
           </Link>
         ),
         icon: <FaIcons.FaUsers className="text-lg" />
@@ -234,25 +290,35 @@ function Sidebar() {
         <div className="mx-2.5 mt-1 mb-2">
           <div className="mx-3 mb-2 h-px bg-gradient-to-r from-transparent via-gray-200/80 to-transparent dark:via-gray-700/60" />
           {!isSidebarClose && (
-            <p className="mb-1 px-3 text-[10px] font-semibold tracking-widest text-gray-300 uppercase dark:text-gray-600">
+            <p className="mb-1 px-3 text-[10px] font-semibold tracking-widest text-gray-600 normal-case dark:text-gray-300">
               Quản trị
             </p>
           )}
           <div className="space-y-0.5">
-            <Link to="/admin/rbac" className="block no-underline">
-              <div className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13.5px] text-black/80 transition-all duration-200 hover:bg-gray-50 hover:text-black active:scale-[0.98] dark:text-gray-200 dark:hover:bg-white/5 dark:hover:text-white">
+            <Link
+              to="/admin/rbac"
+              aria-label="Phân quyền"
+              title="Phân quyền"
+              className="block no-underline"
+            >
+              <div className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] text-black/80 transition-all duration-200 hover:bg-gray-50 hover:text-black active:scale-[0.98] dark:text-gray-200 dark:hover:bg-white/5 dark:hover:text-white">
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[15px] text-gray-500 dark:text-gray-400">
                   <IconShield />
                 </span>
                 {!isSidebarClose && <span>Phân quyền</span>}
               </div>
             </Link>
-            <Link to="/admin/edit-layout" className="block no-underline">
-              <div className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13.5px] text-black/80 transition-all duration-200 hover:bg-gray-50 hover:text-black active:scale-[0.98] dark:text-gray-200 dark:hover:bg-white/5 dark:hover:text-white">
+            <Link
+              to="/admin/edit-layout"
+              aria-label="Thông báo & Test modal"
+              title="Thông báo & Test modal"
+              className="block no-underline"
+            >
+              <div className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] text-black/80 transition-all duration-200 hover:bg-gray-50 hover:text-black active:scale-[0.98] dark:text-gray-200 dark:hover:bg-white/5 dark:hover:text-white">
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[15px] text-gray-500 dark:text-gray-400">
                   <IconEdit />
                 </span>
-                {!isSidebarClose && <span>Chỉnh giao diện</span>}
+                {!isSidebarClose && <span>Thông báo & Test modal</span>}
               </div>
             </Link>
             <Link
@@ -260,35 +326,37 @@ function Sidebar() {
               aria-label="CAP7A"
               className="block no-underline"
             >
-              <div className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13.5px] text-black/80 transition-all duration-200 hover:bg-gray-50 hover:text-black active:scale-[0.98] dark:text-gray-200 dark:hover:bg-white/5 dark:hover:text-white">
+              <div className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] text-black/80 transition-all duration-200 hover:bg-gray-50 hover:text-black active:scale-[0.98] dark:text-gray-200 dark:hover:bg-white/5 dark:hover:text-white">
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[15px] text-gray-500 dark:text-gray-400">
                   <FaServer />
                 </span>
                 {!isSidebarClose && <span>CAP7A</span>}
               </div>
             </Link>
-            <Link to="/admin/registry" className="block no-underline">
-              <div className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13.5px] text-black/80 transition-all duration-200 hover:bg-gray-50 hover:text-black active:scale-[0.98] dark:text-gray-200 dark:hover:bg-white/5 dark:hover:text-white">
+            <Link
+              to="/admin/registry"
+              aria-label="API Registry"
+              title="API Registry"
+              className="block no-underline"
+            >
+              <div className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] text-black/80 transition-all duration-200 hover:bg-gray-50 hover:text-black active:scale-[0.98] dark:text-gray-200 dark:hover:bg-white/5 dark:hover:text-white">
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[15px] text-gray-500 dark:text-gray-400">
                   <FaServer />
                 </span>
                 {!isSidebarClose && <span>API Registry</span>}
               </div>
             </Link>
-            <Link to="/admin/system-logs" className="block no-underline">
-              <div className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13.5px] text-black/80 transition-all duration-200 hover:bg-gray-50 hover:text-black active:scale-[0.98] dark:text-gray-200 dark:hover:bg-white/5 dark:hover:text-white">
+            <Link
+              to="/admin/system-logs"
+              aria-label="Nhật ký hệ thống"
+              title="Nhật ký hệ thống"
+              className="block no-underline"
+            >
+              <div className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] text-black/80 transition-all duration-200 hover:bg-gray-50 hover:text-black active:scale-[0.98] dark:text-gray-200 dark:hover:bg-white/5 dark:hover:text-white">
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[15px] text-gray-500 dark:text-gray-400">
                   <FaTerminal />
                 </span>
                 {!isSidebarClose && <span>Nhật ký hệ thống</span>}
-              </div>
-            </Link>
-            <Link to="/admin/notification-demo" className="block no-underline">
-              <div className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13.5px] text-black/80 transition-all duration-200 hover:bg-gray-50 hover:text-black active:scale-[0.98] dark:text-gray-200 dark:hover:bg-white/5 dark:hover:text-white">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[15px] text-gray-500 dark:text-gray-400">
-                  <FaFlask />
-                </span>
-                {!isSidebarClose && <span>Test modal</span>}
               </div>
             </Link>
           </div>
@@ -338,18 +406,18 @@ function Sidebar() {
       {!isAdmin && (
         <button
           onClick={() => setFeedbackOpen(true)}
-          className="mb-0.5 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[13.5px] text-black/80 transition-all duration-200 hover:bg-blue-50/60 hover:text-blue-600 active:scale-[0.98] dark:text-gray-200 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
+          className="mb-0.5 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] text-black/80 transition-all duration-200 hover:bg-blue-50/60 hover:text-blue-600 active:scale-[0.98] dark:text-gray-200 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
         >
           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[15px] text-blue-500">
             <FaCommentDots />
           </span>
-          {!isSidebarClose && <span>Góp ý</span>}
+          {!isSidebarClose && <span>Góp ý và báo lỗi</span>}
         </button>
       )}
       <button
         onClick={handleLogout}
         disabled={isLoggingOut}
-        className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[13.5px] text-red-400 transition-all duration-200 hover:bg-red-50 hover:text-red-600 active:scale-[0.98] disabled:opacity-50 dark:text-red-400/70 dark:hover:bg-red-900/10 dark:hover:text-red-400"
+        className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] text-red-400 transition-all duration-200 hover:bg-red-50 hover:text-red-600 active:scale-[0.98] disabled:opacity-50 dark:text-red-400/70 dark:hover:bg-red-900/10 dark:hover:text-red-400"
       >
         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[15px]">
           <IconLogOut />
@@ -422,7 +490,7 @@ function Sidebar() {
               {isSuperAdmin && (
                 <div className="mx-2.5 mt-1 mb-2">
                   <div className="mx-3 mb-2 h-px bg-gradient-to-r from-transparent via-gray-200/80 to-transparent dark:via-gray-700/60" />
-                  <p className="mb-1 px-3 text-[10px] font-semibold tracking-widest text-gray-300 uppercase dark:text-gray-600">
+                  <p className="mb-1 px-3 text-[10px] font-semibold tracking-widest text-gray-600 normal-case dark:text-gray-300">
                     Quản trị
                   </p>
                   <div className="space-y-0.5">
@@ -431,7 +499,7 @@ function Sidebar() {
                       onClick={toggleSidebar}
                       className="block no-underline"
                     >
-                      <div className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13.5px] text-gray-500 transition-all duration-200 hover:bg-gray-50 hover:text-gray-700 active:scale-[0.98] dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200">
+                      <div className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] text-gray-500 transition-all duration-200 hover:bg-gray-50 hover:text-gray-700 active:scale-[0.98] dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200">
                         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[15px] text-gray-400">
                           <IconShield />
                         </span>
@@ -443,11 +511,11 @@ function Sidebar() {
                       onClick={toggleSidebar}
                       className="block no-underline"
                     >
-                      <div className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13.5px] text-gray-500 transition-all duration-200 hover:bg-gray-50 hover:text-gray-700 active:scale-[0.98] dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200">
+                      <div className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] text-gray-500 transition-all duration-200 hover:bg-gray-50 hover:text-gray-700 active:scale-[0.98] dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200">
                         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[15px] text-gray-400">
                           <IconEdit />
                         </span>
-                        <span>Chỉnh giao diện</span>
+                        <span>Thông báo & Test modal</span>
                       </div>
                     </Link>
                     <Link
@@ -455,7 +523,7 @@ function Sidebar() {
                       onClick={toggleSidebar}
                       className="block no-underline"
                     >
-                      <div className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13.5px] text-gray-500 transition-all duration-200 hover:bg-gray-50 hover:text-gray-700 active:scale-[0.98] dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200">
+                      <div className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] text-gray-500 transition-all duration-200 hover:bg-gray-50 hover:text-gray-700 active:scale-[0.98] dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200">
                         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[15px] text-gray-400">
                           <FaServer />
                         </span>
@@ -467,7 +535,7 @@ function Sidebar() {
                       onClick={toggleSidebar}
                       className="block no-underline"
                     >
-                      <div className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13.5px] text-gray-500 transition-all duration-200 hover:bg-gray-50 hover:text-gray-700 active:scale-[0.98] dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200">
+                      <div className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] text-gray-500 transition-all duration-200 hover:bg-gray-50 hover:text-gray-700 active:scale-[0.98] dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200">
                         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[15px] text-gray-400">
                           <FaServer />
                         </span>
@@ -479,23 +547,11 @@ function Sidebar() {
                       onClick={toggleSidebar}
                       className="block no-underline"
                     >
-                      <div className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13.5px] text-gray-500 transition-all duration-200 hover:bg-gray-50 hover:text-gray-700 active:scale-[0.98] dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200">
+                      <div className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] text-gray-500 transition-all duration-200 hover:bg-gray-50 hover:text-gray-700 active:scale-[0.98] dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200">
                         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[15px] text-gray-400">
                           <FaTerminal />
                         </span>
                         <span>Nhật ký hệ thống</span>
-                      </div>
-                    </Link>
-                    <Link
-                      to="/admin/notification-demo"
-                      onClick={toggleSidebar}
-                      className="block no-underline"
-                    >
-                      <div className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13.5px] text-gray-500 transition-all duration-200 hover:bg-gray-50 hover:text-gray-700 active:scale-[0.98] dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200">
-                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[15px] text-gray-400">
-                          <FaFlask />
-                        </span>
-                        <span>Test modal</span>
                       </div>
                     </Link>
                   </div>
@@ -512,18 +568,18 @@ function Sidebar() {
                     toggleSidebar();
                     setFeedbackOpen(true);
                   }}
-                  className="mb-0.5 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[13.5px] text-black/80 transition-all duration-200 hover:bg-blue-50/60 hover:text-blue-600 active:scale-[0.98] dark:text-gray-200 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
+                  className="mb-0.5 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] text-black/80 transition-all duration-200 hover:bg-blue-50/60 hover:text-blue-600 active:scale-[0.98] dark:text-gray-200 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
                 >
                   <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[15px] text-blue-500">
                     <FaCommentDots />
                   </span>
-                  <span>Góp ý</span>
+                  <span>Góp ý và báo lỗi</span>
                 </button>
               )}
               <button
                 onClick={handleLogout}
                 disabled={isLoggingOut}
-                className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[13.5px] text-red-400 transition-all duration-200 hover:bg-red-50 hover:text-red-600 active:scale-[0.98] disabled:opacity-50 dark:text-red-400/70 dark:hover:bg-red-900/10"
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] text-red-400 transition-all duration-200 hover:bg-red-50 hover:text-red-600 active:scale-[0.98] disabled:opacity-50 dark:text-red-400/70 dark:hover:bg-red-900/10"
               >
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[15px]">
                   <IconLogOut />

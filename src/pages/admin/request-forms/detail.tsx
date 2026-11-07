@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from '@tanstack/react-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Button, Spin, Alert, Tag, message } from 'antd';
+import { Spin, Alert, Tag, message } from 'antd';
+import Button from '@components/common/AppButton';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { DetailView, AdminActionModal } from '@components/RequestForm';
 import {
@@ -90,7 +91,11 @@ export default function RequestFormDetail() {
   if (error) {
     return (
       <div className="space-y-4">
-        <Button icon={<ArrowLeftOutlined />} onClick={handleBack}>
+        <Button
+          tone="inherit"
+          icon={<ArrowLeftOutlined />}
+          onClick={handleBack}
+        >
           Quay lại
         </Button>
         <div className="rounded-xl border border-red-100 bg-red-50 p-4 dark:border-red-900/50 dark:bg-red-900/20">
@@ -110,7 +115,11 @@ export default function RequestFormDetail() {
   if (!requestForm) {
     return (
       <div className="space-y-4">
-        <Button icon={<ArrowLeftOutlined />} onClick={handleBack}>
+        <Button
+          tone="inherit"
+          icon={<ArrowLeftOutlined />}
+          onClick={handleBack}
+        >
           Quay lại
         </Button>
         <div className="rounded-xl border border-amber-100 bg-amber-50 p-4 dark:border-amber-900/50 dark:bg-amber-900/20">
@@ -131,7 +140,7 @@ export default function RequestFormDetail() {
     <ComponentCard title="Chi tiết đơn yêu cầu">
       <div className="space-y-5">
         {/* ── Action Bar ──────────────────────────────────────── */}
-        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/50">
+        <div className="ui-toolbar flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/50">
           <AppButton tone="neutral" onClick={handleBack}>
             <ArrowLeftOutlined />
             Quay lại danh sách
@@ -143,6 +152,7 @@ export default function RequestFormDetail() {
           )}
           {canReject && (
             <Button
+              tone="inherit"
               danger
               onClick={() => {
                 setMode('reject');

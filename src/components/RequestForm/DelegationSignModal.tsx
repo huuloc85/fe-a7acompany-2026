@@ -3,13 +3,13 @@ import {
   Modal,
   Form,
   Upload,
-  Button,
   Typography,
   Card,
   Divider,
   message,
   Tabs
 } from 'antd';
+import Button from '@components/common/AppButton';
 import {
   UserOutlined,
   FileImageOutlined,
@@ -174,7 +174,7 @@ export const DelegationSignModal: React.FC<DelegationSignModalProps> = ({
         open={visible}
         onCancel={onCancel}
         footer={[
-          <Button key="close" onClick={onCancel}>
+          <Button tone="inherit" key="close" onClick={onCancel}>
             Đóng
           </Button>
         ]}
@@ -202,10 +202,11 @@ export const DelegationSignModal: React.FC<DelegationSignModalProps> = ({
       onCancel={handleCancel}
       width="min(800px, 95vw)"
       footer={[
-        <Button key="cancel" onClick={handleCancel}>
+        <Button tone="inherit" key="cancel" onClick={handleCancel}>
           Hủy
         </Button>,
         <Button
+          tone="inherit"
           key="submit"
           type="primary"
           loading={loading}

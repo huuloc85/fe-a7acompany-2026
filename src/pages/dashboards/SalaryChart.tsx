@@ -4,6 +4,7 @@ import { uiStore } from '@stores/uiStore';
 import { useStore } from '@tanstack/react-store';
 import DashboardChartCard from '@/components/dashboard/DashboardChartCard';
 import { memo, useEffect } from 'react';
+import { useReducedMotion } from 'framer-motion';
 
 type salaryDataType = {
   month: string;
@@ -16,6 +17,7 @@ export const SalaryChart = memo(function SalaryChart({
 }: {
   data: SalaryType[];
 }) {
+  const reduceMotion = useReducedMotion();
   const { isMobile, theme } = useStore(uiStore);
   const isDark = theme === 'dark';
 
@@ -55,6 +57,7 @@ export const SalaryChart = memo(function SalaryChart({
   };
 
   const config = {
+    animate: reduceMotion ? false : undefined,
     theme: isDark ? 'dark' : 'light',
     data: chartData,
     xField: 'month',

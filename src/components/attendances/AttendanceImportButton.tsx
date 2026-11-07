@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Button, DatePicker, Modal, Progress, Tag } from 'antd';
+import { Alert, DatePicker, Modal, Progress, Tag } from 'antd';
+import Button from '@components/common/AppButton';
 import { DownloadOutlined } from '@ant-design/icons';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import dayjs, { type Dayjs } from 'dayjs';
@@ -100,7 +101,11 @@ export default function AttendanceImportButton() {
 
   return (
     <>
-      <Button icon={<DownloadOutlined />} onClick={() => setOpen(true)}>
+      <Button
+        tone="inherit"
+        icon={<DownloadOutlined />}
+        onClick={() => setOpen(true)}
+      >
         Lấy dữ liệu máy chấm công
       </Button>
       <Modal
@@ -211,7 +216,11 @@ export default function AttendanceImportButton() {
               type="error"
               message="Không đọc được trạng thái từ host."
               action={
-                <Button size="small" onClick={() => void query.refetch()}>
+                <Button
+                  tone="inherit"
+                  size="small"
+                  onClick={() => void query.refetch()}
+                >
                   Tải lại
                 </Button>
               }
@@ -280,6 +289,7 @@ export default function AttendanceImportButton() {
                   </p>
                   {job.status === 'failed' && (
                     <Button
+                      tone="inherit"
                       size="small"
                       className="mt-2 min-h-11"
                       disabled={sending}

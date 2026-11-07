@@ -14,7 +14,7 @@ import { requiresManagerApproval } from '@/utils/requestFormUtil';
 const { Title, Text } = Typography;
 
 // Danh sách nhân viên nộp đơn thẳng cho quản lý, bỏ qua tổ trưởng
-const DIRECT_TO_MANAGER_IDS = ['22122900', '23080100', '23011400'] as const;
+const DIRECT_TO_MANAGER_IDS = ['22122902', '23080130', '23011410'] as const;
 
 // Helper function to create cache-busting signature URL
 const getSignatureUrl = (signaturePath: string, updatedAt?: string): string => {

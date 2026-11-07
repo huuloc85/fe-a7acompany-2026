@@ -1,0 +1,122 @@
+/* Layout and accessibility only. Existing skins and business data own their colors. */
+@media screen {
+  .ui-content {
+    padding: 20px;
+  }
+  .ui-content :where(td, th, .ant-statistic-content, .tabular-nums) {
+    font-variant-numeric: tabular-nums;
+  }
+  .ui-page-title {
+    overflow-wrap: anywhere;
+  }
+  .ui-form-actions {
+    padding-top: 16px;
+  }
+  .ui-load-error {
+    margin-block: 12px;
+  }
+  .ui-record-card > button {
+    min-height: 44px;
+  }
+
+  /* Ant inputs and composite controls already draw their own rounded focus. */
+  :where(a, button, input, textarea, select, [tabindex]):not(
+      .ant-input,
+      .ant-select input,
+      .ant-picker input,
+      .ant-input-affix-wrapper input,
+      .ant-input-affix-wrapper textarea
+    ):focus-visible {
+    outline: 2px solid #2563eb !important;
+    outline-offset: 3px !important;
+  }
+  html.dark
+    :where(a, button, input, textarea, select, [tabindex]):not(
+      .ant-input,
+      .ant-select input,
+      .ant-picker input,
+      .ant-input-affix-wrapper input,
+      .ant-input-affix-wrapper textarea
+    ):focus-visible {
+    outline-color: #60a5fa !important;
+  }
+  #main-content:focus {
+    outline: none;
+  }
+  .ui-skip-link {
+    position: fixed;
+    inset: 8px auto auto 8px;
+    z-index: 5000;
+    padding: 12px 16px;
+    border-radius: 8px;
+    color: #1e293b;
+    background: #fff;
+    transform: translateY(-160%);
+  }
+  .ui-skip-link:focus {
+    transform: none;
+  }
+
+  @media (max-width: 767px) {
+    /* Keep employee calendars inside narrow/short mobile viewports. */
+    html body .ant-picker-dropdown.user-date-picker-popup {
+      position: fixed !important;
+      inset: auto 8px max(8px, env(safe-area-inset-bottom)) !important;
+      width: auto !important;
+      min-width: 0 !important;
+      transform: none !important;
+    }
+    html body .user-date-picker-popup .ant-picker-panel-container {
+      width: 100%;
+      max-height: calc(100dvh - 24px);
+      overflow: auto !important;
+    }
+    html
+      body
+      .user-date-picker-popup
+      :is(
+        .ant-picker-panel-layout,
+        .ant-picker-panels,
+        .ant-picker-panel,
+        .ant-picker-date-panel,
+        .ant-picker-month-panel,
+        .ant-picker-year-panel,
+        .ant-picker-decade-panel
+      ) {
+      width: 100%;
+      min-width: 0;
+    }
+    html body .user-date-picker-popup .ant-picker-content {
+      width: 100%;
+      table-layout: fixed;
+    }
+    .ui-content {
+      padding: 12px;
+    }
+    .ui-toolbar {
+      gap: 8px;
+    }
+    .ui-toolbar .ant-btn {
+      min-height: 40px;
+    }
+    .ui-content .ant-pagination {
+      flex-wrap: wrap;
+      row-gap: 8px;
+    }
+    .ui-content .ant-pagination-total-text {
+      width: 100%;
+      text-align: left;
+    }
+    .ui-form
+      :is(
+        .ant-input:not(textarea),
+        .ant-select-selector,
+        .ant-picker-input > input
+      ) {
+      font-size: 16px !important;
+    }
+    .ui-form-actions .ant-btn {
+      min-height: 44px;
+    }
+  }
+}

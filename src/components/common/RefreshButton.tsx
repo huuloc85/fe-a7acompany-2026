@@ -1,7 +1,6 @@
 import { ButtonProps } from 'antd';
 import React from 'react';
 import { IoReload } from 'react-icons/io5';
-import { motion } from 'framer-motion';
 import AppButton from '@components/common/AppButton';
 
 interface RefreshButtonProps extends ButtonProps {
@@ -16,11 +15,7 @@ const RefreshButton: React.FC<RefreshButtonProps> = ({
   ...props
 }) => {
   return (
-    <motion.div
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
-      className="inline-block"
-    >
+    <div className="inline-block">
       <AppButton
         tone="primary"
         type="default"
@@ -32,7 +27,7 @@ const RefreshButton: React.FC<RefreshButtonProps> = ({
       >
         {props.children !== undefined ? props.children : 'Làm mới'}
       </AppButton>
-    </motion.div>
+    </div>
   );
 };
 

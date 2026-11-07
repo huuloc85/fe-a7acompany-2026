@@ -9,7 +9,7 @@ export default function AuthLayout() {
 
   if (!isMidAutumn) {
     return (
-      <div className="glass-app-shell relative z-1 flex h-screen w-full overflow-hidden px-4 py-6 sm:p-0">
+      <div className="glass-app-shell relative z-1 flex min-h-dvh w-full overflow-x-hidden px-4 py-6 sm:p-0">
         <div className="auth-ambient" aria-hidden="true" />
         <motion.div
           initial={{ opacity: 0, x: -30 }}

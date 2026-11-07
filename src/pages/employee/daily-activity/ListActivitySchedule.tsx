@@ -216,8 +216,8 @@ export const ListActivity = () => {
 
   return (
     <>
-      <BackButton to="/" />
       <ComponentCard
+        actions={<BackButton to="/" />}
         title={
           <div className="flex items-center gap-3">
             <FaClipboardList className="text-blue-500" />
@@ -227,7 +227,7 @@ export const ListActivity = () => {
       >
         <div data-tour="employee-activity-records" className="space-y-5">
           {/* ── Action Bar ─────────────────────────────────────── */}
-          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/50">
+          <div className="ui-toolbar flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/50">
             <RefreshButton isLoading={isFetching} refresh={refetch} />
             <div className="ml-auto flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 dark:border-gray-600 dark:bg-gray-800">
               <Tag color="blue" className="!m-0 !text-xs">
@@ -245,7 +245,8 @@ export const ListActivity = () => {
                 Chọn ngày
               </label>
               <DatePicker
-                format="DD/MM/YYYY"
+                format="DD/MM"
+                classNames={{ popup: { root: 'user-date-picker-popup' } }}
                 id="month-picker"
                 data-tour="employee-activity-date"
                 placeholder="Chọn ngày"

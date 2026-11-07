@@ -5,6 +5,7 @@ import {
 } from './PaginationProps.custom';
 
 export const customTableProps: TableProps = {
+  className: 'ui-data-table',
   bordered: true,
   size: 'small',
   scroll: {
@@ -17,6 +18,6 @@ export const customTableProps: TableProps = {
     showSizeChanger: true,
     pageSizeOptions: DEFAULT_PAGE_SIZE_OPTIONS,
     showTotal: defaultPaginationShowTotal,
-    position: ['topRight', 'bottomRight']
+    position: ['bottomRight']
   }
 };

@@ -18,11 +18,16 @@ export const savePayrollDraft = (
   period: string,
   draft: PayrollDraft,
   revision: number
-) =>
-  axiosPrivate.put<never, { data: PayrollPublication }>(
+) => {
+  if (draft.reconciliation?.pending.length)
+    return Promise.reject(
+      new Error('Còn dòng Excel chưa xác nhận mã nhân viên. Chưa lưu bản nháp.')
+    );
+  return axiosPrivate.put<never, { data: PayrollPublication }>(
     `/api/payroll-drafts/${company.toLowerCase()}/${period}`,
     { draft, revision }
   );
+};
 
 export const publishPayroll = (id: number, revision: number) =>
   axiosPrivate.post(`/api/payroll-publications/${id}`, { revision });

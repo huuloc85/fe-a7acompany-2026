@@ -1,15 +1,17 @@
 import { useAttendanceMonth } from '@/hooks/useAttendanceMonth';
 import { fetchEmpAttendancesCalculated } from '@/services/AttendanceService';
 import { getIncompleteAttendanceDates } from '@/utils/incompleteAttendance';
+import { getMissingOvertimeRequestDates } from '@/utils/missingOvertimeRequests';
 import { useQuery } from '@tanstack/react-query';
-import { Link } from '@tanstack/react-router';
-import { Alert } from 'antd';
 import dayjs from 'dayjs';
+import { AttendanceReminder } from './AttendanceReminder';
 
 export function IncompleteAttendanceAlert({
-  employeeId
+  employeeId,
+  showOvertimeReminder = false
 }: {
   employeeId: string;
+  showOvertimeReminder?: boolean;
 }) {
   const month = useAttendanceMonth();
   const startDate = dayjs(`${month}-01`)
@@ -26,40 +28,17 @@ export function IncompleteAttendanceAlert({
     refetchInterval: 60_000
   });
   const dates = getIncompleteAttendanceDates(data?.data ?? []);
+  const overtimeDates = showOvertimeReminder
+    ? getMissingOvertimeRequestDates(data?.data ?? [])
+    : [];
 
-  if (isError || dates.length === 0) return null;
+  if (isError || (dates.length === 0 && overtimeDates.length === 0))
+    return null;
 
   return (
-    <Alert
-      className="mb-3"
-      style={{
-        padding: '8px 12px',
-        borderRadius: 10,
-        alignItems: 'flex-start'
-      }}
-      type="warning"
-      showIcon
-      message={
-        <div className="text-sm leading-5">
-          <div className="font-medium">
-            Chưa đủ chấm công: {dates.length} ngày
-          </div>
-          <div className="flex flex-wrap items-baseline gap-x-3 text-xs leading-5">
-            <span>
-              {dates.map((date) => dayjs(date).format('DD/MM')).join(', ')}
-            </span>
-            <Link
-              to="/employee/attendances"
-              className="shrink-0 font-medium underline"
-            >
-              Xem chi tiết
-            </Link>
-          </div>
-          <div className="text-xs leading-5">
-            Vui lòng báo tổ trưởng để được xác nhận giờ vào/ra.
-          </div>
-        </div>
-      }
-    />
+    <>
+      <AttendanceReminder dates={dates} kind="incomplete" />
+      <AttendanceReminder dates={overtimeDates} kind="overtime" />
+    </>
   );
 }

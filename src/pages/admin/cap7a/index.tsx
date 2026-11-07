@@ -1,11 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import './cap7a.css';
 import ScreenViewer from './ScreenViewer';
 import DailyPerformance from './DailyPerformance';
 import LivePerformance from './LivePerformance';
 import SpikeControls from './SpikeControls';
+import TailApplicationControls from './TailApplicationControls';
+import SpikeApplicationControls from './SpikeApplicationControls';
 import ApplicationLogs from './ApplicationLogs';
 import SpikeApplicationLogs from './SpikeApplicationLogs';
+import ProductionMailSettings from './ProductionMailSettings';
 import { useQuery } from '@tanstack/react-query';
 import { Alert, Card, InputNumber, Tabs, Tag, message } from 'antd';
 import Button from '@/components/common/AppButton';
@@ -18,6 +21,8 @@ import {
   type Cap7AStatus
 } from '@/services/Cap7AService';
 import { getApiErrorMessage } from '@/utils/apiError';
+import useLiveClock from './useLiveClock';
+import { livePollingInterval } from './livePolling';
 
 const modeLabels: Record<string, string> = {
   RUN: 'Đang chạy',
@@ -40,21 +45,40 @@ const temperatureLabel = (value?: number | null) =>
   value == null || !Number.isFinite(value) ? '—' : `${value.toFixed(1)} °C`;
 
 export default function Cap7APage() {
+  const [activeSystem, setActiveSystem] = useState('tail');
   return (
     <ComponentCard title="CAP7A">
       <Tabs
-        defaultActiveKey="tail"
+        activeKey={activeSystem}
+        onChange={setActiveSystem}
         destroyOnHidden={false}
         items={[
           {
             key: 'tail',
             label: 'Screen 1',
-            children: <Cap7ASystemPanel key="tail" system="tail" />
+            children: (
+              <Cap7ASystemPanel
+                key="tail"
+                system="tail"
+                active={activeSystem === 'tail'}
+              />
+            )
           },
           {
             key: 'spike',
             label: 'Screen 2',
-            children: <Cap7ASystemPanel key="spike" system="spike" />
+            children: (
+              <Cap7ASystemPanel
+                key="spike"
+                system="spike"
+                active={activeSystem === 'spike'}
+              />
+            )
+          },
+          {
+            key: 'production-mail',
+            label: 'Báo cáo qua email',
+            children: <ProductionMailSettings />
           }
         ]}
       />
@@ -62,14 +86,33 @@ export default function Cap7APage() {
   );
 }
 
-function Cap7ASystemPanel({ system }: { system: Cap7ASystem }) {
+function Cap7ASystemPanel({
+  system,
+  active
+}: {
+  system: Cap7ASystem;
+  active: boolean;
+}) {
+  const now = useLiveClock(active);
   const [busy, setBusy] = useState(false);
+  const [screenOpenRequest, setScreenOpenRequest] = useState(0);
+  const screenRequestedForVisit = useRef(false);
+  const [screenGeneration, setScreenGeneration] = useState(0);
+  const closeScreen = () => {
+    setScreenOpenRequest(0);
+    setScreenGeneration((value) => value + 1);
+  };
   const [threshold, setThreshold] = useState<number | null>(null);
   const [roi, setRoi] = useState<(number | null)[]>([null, null, null, null]);
   const query = useQuery({
     queryKey: ['cap7a', system, 'status'],
     queryFn: ({ signal }) => getCap7AStatus(system, signal),
-    refetchInterval: 1000,
+    enabled: active,
+    staleTime: 1000,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    refetchInterval: (query) =>
+      livePollingInterval(1000, query.state.fetchFailureCount),
     refetchIntervalInBackground: false,
     retry: false
   });
@@ -82,16 +125,35 @@ function Cap7ASystemPanel({ system }: { system: Cap7ASystem }) {
   const displayed = data?.state ? data : lastSnapshot;
   const state = displayed?.state;
   const online =
+    active &&
     !!data?.online &&
     !!data?.state &&
     !query.isError &&
-    Date.now() - query.dataUpdatedAt < 20000;
+    now - query.dataUpdatedAt < 20000 &&
+    !!data?.received_at_ms &&
+    now - data.received_at_ms >= -5000 &&
+    now - data.received_at_ms < 20000;
+  // A paused browser poll is not evidence of an MQTT disconnect.
+  // Keep the last confirmed status labelled as such while refreshing;
+  // command authorization continues to use the strict freshness above.
+  const syncing =
+    active && !online && !!data?.online && !query.isError && query.isFetching;
   const allowed =
     online &&
     !!capabilities?.commands &&
     !!state?.remote_allowed &&
     !!data?.commands_enabled &&
     !busy;
+  useEffect(() => {
+    if (!active) {
+      screenRequestedForVisit.current = false;
+      return;
+    }
+    if (!online || !capabilities?.screen || screenRequestedForVisit.current)
+      return;
+    screenRequestedForVisit.current = true;
+    setScreenOpenRequest(Date.now());
+  }, [active, online, capabilities?.screen]);
   const stopped = allowed && state?.mode === 'STOP';
   const operable =
     allowed &&
@@ -132,9 +194,22 @@ function Cap7ASystemPanel({ system }: { system: Cap7ASystem }) {
         className="cap7a-page"
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <Tag color={online ? 'green' : 'default'}>
-            {online ? 'MQTT · Online' : 'Chưa kết nối / dữ liệu cũ'}
+          <Tag color={online ? 'green' : syncing ? 'blue' : 'default'}>
+            {online
+              ? 'MQTT · Online'
+              : syncing
+                ? 'MQTT · Online lần cuối'
+                : 'Chưa kết nối / dữ liệu cũ'}
           </Tag>
+          {system === 'tail' && capabilities?.commands && (
+            <Button
+              disabled={!allowed}
+              title="Reset thời gian chạy/dừng hôm nay, giữ nguyên bộ đếm sản phẩm"
+              onClick={() => command('reset_runtime')}
+            >
+              Reset thời gian
+            </Button>
+          )}
         </div>
         {query.isError ? (
           <Alert
@@ -150,10 +225,10 @@ function Cap7ASystemPanel({ system }: { system: Cap7ASystem }) {
             message={
               query.isPending
                 ? 'Đang kiểm tra kết nối…'
-                : 'Backend chưa cấu hình ThingsBoard'
+                : 'Backend chưa cấu hình kết nối thiết bị'
             }
           />
-        ) : !online ? (
+        ) : syncing ? null : !online ? (
           <Alert
             type="warning"
             showIcon
@@ -172,6 +247,7 @@ function Cap7ASystemPanel({ system }: { system: Cap7ASystem }) {
         ) : null}
         {capabilities?.daily ? (
           <DailyPerformance
+            active={active}
             system={system}
             state={state}
             online={online}
@@ -188,7 +264,9 @@ function Cap7ASystemPanel({ system }: { system: Cap7ASystem }) {
             />
           </Card>
         )}
-        {system === 'tail' && <ApplicationLogs online={online} />}
+        {system === 'tail' && (
+          <ApplicationLogs online={online} active={active} />
+        )}
         {system === 'spike' && (
           <SpikeApplicationLogs
             logs={data?.app_logs ?? displayed?.app_logs}
@@ -198,12 +276,36 @@ function Cap7ASystemPanel({ system }: { system: Cap7ASystem }) {
         )}
         <div className="cap7a-workspace">
           <Card
-            title="Màn hình Jetson"
+            title={
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span>Màn hình Jetson</span>
+                <span
+                  className="text-sm font-normal"
+                  title="Giá trị xử lý gần nhất; không phải FPS truyền màn hình."
+                >
+                  FPS xử lý:{' '}
+                  {online &&
+                  typeof state?.processing_fps === 'number' &&
+                  Number.isFinite(state.processing_fps) &&
+                  state.processing_fps > 0
+                    ? state.processing_fps.toLocaleString('vi-VN', {
+                        maximumFractionDigits: 1
+                      })
+                    : '—'}
+                </span>
+              </div>
+            }
             size="small"
             className="cap7a-screen-card liquid-glass-card !rounded-2xl"
           >
             {capabilities?.screen ? (
-              <ScreenViewer key={system} system={system} />
+              <ScreenViewer
+                key={`${system}-${screenGeneration}`}
+                system={system}
+                autoConnectRequest={screenOpenRequest}
+                tabActive={active}
+                appOnline={online}
+              />
             ) : (
               <Alert
                 type="info"
@@ -215,6 +317,36 @@ function Cap7ASystemPanel({ system }: { system: Cap7ASystem }) {
             className="cap7a-controls"
             aria-label="Trạng thái và điều khiển"
           >
+            {system === 'tail' && (
+              <TailApplicationControls
+                active={active}
+                state={state}
+                online={online}
+                allowed={allowed}
+                busy={busy}
+                setBusy={setBusy}
+                onStartAccepted={() => setScreenOpenRequest(Date.now())}
+                onCloseAccepted={closeScreen}
+                refresh={() => {
+                  void query.refetch({ cancelRefetch: false });
+                }}
+              />
+            )}
+            {system === 'spike' && (
+              <SpikeApplicationControls
+                active={active}
+                state={state}
+                online={online}
+                allowed={allowed}
+                busy={busy}
+                setBusy={setBusy}
+                onStartAccepted={() => setScreenOpenRequest(Date.now())}
+                onCloseAccepted={closeScreen}
+                refresh={() => {
+                  void query.refetch({ cancelRefetch: false });
+                }}
+              />
+            )}
             <Card
               title="Trạng thái Jetson"
               size="small"
@@ -294,7 +426,7 @@ function Cap7ASystemPanel({ system }: { system: Cap7ASystem }) {
             )}
             {system === 'tail' && capabilities?.commands && (
               <Card
-                title="Điều khiển TAIL"
+                title="Điều khiển kiểm tra điểm thiếu nhựa"
                 size="small"
                 className="liquid-glass-card !rounded-2xl"
               >

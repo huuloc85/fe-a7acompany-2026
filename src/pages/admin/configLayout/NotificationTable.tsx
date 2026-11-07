@@ -16,16 +16,8 @@ import {
   DeleteButton
 } from '@components/common/ActionButtons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  Button,
-  Checkbox,
-  Form,
-  Input,
-  message,
-  Popconfirm,
-  Table,
-  Tag
-} from 'antd';
+import { Checkbox, Form, Input, message, Popconfirm, Table, Tag } from 'antd';
+import Button from '@components/common/AppButton';
 import type { ColumnsType, TableProps } from 'antd/es/table';
 import { useState } from 'react';
 
@@ -247,6 +239,7 @@ export const NotificationTable = () => {
         return editable ? (
           <ActionGroup>
             <Button
+              tone="inherit"
               type="primary"
               onClick={() =>
                 save({
@@ -258,7 +251,9 @@ export const NotificationTable = () => {
               Lưu
             </Button>
             <Popconfirm title="Hủy thay đổi?" onConfirm={cancel}>
-              <Button type="default">Hủy</Button>
+              <Button tone="inherit" type="default">
+                Hủy
+              </Button>
             </Popconfirm>
           </ActionGroup>
         ) : (

@@ -1,4 +1,5 @@
-import { Button, Tooltip } from 'antd';
+import { Tooltip } from 'antd';
+import Button from '@components/common/AppButton';
 import { BellOutlined, BellFilled } from '@ant-design/icons';
 import { useNotificationPermission } from '@hooks/useNotificationPermission';
 import { useActionTooltip } from '@/hooks/useActionTooltip';
@@ -67,6 +68,7 @@ export const NotificationStatusIndicator: React.FC<
   return (
     <Tooltip title={getTooltipTitle()} {...tooltipProps}>
       <Button
+        tone="inherit"
         {...triggerProps}
         aria-label={getTooltipTitle()}
         type={getButtonType()}

@@ -7,6 +7,7 @@ export interface Role {
 }
 
 export interface User {
+  is_preview?: boolean;
   id: string;
   name: string;
   image_url?: string;

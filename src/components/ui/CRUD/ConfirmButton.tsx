@@ -102,7 +102,10 @@ export function ConfirmButton<
             </span>
           </>
         }
-        loading={isPending}
+        confirmLoading={isPending}
+        closable={!isPending}
+        maskClosable={!isPending}
+        keyboard={!isPending}
         open={open}
         centered
         okButtonProps={{
@@ -114,11 +117,13 @@ export function ConfirmButton<
         }}
         okText={label.btn}
         onOk={() => {
+          if (isPending) return;
           if (mode === 'restore') restoreItem();
           else if (mode === 'forceDelete') forceDeleteItem();
           else deleteItem();
         }}
         cancelButtonProps={{
+          disabled: isPending,
           size
         }}
         onCancel={handleClose}

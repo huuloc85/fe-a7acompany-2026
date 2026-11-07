@@ -1,4 +1,5 @@
 import type { AttendanceResult } from './attendanceUtil';
+import { resolveSnapshotProfile } from './payrollSnapshotProfile';
 
 export interface PayrollProfile {
   employeeId: string;
@@ -29,6 +30,8 @@ export interface PayrollAttendanceOverride {
 }
 
 export interface PayrollAdjustments {
+  /** Period-specific inputs. Missing means calculate normally; zero is explicit. */
+  calculation?: PayrollPeriodInputs;
   attendanceOverrides?: PayrollAttendanceOverride[];
   holidayDays: number;
   paidLeaveDays: number;
@@ -45,6 +48,55 @@ export interface PayrollAdjustments {
   otherDeduction: number;
   noAttendanceConfirmed: boolean;
   note: string;
+}
+
+export const payrollPeriodInputKeys = [
+  'dayDays',
+  'nightDays',
+  'dayRate',
+  'nightRate',
+  'dayOvertimeHours',
+  'nightOvertimeHours',
+  'mainReinforcementHours',
+  'mainReinforcementHourlyRate',
+  'housingPerDay',
+  'travelPerDay',
+  'mealPerDay',
+  'downtimeDailyRate',
+  'holidayDailyRate',
+  'paidLeaveDailyRate',
+  'menstrualHourlyRate',
+  'unionBase',
+  'insuranceBase',
+  'personalDeduction',
+  'dependentDeduction',
+  'taxable',
+  'diligence',
+  'cashOvertimeHours',
+  'cashOvertimeBase',
+  'cashAnnualLeaveDays',
+  'cashAnnualLeaveBase',
+  'cashDowntime',
+  'cashOtherIncome',
+  'cashReinforcementHours',
+  'cashReinforcementHourlyRate',
+  'cashMeal',
+  'cashOvertimeAllowance',
+  'cashHousing',
+  'cashTravel'
+] as const;
+
+export type PayrollPeriodInputs = Partial<
+  Record<(typeof payrollPeriodInputKeys)[number], number>
+>;
+
+export interface PayrollSource {
+  file: string;
+  sheet: string;
+  row: number;
+  employeeCode: string;
+  /** Exact source inputs/formulas, retained for reconciliation, never executed. */
+  cells: Record<string, { value: string | number | null; formula?: string }>;
 }
 
 export interface PayrollRules {
@@ -99,8 +151,14 @@ export const emptyPayrollAdjustments = (): PayrollAdjustments => ({
 export function calculatePayrollDiligence(
   approvedAmount: number,
   authorizedLeaveDays = 0,
-  unauthorizedLeaveDays = 0
+  unauthorizedLeaveDays = 0,
+  company = 'vvp'
 ): number {
+  // A7A's approved workbook has a different authorized-leave threshold.
+  if (company.trim().toLowerCase() === 'a7a') {
+    if (authorizedLeaveDays >= 2 || unauthorizedLeaveDays >= 2) return 0;
+    return unauthorizedLeaveDays >= 1 ? approvedAmount * 0.5 : approvedAmount;
+  }
   if (
     authorizedLeaveDays >= 3 ||
     unauthorizedLeaveDays >= 2 ||
@@ -122,6 +180,19 @@ export interface PayrollHours {
 }
 
 export interface PayrollRow {
+  excelNetBlank?: boolean;
+  annualLeaveSalary?: number;
+  annualLeaveDays?: number;
+  allowanceDays?: number;
+  employeeInsurance?: number;
+  employerInsurance?: number;
+  employerUnion?: number;
+  cashSource?: PayrollSource;
+  source?: PayrollSource;
+  cashReinforcementSalary?: number;
+  cashOvertimeSalary?: number;
+  cashAnnualLeaveSalary?: number;
+  cashTotal?: number;
   profile: PayrollProfile;
   adjustments: PayrollAdjustments;
   hours: PayrollHours;
@@ -154,6 +225,26 @@ export interface PayrollRow {
 }
 
 export interface PayrollDraft {
+  importMode?: 'excel-values';
+  formulaVersion?: string;
+  attendance?: AttendanceResult[];
+  /** Unresolved source rows must not be silently merged or included in payment. */
+  reconciliation?: {
+    sourceTotals: Record<string, number>;
+    originalSourceTotals?: Record<string, number>;
+    excluded?: {
+      source: PayrollSource;
+      name: string;
+      net: number;
+      reason: string;
+    }[];
+    pending: {
+      source: PayrollSource;
+      name: string;
+      net: number;
+      reason: string;
+    }[];
+  };
   warnings?: string[];
   dataThrough?: string;
   startDate: string;
@@ -165,6 +256,9 @@ export interface PayrollDraft {
 
 const validNumber = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value) && value >= 0;
+
+// Approved default day attendance; explicit period inputs and saved drafts win.
+const default22DayEmployeeCodes = new Set(['13001201', '23030102', '23032403']);
 
 export function normalizeEmployeeId(value: string | number) {
   return String(value).trim();
@@ -210,6 +304,8 @@ export function calculatePayroll(
 ): PayrollDraft {
   const issues: string[] = [];
   const result: PayrollDraft = {
+    formulaVersion: 'excel-2026-10-v2',
+    attendance: attendance.map((entry) => ({ ...entry })),
     startDate,
     endDate,
     rules: { ...rules },
@@ -413,19 +509,32 @@ export function calculatePayroll(
       profile.unionBase,
       profile.dependents
     ];
-    const numericAdjustments = Object.values(adjustment).filter(
-      (v) =>
-        typeof v !== 'string' && typeof v !== 'boolean' && !Array.isArray(v)
-    );
+    const input = adjustment.calculation ?? {};
+    const numericAdjustments = Object.entries(adjustment)
+      .filter(
+        ([key]) =>
+          ![
+            'note',
+            'noAttendanceConfirmed',
+            'attendanceOverrides',
+            'calculation'
+          ].includes(key)
+      )
+      .map(([, value]) => value);
     if (
       !numericProfile.every(validNumber) ||
       !numericAdjustments.every(validNumber) ||
+      Object.entries(input).some(
+        ([key, value]) =>
+          !payrollPeriodInputKeys.includes(key as keyof PayrollPeriodInputs) ||
+          !validNumber(value)
+      ) ||
       !Number.isInteger(profile.dependents)
     ) {
       issues.push(`Hồ sơ hoặc khoản phát sinh không hợp lệ: ${id}`);
       continue;
     }
-    const total = savedHours?.[id] ??
+    const sourceHours = savedHours?.[id] ??
       hours.get(normalizeEmployeeId(profile.attendanceEmployeeId || id)) ?? {
         day: 0,
         night: 0,
@@ -434,6 +543,25 @@ export function calculatePayroll(
         reinforcement: 0,
         records: 0
       };
+    const total = {
+      ...sourceHours,
+      day:
+        input.dayDays !== undefined
+          ? input.dayDays * rules.hoursPerDay
+          : savedHours?.[id] || adjustment.attendanceOverrides?.length
+            ? sourceHours.day
+            : default22DayEmployeeCodes.has(
+                  normalizeEmployeeId(profile.attendanceEmployeeId || id)
+                )
+              ? 22 * rules.hoursPerDay
+              : sourceHours.day,
+      night:
+        input.nightDays === undefined
+          ? sourceHours.night
+          : input.nightDays * rules.hoursPerDay,
+      dayOvertime: input.dayOvertimeHours ?? sourceHours.dayOvertime,
+      nightOvertime: input.nightOvertimeHours ?? sourceHours.nightOvertime
+    };
     if (!Object.values(total).every(validNumber)) {
       issues.push(`Giờ công không hợp lệ: ${id}`);
       continue;
@@ -458,9 +586,9 @@ export function calculatePayroll(
     const dayDays = total.day / rules.hoursPerDay;
     const nightDays = total.night / rules.hoursPerDay;
     const paidDays = dayDays + nightDays;
-    const daySalary = Math.round(dailyRate * dayDays);
+    const daySalary = Math.round((input.dayRate ?? dailyRate) * dayDays);
     const nightSalary = Math.round(
-      dailyRate * nightDays * rules.nightMultiplier
+      (input.nightRate ?? dailyRate * rules.nightMultiplier) * nightDays
     );
     const dayOvertimeSalary = Math.round(
       hourlyRate * total.dayOvertime * rules.dayOvertimeMultiplier
@@ -469,26 +597,76 @@ export function calculatePayroll(
       hourlyRate * total.nightOvertime * rules.nightOvertimeMultiplier
     );
     const reinforcementSalary = Math.round(
-      hourlyRate * total.reinforcement * rules.reinforcementMultiplier
+      (input.mainReinforcementHourlyRate ??
+        hourlyRate * rules.reinforcementMultiplier) *
+        (input.mainReinforcementHours ?? 0)
     );
-    const housing = Math.round(paidDays * profile.housingPerDay);
-    const travel = Math.round(paidDays * profile.travelPerDay);
-    const meal = Math.round(paidDays * profile.mealPerDay);
-    const holidaySalary = Math.round(dailyRate * adjustment.holidayDays);
-    const paidLeaveSalary = Math.round(dailyRate * adjustment.paidLeaveDays);
-    const downtimeSalary = Math.round(dailyRate * adjustment.downtimeDays);
-    const menstrualSalary = Math.round(hourlyRate * adjustment.menstrualHours);
+    const cashHours = input.cashReinforcementHours ?? total.reinforcement;
+    const cashReinforcementSalary =
+      cashHours > 0
+        ? cashHours *
+            (input.cashReinforcementHourlyRate ??
+              hourlyRate * rules.reinforcementMultiplier) +
+          (input.cashMeal ?? 0) +
+          (input.cashOvertimeAllowance ?? 0) +
+          (input.cashHousing ?? 0) +
+          (input.cashTravel ?? 0)
+        : 0;
+    const cashOvertimeSalary = Math.round(
+      ((input.cashOvertimeBase ?? profile.legacySalary26Days ?? 0) /
+        (rules.standardDays * rules.hoursPerDay)) *
+        (input.cashOvertimeHours ?? 0) *
+        rules.dayOvertimeMultiplier
+    );
+    const cashAnnualLeaveSalary = Math.round(
+      ((input.cashAnnualLeaveBase ?? profile.legacySalary26Days ?? 0) / 26) *
+        (input.cashAnnualLeaveDays ?? 0)
+    );
+    const cashTotal =
+      Math.floor(
+        (cashOvertimeSalary +
+          cashAnnualLeaveSalary +
+          cashReinforcementSalary +
+          (input.cashDowntime ?? 0) +
+          (input.cashOtherIncome ?? 0)) /
+          1000
+      ) * 1000;
+    const housing = Math.round(
+      paidDays * (input.housingPerDay ?? profile.housingPerDay)
+    );
+    const travel = Math.round(
+      paidDays * (input.travelPerDay ?? profile.travelPerDay)
+    );
+    const meal = Math.round(
+      paidDays * (input.mealPerDay ?? profile.mealPerDay)
+    );
+    const holidaySalary = Math.round(
+      (input.holidayDailyRate ?? dailyRate) * adjustment.holidayDays
+    );
+    const paidLeaveSalary = Math.round(
+      (input.paidLeaveDailyRate ?? dailyRate) * adjustment.paidLeaveDays
+    );
+    const downtimeSalary = Math.round(
+      (input.downtimeDailyRate ?? dailyRate) * adjustment.downtimeDays
+    );
+    const menstrualSalary = Math.round(
+      (input.menstrualHourlyRate ?? hourlyRate) * adjustment.menstrualHours
+    );
     // Keep the approved base unchanged so recalculation never discounts it twice.
-    const diligence = calculatePayrollDiligence(
-      adjustment.diligence,
-      adjustment.authorizedLeaveDays,
-      adjustment.unauthorizedLeaveDays
-    );
+    const diligence =
+      input.diligence ??
+      calculatePayrollDiligence(
+        adjustment.diligence,
+        adjustment.authorizedLeaveDays,
+        adjustment.unauthorizedLeaveDays,
+        profile.company
+      );
     const gross =
       daySalary +
       nightSalary +
       dayOvertimeSalary +
       nightOvertimeSalary +
+      reinforcementSalary +
       housing +
       travel +
       meal +
@@ -502,27 +680,33 @@ export function calculatePayroll(
       adjustment.otherIncome;
     // AF:AI use catalogue F + G, without ROUND in the workbook.
     const contributionBase = profile.basicSalary + profile.responsibility;
-    const union = contributionBase * rules.unionRate;
-    const social = contributionBase * rules.socialRate;
-    const health = contributionBase * rules.healthRate;
-    const unemployment = contributionBase * rules.unemploymentRate;
-    const dependentDeduction = profile.dependents * rules.dependentDeduction;
+    const union = (input.unionBase ?? contributionBase) * rules.unionRate;
+    const social = (input.insuranceBase ?? contributionBase) * rules.socialRate;
+    const health = (input.insuranceBase ?? contributionBase) * rules.healthRate;
+    const unemployment =
+      (input.insuranceBase ?? contributionBase) * rules.unemploymentRate;
+    const personalDeduction =
+      input.personalDeduction ?? rules.personalDeduction;
+    const dependentDeduction =
+      input.dependentDeduction ?? profile.dependents * rules.dependentDeduction;
     if (adjustment.taxExemptIncome > gross)
       issues.push(`Thu nhập miễn thuế vượt tổng thu nhập: ${id}`);
-    const taxable = Math.max(
-      0,
-      gross -
-        adjustment.taxExemptIncome -
-        // Match the workbook AL column: housing and meal are tax-exempt;
-        // travel is not included in that column.
-        housing -
-        meal -
-        social -
-        health -
-        unemployment -
-        // The supplied workbook displays AK but does not subtract it in AL/AM.
-        rules.personalDeduction
-    );
+    const taxable =
+      input.taxable ??
+      Math.max(
+        0,
+        gross -
+          adjustment.taxExemptIncome -
+          // Match the workbook AL column: housing and meal are tax-exempt;
+          // travel is not included in that column.
+          housing -
+          meal -
+          social -
+          health -
+          unemployment -
+          // The supplied workbook displays AK but does not subtract it in AL/AM.
+          personalDeduction
+      );
     const tax = calculateResidentTax2026(taxable);
     const net =
       gross -
@@ -552,6 +736,10 @@ export function calculatePayroll(
       dayOvertimeSalary,
       nightOvertimeSalary,
       reinforcementSalary,
+      cashReinforcementSalary,
+      cashOvertimeSalary,
+      cashAnnualLeaveSalary,
+      cashTotal,
       housing,
       travel,
       meal,
@@ -565,7 +753,7 @@ export function calculatePayroll(
       social,
       health,
       unemployment,
-      personalDeduction: rules.personalDeduction,
+      personalDeduction,
       dependentDeduction,
       taxable,
       tax,
@@ -574,4 +762,55 @@ export function calculatePayroll(
   }
   result.issues = [...new Set(issues)];
   return result;
+}
+
+/** Recalculate a draft without fetching attendance or changing historical profiles. */
+export function recalculatePayrollDraft(
+  draft: PayrollDraft,
+  profiles: PayrollProfile[] = []
+): PayrollDraft {
+  if (draft.importMode === 'excel-values')
+    throw new Error(
+      'Bản nháp giữ nguyên kết quả Excel. Nhập lại Excel để thay đổi số liệu.'
+    );
+  const warnings = [...(draft.warnings ?? [])];
+  const rows = draft.rows.map((row) => {
+    const id = normalizeEmployeeId(row.profile.employeeId);
+    const profile = resolveSnapshotProfile(
+      row.profile,
+      profiles.find((item) => normalizeEmployeeId(item.employeeId) === id)
+    );
+    const adjustments = { ...emptyPayrollAdjustments(), ...row.adjustments };
+    const code = normalizeEmployeeId(profile.attendanceEmployeeId || id);
+    // These three approved defaults also repair zero-day legacy drafts.
+    // An existing zero override or daily correction must not suppress the default.
+    if (
+      default22DayEmployeeCodes.has(code) &&
+      row.hours.day === 0 &&
+      (adjustments.calculation?.dayDays ?? 0) === 0
+    ) {
+      adjustments.calculation = { ...adjustments.calculation, dayDays: 22 };
+    }
+    const result = calculatePayroll(
+      [profile],
+      [],
+      { [id]: { ...adjustments, attendanceOverrides: [] } },
+      draft.rules,
+      draft.startDate,
+      draft.endDate,
+      { [id]: row.hours }
+    );
+    if (result.issues.length || !result.rows.length)
+      throw new Error(
+        `${profile.name} (${code}): ${result.issues.join('; ') || 'Không thể tính lại lương.'}`
+      );
+    warnings.push(...(result.warnings ?? []));
+    return { ...result.rows[0], adjustments, source: row.source };
+  });
+  return {
+    ...draft,
+    rows,
+    formulaVersion: 'excel-2026-10-v2',
+    warnings: [...new Set(warnings)]
+  };
 }

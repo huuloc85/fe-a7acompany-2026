@@ -23,7 +23,8 @@ type DashboardDataResponse = {
 export const fetchDashboardData = async () => {
   try {
     const response: DashboardDataResponse = await axiosPrivate.get(
-      '/api/admin/dashboard'
+      '/api/admin/dashboard',
+      { params: { include_top_users: false } }
     );
 
     const dashboardData: DashboardDataType = {

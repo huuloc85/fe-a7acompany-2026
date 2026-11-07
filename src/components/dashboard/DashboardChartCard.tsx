@@ -26,7 +26,7 @@ export default function DashboardChartCard({
         className="liquid-glass-card dashboard-liquid-chart dashboard-report-card !rounded-2xl"
         title={
           <div className="min-w-0 py-1">
-            <h3 className="!m-0 text-base font-bold text-gray-900 uppercase dark:text-white">
+            <h3 className="!m-0 text-base font-semibold text-gray-900 dark:text-white">
               {title}
             </h3>
             <p className="mt-1 !mb-0 text-xs leading-relaxed font-normal whitespace-normal text-gray-500 dark:text-gray-400">

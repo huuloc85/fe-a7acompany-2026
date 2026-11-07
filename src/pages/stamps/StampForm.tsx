@@ -1,5 +1,4 @@
 import {
-  Button,
   DatePicker,
   Form,
   FormProps,
@@ -8,6 +7,7 @@ import {
   Select,
   Tag
 } from 'antd';
+import Button from '@components/common/AppButton';
 import dayjs, { Dayjs } from 'dayjs';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -174,7 +174,7 @@ export default function StampForm() {
       >
         <div className="space-y-5">
           {/* ── Action Bar ─────────────────────────────────────── */}
-          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/50">
+          <div className="ui-toolbar flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/50">
             <AppButton
               tone="warning"
               tabIndex={-1}
@@ -450,6 +450,7 @@ export default function StampForm() {
                   Tạo Tem
                 </button>
                 <Button
+                  tone="inherit"
                   htmlType="reset"
                   className="!rounded-lg"
                   icon={<FaRotateRight className="text-xs" />}
@@ -516,6 +517,7 @@ export default function StampForm() {
                   </div>
                 </div>
                 <Button
+                  tone="inherit"
                   color="red"
                   variant="outlined"
                   onClick={() => setStampData(undefined)}

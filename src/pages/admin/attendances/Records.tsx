@@ -3,7 +3,6 @@ import { isCurrentAttendanceDate } from '@/utils/attendanceWindow';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import {
-  Button,
   DatePicker,
   Select,
   Switch,
@@ -12,6 +11,7 @@ import {
   TableProps,
   Tag
 } from 'antd';
+import Button from '@components/common/AppButton';
 import dayjs from 'dayjs';
 import { debounce } from 'lodash';
 import { useState } from 'react';
@@ -369,7 +369,12 @@ export default function Records() {
           isLoading={isFetching}
         />
         <Link to="/admin/attendances">
-          <Button color="green" variant="solid" icon={<IconHistory />}>
+          <Button
+            tone="inherit"
+            color="green"
+            variant="solid"
+            icon={<IconHistory />}
+          >
             Lịch sử chấm công
           </Button>
         </Link>

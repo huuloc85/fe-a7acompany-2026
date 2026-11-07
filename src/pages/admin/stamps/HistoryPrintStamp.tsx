@@ -17,7 +17,6 @@ import {
 import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query';
 import { Route } from '@routes/_authenticated/stamps/history';
 import {
-  Button,
   DatePicker,
   Modal,
   Pagination,
@@ -31,6 +30,7 @@ import {
   Input,
   message
 } from 'antd';
+import Button from '@components/common/AppButton';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 import { useState, useEffect, useRef } from 'react';
@@ -547,7 +547,7 @@ export default function HistoryPrintStamp() {
       <ComponentCard title="Lịch sử in tem">
         <div className="space-y-5">
           {/* ── Action Bar ── */}
-          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/50">
+          <div className="ui-toolbar flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/50">
             <RefreshButton
               isLoading={queryResult.isFetching}
               refresh={queryResult.refetch}
@@ -1004,6 +1004,7 @@ export default function HistoryPrintStamp() {
                   </div>
                 </div>
                 <Button
+                  tone="inherit"
                   color="red"
                   variant="outlined"
                   onClick={() => setSelectedRecord(null)}

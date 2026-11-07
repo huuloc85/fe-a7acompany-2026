@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Button, Space, message } from 'antd';
+import { Space, message } from 'antd';
+import Button from '@components/common/AppButton';
 import { ClearOutlined, DownloadOutlined } from '@ant-design/icons';
 import { CANVAS_WIDTH, CANVAS_HEIGHT } from '@/utils/signatureUtil';
 
@@ -194,6 +195,7 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
       <div className="flex justify-center">
         <Space>
           <Button
+            tone="inherit"
             icon={<ClearOutlined />}
             onClick={clearSignature}
             disabled={isEmpty}
@@ -201,6 +203,7 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
             Xóa chữ ký
           </Button>
           <Button
+            tone="inherit"
             icon={<DownloadOutlined />}
             onClick={downloadSignature}
             disabled={isEmpty}

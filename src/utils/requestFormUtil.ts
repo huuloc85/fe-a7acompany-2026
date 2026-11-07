@@ -17,7 +17,7 @@ export interface RequestFormUser {
 export function requiresManagerApproval(
   record: Pick<RequestForm, 'employee_id'>
 ): boolean {
-  return [...SUPERVISOR_IDS, '22122900', '23080100', '23011400'].includes(
+  return [...SUPERVISOR_IDS, '22122902', '23080130', '23011410'].includes(
     String(record.employee_id)
   );
 }
@@ -321,7 +321,7 @@ export function areSignaturesComplete(record: RequestForm): boolean {
 
   if (
     createdBySupervisor ||
-    [...SUPERVISOR_IDS, '22122900', '23080100', '23011400'].includes(
+    [...SUPERVISOR_IDS, '22122902', '23080130', '23011410'].includes(
       String(record.employee_id)
     )
   ) {

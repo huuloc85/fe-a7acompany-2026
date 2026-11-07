@@ -14,7 +14,6 @@ import { payrollBanks, payrollBankBin } from '@/utils/payrollBanks';
 import PayrollBankLabel from './PayrollBankLabel';
 import {
   Alert,
-  Button,
   Checkbox,
   DatePicker,
   Form,
@@ -29,12 +28,14 @@ import {
   Typography,
   message
 } from 'antd';
+import Button from '@components/common/AppButton';
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
 import { saveAs } from 'file-saver';
 import AppButton from '@components/common/AppButton';
 import ComponentCard from '@components/common/ComponentCard';
 import PayrollExcelSheets from './PayrollExcelSheets';
+import PayrollReferenceImport from './PayrollReferenceImport';
 import {
   fetchPayrollAdjustments,
   savePayrollAdjustment
@@ -971,7 +972,66 @@ export default function PayrollCalculator() {
                 </strong>
               </span>
               <div className="vvp-period-buttons">
+                <PayrollReferenceImport
+                  key={publicationKey}
+                  period={publicationPeriod}
+                  profiles={[
+                    ...profiles.filter(
+                      (p) =>
+                        savedProfiles[p.employeeId]?.employeeLinked !== false
+                    ),
+                    ...availableEmployees.map((e) => ({
+                      employeeId: e.id,
+                      attendanceEmployeeId: e.id,
+                      name: e.name,
+                      company: e.company,
+                      department: '',
+                      bankAccount: '',
+                      basicSalary: 0,
+                      responsibility: 0,
+                      housingPerDay: 0,
+                      travelPerDay: 0,
+                      mealPerDay: 0,
+                      diligence: 0,
+                      insuranceBase: 0,
+                      unionBase: 0,
+                      dependents: 0
+                    }))
+                  ]}
+                  disabled={
+                    busy ||
+                    syncing ||
+                    loadingProfiles ||
+                    !canEditProfiles ||
+                    publication?.key !== publicationKey ||
+                    publication.data?.status === 'published'
+                  }
+                  onSave={async (importedDraft) => {
+                    const response = await savePayrollDraft(
+                      'all',
+                      publicationPeriod,
+                      importedDraft,
+                      publication?.data?.revision ?? 0
+                    );
+                    setPublication({
+                      key: publicationKey,
+                      data: response.data
+                    });
+                    setSavedSnapshot('');
+                    setSalaryCalculated(false);
+                    void queryClient.invalidateQueries({
+                      queryKey: ['salaries']
+                    });
+                    void queryClient.invalidateQueries({
+                      queryKey: ['adminSalaryPreview']
+                    });
+                    message.success(
+                      'Đã lưu bản nháp từ Excel. Xem lại tại danh sách bảng lương.'
+                    );
+                  }}
+                />
                 <Button
+                  tone="inherit"
                   loading={loadingProfiles}
                   disabled={busy || savingProfile}
                   onClick={() => setReloadProfiles((value) => value + 1)}
@@ -1011,6 +1071,7 @@ export default function PayrollCalculator() {
                 {publication?.key === publicationKey &&
                   publication.data?.status === 'draft' && (
                     <Button
+                      tone="inherit"
                       type="primary"
                       loading={publishing}
                       disabled={
@@ -1090,6 +1151,7 @@ export default function PayrollCalculator() {
               </div>
               <div className="vvp-period-buttons">
                 <Button
+                  tone="inherit"
                   type="link"
                   onClick={() => {
                     setSelectedIds(null);
@@ -1098,6 +1160,7 @@ export default function PayrollCalculator() {
                   Chọn tất cả
                 </Button>
                 <Button
+                  tone="inherit"
                   type="link"
                   disabled={attendance === null}
                   onClick={() => {
@@ -1133,6 +1196,7 @@ export default function PayrollCalculator() {
               message={adjustmentError}
               action={
                 <Button
+                  tone="inherit"
                   onClick={() => setAdjustmentReload((value) => value + 1)}
                 >
                   Tải lại khoản phát sinh
@@ -1283,16 +1347,18 @@ export default function PayrollCalculator() {
             <summary>Thiết lập & tải lại dữ liệu</summary>
             <div className="vvp-payroll-actions">
               <Button
+                tone="inherit"
                 disabled={savingProfile}
                 onClick={() => setAdjustmentReload((value) => value + 1)}
               >
                 Tải lại khoản phát sinh
               </Button>
-              <Button onClick={() => setConfigurationOpen(true)}>
+              <Button tone="inherit" onClick={() => setConfigurationOpen(true)}>
                 Cấu hình & công thức
               </Button>
               <Space wrap>
                 <Button
+                  tone="inherit"
                   disabled={!canEditProfiles || !holidaysReady || holidaySaving}
                   onClick={() => editHoliday(null)}
                 >
@@ -1305,6 +1371,7 @@ export default function PayrollCalculator() {
                   </span>
                 )}
                 <Button
+                  tone="inherit"
                   disabled={holidaySaving}
                   onClick={() => setHolidayReload((v) => v + 1)}
                 >
@@ -1318,7 +1385,10 @@ export default function PayrollCalculator() {
               type="error"
               message={holidayError}
               action={
-                <Button onClick={() => setHolidayReload((v) => v + 1)}>
+                <Button
+                  tone="inherit"
+                  onClick={() => setHolidayReload((v) => v + 1)}
+                >
                   Tải lại công lễ
                 </Button>
               }
@@ -1503,6 +1573,7 @@ export default function PayrollCalculator() {
             />
             {holidayEmployee && (
               <Button
+                tone="inherit"
                 disabled={holidaySaving}
                 onClick={() => setHolidayInput(null)}
               >
@@ -1665,6 +1736,7 @@ export default function PayrollCalculator() {
           </Modal>
           <div>
             <Button
+              tone="inherit"
               type="primary"
               disabled={!canExport}
               loading={busy}

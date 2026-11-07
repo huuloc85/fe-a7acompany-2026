@@ -1,6 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
 import {
-  Button,
   Card,
   DatePicker,
   Form,
@@ -9,6 +8,7 @@ import {
   message,
   Select
 } from 'antd';
+import Button from '@components/common/AppButton';
 import { SizeType } from 'antd/es/config-provider/SizeContext';
 import dayjs, { Dayjs } from 'dayjs';
 
@@ -277,7 +277,7 @@ export default function ProductQuantityAdd() {
                 </div>
               </Card>
             ))}
-            <Button type="dashed" onClick={() => add()} block>
+            <Button tone="inherit" type="dashed" onClick={() => add()} block>
               <IconAdd /> Thêm sản phẩm
             </Button>
           </div>
@@ -286,6 +286,7 @@ export default function ProductQuantityAdd() {
 
       <Form.Item style={{ marginTop: '16px', marginBottom: '0' }}>
         <Button
+          tone="inherit"
           variant="solid"
           color="green"
           loading={isPending}

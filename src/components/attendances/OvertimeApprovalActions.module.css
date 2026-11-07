@@ -1,0 +1,19 @@
+@media screen {
+  :global(html body #root) .actions .action {
+    height: 28px !important;
+    min-height: 28px !important;
+    min-width: 0 !important;
+    padding: 0 10px !important;
+    border-radius: 6px !important;
+    font-size: 12px !important;
+    line-height: 1 !important;
+    box-shadow: none !important;
+  }
+}
+
+@media screen and (pointer: coarse) {
+  :global(html body #root) .actions .action {
+    height: 36px !important;
+    min-height: 36px !important;
+  }
+}

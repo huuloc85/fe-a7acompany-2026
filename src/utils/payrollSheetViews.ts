@@ -49,6 +49,21 @@ export function buildPayrollSheetView(
   const original = payrollSheetSchema.find((sheet) => sheet.name === name);
   if (!original) throw new Error('Unknown payroll sheet');
   const schema = structuredClone(original);
+  if (name === 'Tính lương' && draft?.importMode === 'excel-values') {
+    for (const label of [
+      'Số ngày phép năm',
+      'Tiền phép năm',
+      'Tăng cường tiền mặt'
+    ]) {
+      schema.columnCount++;
+      schema.headers[0].push({
+        column: schema.columnCount,
+        label,
+        colSpan: 1,
+        rowSpan: 1
+      });
+    }
+  }
   const dates = periodDates(start, end);
   const entries = (attendance ?? []).filter(
     (e) =>
@@ -220,7 +235,7 @@ export function buildPayrollSheetView(
         r.dayOvertimeSalary,
         r.hours.nightOvertime,
         r.nightOvertimeSalary,
-        r.dayDays + r.nightDays,
+        r.allowanceDays ?? r.dayDays + r.nightDays,
         r.housing,
         r.travel,
         r.meal,
@@ -248,13 +263,16 @@ export function buildPayrollSheetView(
         a.taxExemptIncome,
         r.taxable,
         r.tax,
-        r.net,
-        r.social + r.health + r.unemployment,
-        (p.basicSalary + p.responsibility) * 0.215,
-        (p.basicSalary + p.responsibility) * 0.02,
+        r.excelNetBlank ? null : r.net,
+        r.employeeInsurance ?? r.social + r.health + r.unemployment,
+        r.employerInsurance ?? (p.basicSalary + p.responsibility) * 0.215,
+        r.employerUnion ?? (p.basicSalary + p.responsibility) * 0.02,
         a.otherIncome,
         a.advance,
-        a.otherDeduction
+        a.otherDeduction,
+        ...(draft?.importMode === 'excel-values'
+          ? [r.annualLeaveDays ?? 0, r.annualLeaveSalary ?? 0, r.cashTotal ?? 0]
+          : [])
       ];
     else if (name === ' Bảng nhập công')
       values = [

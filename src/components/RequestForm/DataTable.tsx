@@ -1,6 +1,8 @@
 import React from 'react';
+import { authStore } from '@/stores/authStore';
 import { REQUEST_FORM_FACTORY_MANAGER_NAME } from '@/constants/requestForm';
-import { Table, Tag, Button, Space, Tooltip, Pagination, Spin } from 'antd';
+import { Table, Tag, Space, Tooltip, Pagination, Spin } from 'antd';
+import Button from '@components/common/AppButton';
 import {
   EyeOutlined,
   EditOutlined,
@@ -27,7 +29,7 @@ import {
 } from '@/utils/requestFormUtil';
 
 // Danh sách nhân viên nộp đơn thẳng cho quản lý, bỏ qua tổ trưởng
-const DIRECT_TO_MANAGER_IDS = ['22122900', '23080100', '23011400'] as const;
+const DIRECT_TO_MANAGER_IDS = ['22122902', '23080130', '23011410'] as const;
 
 const PendingApproverName = ({
   record,
@@ -106,6 +108,7 @@ export const DataTable: React.FC<RequestFormTableProps> = ({
   };
 
   const canEdit = (record: RequestForm): boolean => {
+    if (authStore.state.user?.is_preview) return false;
     // ❌ Admin không được edit đơn
     if (isAdmin) return false;
 
@@ -140,6 +143,7 @@ export const DataTable: React.FC<RequestFormTableProps> = ({
   };
 
   const canSignDelegation = (record: RequestForm): boolean => {
+    if (authStore.state.user?.is_preview) return false;
     // Chỉ cho phép ký đơn ủy quyền
     if (record.type !== 'giay_uy_quyen' || record.status !== 'pending')
       return false;
@@ -169,6 +173,7 @@ export const DataTable: React.FC<RequestFormTableProps> = ({
   };
 
   const canDelete = (record: RequestForm): boolean => {
+    if (authStore.state.user?.is_preview) return false;
     if (isSuperAdmin && onDelete) return true;
     // ❌ Admin không được xóa đơn
     if (isAdmin) return false;
@@ -204,6 +209,7 @@ export const DataTable: React.FC<RequestFormTableProps> = ({
   };
 
   const canApprove = (record: RequestForm): boolean => {
+    if (authStore.state.user?.is_preview) return false;
     // ❌ Status phải là pending
     if (record.status !== 'pending') return false;
     if (record.type === 'don_xin_tang_ca') {
@@ -282,7 +288,7 @@ export const DataTable: React.FC<RequestFormTableProps> = ({
       if (hasManagerSignature) {
         return (
           hasSupervisorSignature ||
-          ['22122900', '23080100', '23011400'].includes(
+          ['22122902', '23080130', '23011410'].includes(
             String(record.employee_id)
           )
         );
@@ -295,6 +301,7 @@ export const DataTable: React.FC<RequestFormTableProps> = ({
   };
 
   const canReject = (record: RequestForm): boolean => {
+    if (authStore.state.user?.is_preview) return false;
     // ❌ Status phải là pending
     if (record.status !== 'pending') return false;
     if (record.type === 'don_xin_tang_ca' && requiresManagerApproval(record)) {
@@ -1029,6 +1036,7 @@ export const DataTable: React.FC<RequestFormTableProps> = ({
                 zIndex={99}
               >
                 <Button
+                  tone="inherit"
                   type="text"
                   className="request-form-action-btn"
                   icon={<EyeOutlined />}
@@ -1048,6 +1056,7 @@ export const DataTable: React.FC<RequestFormTableProps> = ({
                   zIndex={99}
                 >
                   <Button
+                    tone="inherit"
                     type="text"
                     className="request-form-action-btn"
                     icon={<EyeOutlined />}
@@ -1066,6 +1075,7 @@ export const DataTable: React.FC<RequestFormTableProps> = ({
                     zIndex={99}
                   >
                     <Button
+                      tone="inherit"
                       type="text"
                       className="request-form-action-btn"
                       icon={<EditOutlined />}
@@ -1085,6 +1095,7 @@ export const DataTable: React.FC<RequestFormTableProps> = ({
                     zIndex={99}
                   >
                     <Button
+                      tone="inherit"
                       type="text"
                       className="request-form-action-btn"
                       danger
@@ -1105,6 +1116,7 @@ export const DataTable: React.FC<RequestFormTableProps> = ({
                     zIndex={99}
                   >
                     <Button
+                      tone="inherit"
                       type="text"
                       className="request-form-action-btn request-form-action-btn--info"
                       style={{ color: '#1890ff' }}
@@ -1125,6 +1137,7 @@ export const DataTable: React.FC<RequestFormTableProps> = ({
                     zIndex={99}
                   >
                     <Button
+                      tone="inherit"
                       type="text"
                       className="request-form-action-btn request-form-action-btn--approve"
                       style={{ color: '#52c41a' }}
@@ -1145,6 +1158,7 @@ export const DataTable: React.FC<RequestFormTableProps> = ({
                     zIndex={99}
                   >
                     <Button
+                      tone="inherit"
                       type="text"
                       className="request-form-action-btn"
                       danger
@@ -1366,6 +1380,7 @@ export const DataTable: React.FC<RequestFormTableProps> = ({
           onClick={(e) => e.stopPropagation()}
         >
           <Button
+            tone="inherit"
             type="text"
             size="small"
             icon={<EyeOutlined />}
@@ -1375,6 +1390,7 @@ export const DataTable: React.FC<RequestFormTableProps> = ({
           </Button>
           {canEdit(record) && (
             <Button
+              tone="inherit"
               type="text"
               size="small"
               icon={<EditOutlined />}
@@ -1383,6 +1399,7 @@ export const DataTable: React.FC<RequestFormTableProps> = ({
           )}
           {canDelete(record) && (
             <Button
+              tone="inherit"
               type="text"
               size="small"
               danger
@@ -1392,6 +1409,7 @@ export const DataTable: React.FC<RequestFormTableProps> = ({
           )}
           {!hideSignDelegation && canSignDelegation(record) && (
             <Button
+              tone="inherit"
               type="text"
               size="small"
               style={{ color: '#1890ff' }}
@@ -1404,6 +1422,7 @@ export const DataTable: React.FC<RequestFormTableProps> = ({
           <div className="flex-1" />
           {canApprove(record) && (
             <Button
+              tone="inherit"
               type="text"
               size="small"
               style={{ color: '#52c41a' }}
@@ -1415,6 +1434,7 @@ export const DataTable: React.FC<RequestFormTableProps> = ({
           )}
           {canReject(record) && (
             <Button
+              tone="inherit"
               type="text"
               size="small"
               danger

@@ -1,8 +1,9 @@
-import { createFileRoute } from '@tanstack/react-router';
-import NotificationDemo from '@pages/admin/NotificationDemo';
+import { createFileRoute, redirect } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/_authenticated/admin/notification-demo')(
   {
-    component: NotificationDemo
+    beforeLoad: () => {
+      throw redirect({ to: '/admin/edit-layout' });
+    }
   }
 );

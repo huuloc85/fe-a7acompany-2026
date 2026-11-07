@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useStore } from '@tanstack/react-store';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { sendNotification } from '@utils/notificationUtil';
 import { echo } from '@utils/lib/echo';
 import { fetchMyFeedbacks } from '@services/FeedbackService';
@@ -31,6 +31,7 @@ type FeedbackRepliedPayload = {
  * @param userId - employee id để subscribe Echo channel
  */
 export function useFeedbackNotification(enabled: boolean, userId?: string) {
+  const queryClient = useQueryClient();
   const { items: notifications } = useStore(feedbackNotificationStore);
   const prevStatusMapRef = useRef<Map<number, string>>(new Map());
   const isFirstLoadRef = useRef(true);
@@ -45,6 +46,7 @@ export function useFeedbackNotification(enabled: boolean, userId?: string) {
     const channel = echo.channel(channelName);
 
     const handler = (payload: FeedbackRepliedPayload) => {
+      void queryClient.invalidateQueries({ queryKey: ['my-feedbacks'] });
       const statusLabel =
         payload.status === 'resolved' ? 'đã xử lý ✓' : 'bị từ chối ✕';
 
@@ -68,7 +70,7 @@ export function useFeedbackNotification(enabled: boolean, userId?: string) {
       channel.stopListening(eventName);
       echo.leaveChannel(channelName);
     };
-  }, [enabled, userId]);
+  }, [enabled, userId, queryClient]);
 
   // ── 2. Polling backup (mỗi 60s) ──────────────────────────────────────
 

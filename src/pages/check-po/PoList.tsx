@@ -146,7 +146,7 @@ export const PoList = () => {
     >
       <div className="space-y-5">
         {/* ── Action Bar ────────────────────────────────────────── */}
-        <div className="check-po-action-bar flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/50">
+        <div className="check-po-action-bar ui-toolbar flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800/50 dark:to-gray-900/50">
           <AppButton
             tone="success"
             icon={<IconAdd />}

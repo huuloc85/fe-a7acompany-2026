@@ -1,8 +1,10 @@
-import { Alert, Button, Input, Space, Spin, message } from 'antd';
+import { Alert, Input, Space, message } from 'antd';
+import Button from '@components/common/AppButton';
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   calculatePayroll,
+  recalculatePayrollDraft,
   emptyPayrollAdjustments,
   type PayrollDraft,
   type PayrollAdjustments,
@@ -11,8 +13,8 @@ import {
 import { getApiErrorMessage } from '@/utils/apiError';
 import { fetchPayrollProfiles } from '@/services/PayrollProfileService';
 import PayrollExcelSheets from './PayrollExcelSheets';
+import PayrollReferenceImport from './PayrollReferenceImport';
 import { resolveSnapshotProfile } from '@/utils/payrollSnapshotProfile';
-import { fetchAttendancesCalculated } from '@/services/AttendanceService';
 
 export default function PayrollDraftPreview({
   draft: savedDraft,
@@ -36,30 +38,7 @@ export default function PayrollDraftPreview({
   }, [isEditing, onEditingChange]);
   const [search, setSearch] = useState('');
   const [employeeId, setEmployeeId] = useState<string>();
-  const throughDate = draft.dataThrough ?? draft.endDate;
-  const attendanceQuery = useQuery({
-    queryKey: ['payrollDraftDailyAttendance', draft.startDate, throughDate],
-    queryFn: async () => {
-      const params = {
-        limit: 0,
-        'filter[date_between]': `${draft.startDate},${throughDate}`
-      };
-      const first = await fetchAttendancesCalculated(params);
-      if (!Array.isArray(first.data))
-        throw new Error('Dữ liệu công không hợp lệ');
-      const records = [...first.data];
-      for (let page = 2; page <= (first.last_page || 1); page++) {
-        const next = await fetchAttendancesCalculated({ ...params, page });
-        if (!Array.isArray(next.data) || !next.data.length)
-          throw new Error('Dữ liệu công chưa đầy đủ');
-        records.push(...next.data);
-      }
-      if (first.total > records.length)
-        throw new Error('Dữ liệu công chưa đầy đủ');
-      return records;
-    }
-  });
-  const { data: savedProfiles } = useQuery({
+  const { data: savedProfiles, isFetching: loadingProfiles } = useQuery({
     queryKey: ['payrollProfilesForDraftPreview'],
     queryFn: fetchPayrollProfiles,
     staleTime: 5 * 60 * 1000
@@ -67,10 +46,14 @@ export default function PayrollDraftPreview({
   const profiles = useMemo(
     () =>
       draft.rows.map((row) => {
-        const saved = savedProfiles?.data.find(
-          (item) =>
-            String(item.profile.employeeId).trim() ===
-            String(row.profile.employeeId).trim()
+        const saved = savedProfiles?.data.find((item) =>
+          [item.profile.employeeId, item.profile.attendanceEmployeeId].some(
+            (id) =>
+              id?.trim() ===
+              (
+                row.profile.attendanceEmployeeId || row.profile.employeeId
+              ).trim()
+          )
         );
         return resolveSnapshotProfile(row.profile, saved?.profile);
       }),
@@ -82,7 +65,8 @@ export default function PayrollDraftPreview({
     key: keyof PayrollAdjustments,
     value: string | number
   ) {
-    if (!editingDraft || saving) return false;
+    if (!editingDraft || saving || editingDraft.importMode === 'excel-values')
+      return false;
     const row = editingDraft.rows.find(
       (item) => item.profile.employeeId === profile.employeeId
     );
@@ -108,7 +92,7 @@ export default function PayrollDraftPreview({
       );
       return false;
     }
-    const updated = { ...result.rows[0], adjustments };
+    const updated = { ...result.rows[0], adjustments, source: row.source };
     setEditingDraft(
       (current) =>
         current && {
@@ -143,23 +127,76 @@ export default function PayrollDraftPreview({
   return (
     <div className="grid min-w-0 gap-4">
       {onSave && (
-        <Space>
+        <Space wrap>
           {editingDraft ? (
             <>
+              <PayrollReferenceImport
+                period={editingDraft.endDate.slice(0, 7)}
+                currentDraft={editingDraft}
+                profiles={
+                  savedProfiles?.data
+                    .filter((item) => item.employeeLinked !== false)
+                    .map((item) => item.profile) ?? []
+                }
+                disabled={saving || loadingProfiles || !savedProfiles}
+                onSave={async (imported) => {
+                  setEditingDraft(imported);
+                  message.success(
+                    'Đã áp dụng dữ liệu Excel. Kiểm tra kết quả rồi bấm Lưu thay đổi.'
+                  );
+                }}
+              />
               <Button
+                tone="inherit"
+                disabled={
+                  saving ||
+                  loadingProfiles ||
+                  !editingDraft.rows.length ||
+                  editingDraft.importMode === 'excel-values'
+                }
+                onClick={() => {
+                  try {
+                    setEditingDraft(
+                      recalculatePayrollDraft(editingDraft, profiles)
+                    );
+                    message.success(
+                      'Đã tính lại lương. Kiểm tra kết quả rồi bấm Lưu thay đổi.'
+                    );
+                  } catch (error) {
+                    message.error(
+                      error instanceof Error
+                        ? error.message
+                        : 'Không thể tính lại bảng lương nháp.'
+                    );
+                  }
+                }}
+              >
+                Tính lại lương
+              </Button>
+              <Button
+                tone="inherit"
                 type="primary"
                 loading={saving}
                 onClick={() => void saveChanges()}
               >
                 Lưu thay đổi
               </Button>
-              <Button disabled={saving} onClick={() => setEditingDraft(null)}>
+              <Button
+                tone="inherit"
+                disabled={saving}
+                onClick={() => setEditingDraft(null)}
+              >
                 Huỷ
               </Button>
-              <span>Sửa các ô có biểu tượng ✎ trong tab Tính lương.</span>
+              <span>
+                {draft.importMode === 'excel-values'
+                  ? 'Giữ nguyên số liệu Excel. Nhập lại file để thay đổi.'
+                  : 'Sửa các ô có biểu tượng ✎ trong tab Tính lương.'}
+              </span>
             </>
           ) : (
             <Button
+              tone="inherit"
               disabled={!revision}
               onClick={() => {
                 setEditRevision(revision!);
@@ -178,48 +215,54 @@ export default function PayrollDraftPreview({
         value={search}
         onChange={(event) => setSearch(event.target.value)}
       />
-      {attendanceQuery.isError && (
+      {draft.importMode === 'excel-values' && (
         <Alert
-          type="error"
-          message="Không tải được chi tiết công từng ngày. Vui lòng thử lại."
-          action={
-            <button
-              type="button"
-              onClick={() => void attendanceQuery.refetch()}
-            >
-              Thử lại
-            </button>
-          }
+          type="info"
+          message="Bản nháp nhập nguyên kết quả Excel, không tính lại."
+          description={`Tăng cường tiền mặt: ${draft.rows.reduce((sum, row) => sum + (row.cashTotal ?? 0), 0).toLocaleString('vi-VN')} đ. ${draft.warnings?.join(' ') ?? ''}`}
+        />
+      )}
+      {draft.rows.some((row) => !row.source) && (
+        <Alert
+          type="info"
+          message="Bản nháp đã tính lương, chưa xác nhận đối chiếu với Excel mới."
+          description="Một số dòng chưa lưu thông tin nguồn Excel. Đây không phải thông báo lỗi tính lương hoặc xác nhận số tiền bị lệch."
+        />
+      )}
+      {!draft.attendance && (
+        <Alert
+          type="info"
+          message="Bản nháp chưa lưu chi tiết công từng ngày. Các khoản lương dùng số công tổng hợp đã lưu."
         />
       )}
       <div className="w-full max-w-full min-w-0">
-        <Spin spinning={attendanceQuery.isLoading}>
-          <PayrollExcelSheets
-            draftPreview
-            profiles={profiles}
-            attendance={attendanceQuery.data ?? null}
-            draft={draft}
-            startDate={draft.startDate}
-            endDate={draft.endDate}
-            search={search}
-            busy={saving}
-            canEditProfiles={false}
-            canEditAdjustments={!!editingDraft}
-            canEditHolidays={false}
-            holidaySettings={null}
-            canExport={false}
-            employeeId={employeeId ?? draft.rows[0]?.profile.employeeId}
-            editProfile={() => {}}
-            createProfile={() => {}}
-            deleteProfile={() => {}}
-            saveProfileField={async () => {}}
-            saveManualAdjustment={editAdjustment}
-            editAdjustment={() => {}}
-            editHoliday={() => {}}
-            selectEmployee={setEmployeeId}
-            exportPayslip={() => {}}
-          />
-        </Spin>
+        <PayrollExcelSheets
+          draftPreview
+          profiles={profiles}
+          attendance={draft.attendance ?? null}
+          draft={draft}
+          startDate={draft.startDate}
+          endDate={draft.endDate}
+          search={search}
+          busy={saving}
+          canEditProfiles={false}
+          canEditAdjustments={
+            !!editingDraft && draft.importMode !== 'excel-values'
+          }
+          canEditHolidays={false}
+          holidaySettings={null}
+          canExport={false}
+          employeeId={employeeId ?? draft.rows[0]?.profile.employeeId}
+          editProfile={() => {}}
+          createProfile={() => {}}
+          deleteProfile={() => {}}
+          saveProfileField={async () => {}}
+          saveManualAdjustment={editAdjustment}
+          editAdjustment={() => {}}
+          editHoliday={() => {}}
+          selectEmployee={setEmployeeId}
+          exportPayslip={() => {}}
+        />
       </div>
     </div>
   );

@@ -51,8 +51,8 @@ export default function SpikeControls({
     }
   };
   return (
-    <Card title="Điều khiển SPIKE" size="small">
-      {!controls && <p>Cần cập nhật lõi SPIKE để nhận lệnh từ xa.</p>}
+    <Card title="Điều khiển kiểm tra cổng keo cao" size="small">
+      {!controls && <p>Cần cập nhật lõi ứng dụng để nhận lệnh từ xa.</p>}
       <div className="mt-3 flex flex-wrap gap-2">
         <Button
           disabled={!enabled || calibration}
@@ -138,7 +138,7 @@ export default function SpikeControls({
             <>
               <p>
                 Chọn cạnh ROI 1–4 và dịch chuyển theo % kích thước ảnh. Quan sát
-                màn hình SPIKE trước khi lưu.
+                màn hình kiểm tra cổng keo cao trước khi lưu.
               </p>
               <Select
                 aria-label="Cạnh ROI"
